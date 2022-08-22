@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package tree;
+
+option go_package = "github.com/sourcenetwork/source-zanzibar/model";
+
+import "proto/tuples.proto";
+
+/* Node represents the result from a reverse lookup call.
+ * Reverse Lookup performs a BFS search through the graph, which yields a BFS tree.
+ * Node contains the (object, relation) pair as the node data and a list of edges.  */
+message Node {
+    tuples.Userset data = 1;
+    repeated Edge edges = 2;
+}
+
+/* Edge represents a connection from a a node to another.
+ * It contains the reason the edge was included in the Tree,
+ * as well as an explanatory string with aditional details. */
+message Edge {
+    Node node = 1;
+    SourceReason reason = 2;
+    string details = 3;
+}
+
+/* ReasonReason represents the origin of an edge, explaining why it was included.
+ * Reasons are used to explain whether an edge was found via direct lookup or 
+ * was added due to an userset rewrite rule */
+enum SourceReason {
+    DIRECT = 0; // Direct relation stored in the database
+    COMPUTED_USERSET = 1; 
+    TUPLE_TO_USERSET = 2; 
+}
