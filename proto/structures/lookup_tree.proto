@@ -1,0 +1,39 @@
+/* File contains type declarations for the Tree structured yielded by a Reverse Lookup operation.
+ *
+ * Reverse Lookup traverses up the relation graph, looking for all nodes which are reachable from it.
+ * A Reverse Lookup call expands Userset Rewrites, therefore it may not be immediately obvious how an object was reached.
+ * To ammend the clarity issue, the Tree defined stores the means used to reach a node in its edge.  */
+
+syntax = "proto3";
+
+package structures;
+
+option go_package = "github.com/sourcenetwork/source-zanzibar/structures";
+
+import "proto/model/tuples.proto";
+
+/* Node represents the result from a reverse lookup call.
+ * Reverse Lookup performs a BFS search through the graph, which yields a BFS tree.
+ * Node contains the (object, relation) pair as the node data and a list of edges.  */
+message LookupTree {
+    model.Userset data = 1;
+    repeated Child children = 2;
+}
+
+/* Child represents a connection from a a node to another.
+ * It contains the reason the edge was included in the Tree,
+ * as well as an explanatory string with aditional details. */
+message Child {
+    LookupTree node = 1;
+    SourceReason reason = 2;
+    string details = 3;
+}
+
+/* SourceReason represents the origin of a child, explaining why it was included.
+ * Reasons are used to explain whether a node was found via direct lookup or 
+ * was added due to an userset rewrite rule */
+enum SourceReason {
+    DIRECT = 0; // Direct relation stored in the database
+    COMPUTED_USERSET = 1; 
+    TUPLE_TO_USERSET = 2; 
+}

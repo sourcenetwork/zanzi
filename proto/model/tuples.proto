@@ -1,0 +1,65 @@
+/* File contains types representing the Zanzibar's Permission Tuple data model. 
+ *
+ * TODO Explain the graph nature behind relationship tuples and how it is traversed:
+ * - Userset represent Nodes in the relation tuple graphs */
+
+syntax = "proto3";
+
+package model;
+
+option go_package = "github.com/sourcenetwork/source-zanzibar/model";
+
+/* UserType represents the variant in how the User type should be interpreted.
+ * 
+ * The data model allows for an user to be an intermidiary node or
+ * a Leaf which represents an object.
+ * The Leaf Nodes of the Graph should - under normal usage - represent 
+ * client application specific subjects (ie entities which needs to be authorized). */
+enum UserType {
+    USER = 0; // Represents an Application Subject
+    USER_SET = 1; // Represents an intermediary Node
+}
+
+/* Userset represents an object and a relation pair.
+ * An Userset is a Node in the graph representation of the model,
+ * as such Usersets are connected to several Usersets (nodes).
+ * 
+ * Usersets define objects in the permission database as well as
+ * defines the relation between objects.
+ * 
+ * A note on the relation: most implementations define a sentinel
+ * relation which represents an empty / meaningless relation.
+ * The original paper defines it as "..." */
+message Userset {
+    string namespace = 1;
+    string objectId = 2;
+    string relation = 3;
+}
+
+/* User represents the target of the relation tuple.
+ * In terms of the graph representation, the user is the Edge's target.
+ *
+ * Users may be represent a tree of Nodes (an Userset) or identify a single object,
+ * usually an edge representing an application subject (eg an entity which needs to be authorized) */
+message User {
+    UserType type = 1;
+    /** For USER, identifier is an user id,  for USERT_SET identifier is an object id */
+    Userset userset = 2;
+}
+
+/* Tuple represents an entry in the Relation graph.
+ * A tuple can be thought of as an Edge which both defines and relates usersets (nodes).
+ * object_rel declares the source node, user declares the target node.
+ *
+ * Nodes in the Relationship Graph are infered through the edges and are not stored separetely. */
+message Tuple {
+    Userset object_rel = 1;
+    Userset user = 2;
+}
+
+/* TupleRecord represents a persisted Relationship Tuple.
+ * It stores the Tuple itself (source and target userset) and metadata. */
+message TupleRecord {
+    Tuple tuple = 1;
+    // TODO Define additional metadata (eg. creation date, annotation field (?) and creator)
+}

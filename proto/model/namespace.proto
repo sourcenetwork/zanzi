@@ -1,7 +1,15 @@
+/* File contains types representing Namespaces.
+ *
+ * Namespaces declare client application specific contexts and relations.
+ * A Namespace definition cointains a name and a set of relations.
+ * Namespaces are identified by their name, therefore names should be unique.  */
+
 syntax = "proto3";
-package namespace;
+
+package model;
 
 option go_package = "github.com/sourcenetwork/source-zanzibar/model";
+
 
 message Namespace {
     string name = 1;
@@ -14,10 +22,10 @@ message Relation {
 }
 
 message UsersetRewrite {
-    Node expressionTree = 1;
+    RewriteNode expressionTree = 1;
 }
 
-message Node {
+message RewriteNode {
     oneof node {
         OpNode opnode = 1;
         Leaf leaf = 2;
@@ -25,8 +33,8 @@ message Node {
 }
 
 message OpNode {
-    Node left = 1;
-    Node right = 2;
+    RewriteNode left = 1;
+    RewriteNode right = 2;
     Operation op = 3;
 }
 
