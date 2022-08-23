@@ -1,5 +1,5 @@
 // Package source-zanzibar exposes a zanzibar-like public API
-package source-zanzibar
+package main
 
 import (
     "github.com/sourcenetwork/source-zanzibar/model"
@@ -8,7 +8,7 @@ import (
 
 
 // Service manages resources needed to perform operations
-struct Service {
+type Service struct {
     db db.DB
 }
 
@@ -20,7 +20,7 @@ func NewService() *Serivce {
     // Initialize / load instance of DB.
     // Use Goleveldb as that is supposedly the standard according to the [docs].
     // [docs]: https://pkg.go.dev/github.com/tendermint/tm-db#section-readme
-    levelDb, err := tm-db.NewGoLevelDB(name, path)
+    //levelDb, err := tm-db.NewGoLevelDB(name, path)
     if err != nil {
         return nil, err
     }

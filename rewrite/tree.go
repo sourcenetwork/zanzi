@@ -15,13 +15,13 @@ const (
 
 
 type JoinableNodeType uint8
-var (
+const (
     JoinableNode_OpNode JoinableNode = iota
     JoinableNode_Leaf
 )
 
 type NodeType uint8
-var (
+const (
     Node_OpNode NodeType = iota
     Node_Leaf
     Node_RuleNode

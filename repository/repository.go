@@ -9,7 +9,7 @@ package repository
 // potentially through [github.com/cosmos/cosmos-sdk/store/types.CommitMultiStore.MountStoreWithDB]
 
 import (
-    "github.com/tendermint/tm-db"
+    tmdb "github.com/tendermint/tm-db"
 )
 
 const (
@@ -57,11 +57,13 @@ type Repository interface {
 
     // Return a Relation definition from a namespace
     // NOTE use relation index?
-    GetRelation(namespace, relation string) (model.Relation, error) { }
+    GetRelation(namespace, relation string) (model.Relation, error)
 }
 
-// Define methosd to recursively search a repository by following usersets indirection
-type RepositoryChaser {
+// Define methods to recursively search a repository by following usersets indirection
+// NOTE the idea behind this type is that it could work with any repository.
+// so perhaps turn this into a struct with a concrete implementation
+type RepositoryChaser interface {
 
     // Recursively fetches tuples matching namespace, objectId and relation
     ChaseUsersets(repo Repository, namespace, objectId, relation string) ([]model.TupleRecord, error)
@@ -71,9 +73,9 @@ type RepositoryChaser {
     ReverseChaseUserset(repo Repository, namespace, id, relation string) ([]model.TupleRecord, error)
 }
 
-struct TMDBRepository {
+type TMDBRepository struct {
     // NOTE Single DB for all indexes? hashicorps mem-db has a schema feature for a single db.
     // The tendermint abstraction provides nothing of the sort, forcing partition to be done through keys.
     // Should we use multiple instances of a db? I am not sure of the tradeoffs.
-    Db tm-db.DB
+    Db tmdb.DB
 }
