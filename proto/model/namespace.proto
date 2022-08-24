@@ -85,5 +85,5 @@ message ComputedUserset {
 //   eg. it would compute the userset (obj="dir:root", relation="owner")
 message TupleToUserset {
     string tuplesetRelation = 1;
-    string computerUsersetRelation = 2;
+    string computedUsersetRelation = 2;
 }

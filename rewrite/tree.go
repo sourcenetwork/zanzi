@@ -1,72 +1,90 @@
 package rewrite
 
 import (
-    "github.com/sourcenetwork/source-zanzibar/model"
+	"github.com/sourcenetwork/source-zanzibar/model"
 )
 
-// Type definies possible Operations for a Node in the Userset Expression Tree
-type Operation uint8
-const (
-    Union Operation = iota
-    Difference
-    Intersection
-    NoOp // NoOp indicates a Leaf node which should not perform an operation
+var (
+    _ Node = (*OpNode)(nil)
+    _ Node = (*Leaf)(nil)
+    _ Node = (*RuleNode)(nil)
+    _ JoinableNode = (*OpNode)(nil)
+    _ JoinableNode = (*Leaf)(nil)
 )
 
-
-type JoinableNodeType uint8
-const (
-    JoinableNode_OpNode JoinableNode = iota
-    JoinableNode_Leaf
-)
-
+// Enum which identifies the Node variant Node variant
 type NodeType uint8
+
 const (
-    Node_OpNode NodeType = iota
-    Node_Leaf
-    Node_RuleNode
+	Node_OpNode NodeType = iota
+	Node_Leaf
+	Node_RuleNode
 )
 
+// Enum defines the Rule
+type RuleType uint8
+
+const (
+    RuleType_THIS RuleType = iota
+    RuleType_TTU
+    RuleType_CU
+)
+
+// Type Rule represents a Userset Rewrite Rule
+// Rule contains the rule type and a list of arguments
+// which was passed to the matching rule during userset rewrite definition.
+//
+// Contents of Args is not enforced by the type system but follow a convetion as follows:
+// THIS Args: Name of the relation which defined the This rule
+// CU Args: Name of the target relation
+// TTU Args: Contains two arguments -> Args[0] = Tupleset lookup Relation name; Args[1] Computed Userset Relation name
+type Rule struct {
+    Type RuleType
+    Args []string
+}
+
+// Interface type to restrict the variants on RuleNode child
+// This is done to avoid the semantically meaningless scenario where
+// a RuleNode has another RuleNode as a child.
 type JoinableNode interface {
-    GetJoinableNodeType() JoinableNodeType
+	isJoinableNode()
 }
 
 type Node interface {
-    GetNodeType() NodeType
+	GetNodeType() NodeType
 }
-
 
 type OpNode struct {
-    Left Node
-    Right Node
-    Op Operation
+	Left  Node
+	Right Node
+	Op    model.Operation
 }
 
-func (n *OpNode) GetJoinableNodeType() { 
-    return JoinableNode_OpNode 
+func (n *OpNode) isJoinableNode() { }
+
+func (n *OpNode) GetNodeType() NodeType {
+	return Node_OpNode
 }
 
-func (n *OpNode) GetNodeType() { 
-    return Node_OpNode 
-}
-
+// Type Leaf models leaves in the userset expansion tree
+// Leaves contains a list of usersets
 type Leaf struct {
-    Users []model.User
+	Users []model.Userset
 }
 
-func (n *Leaf) GetJoinableNodeType() { 
-    return JoinableNode_Leaf 
+func (n *Leaf) isJoinableNode() { }
+
+func (n *Leaf) GetNodeType() NodeType {
+	return Node_Leaf
 }
 
-func (n *Leaf) GetNodeType() { 
-    return Node_Leaf 
+// RuleNode represents an Userset Rewrite Rule
+// Its child contains the userset expression tree for the related relation
+type RuleNode struct {
+	Rule Rule
+	Child JoinableNode
 }
 
-type RuleJoinNode struct {
-    Rule Rule
-    Node JoinableNode
-}
-
-func (n *RuleJoinNode) GetNodeType() { 
-    return Node_RuleNode
+func (n *RuleNode) GetNodeType() NodeType {
+	return Node_RuleNode
 }

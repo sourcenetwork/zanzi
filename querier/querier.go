@@ -7,12 +7,13 @@ package querier
 import (
 	"github.com/sourcenetwork/source-zanzibar/model"
 	"github.com/sourcenetwork/source-zanzibar/structures"
+	"github.com/sourcenetwork/source-zanzibar/rewrite"
 )
 
-// Querier
+// Querier abstracts graph traversal and search operations
 type Querier interface {
-	// receives object and performs lookup according to rewrite rule
-	Expand(ctx context.Context, namespace, objectId string) ([]model.User, error)
+	// Build Tree of all Usersets related to the given Userset
+	Expand(ctx context.Context, userset model.Userset) (rewrite.Node, error)
 
 	// Verify whether object has relation with user.
 	// Check calls can be short circuited,
