@@ -27,18 +27,19 @@ func BuildExpressionTree(ctx context.Context, namespace string, relName string) 
 func convertTree(root *model.RewriteNode, relation string) Node {
     var node Node
     switch n := root.Node.(type) {
-    case model.RewriteNode_Opnode:
+    case *model.RewriteNode_Opnode:
         opnode := n.Opnode
-        left := convertTree(n.Left, relation)
-        right := convertTree(n.Left, relation)
-        node = OpNode {
+        left := convertTree(opnode.Left, relation)
+        right := convertTree(opnode.Left, relation)
+        node = &OpNode {
             Left: left,
             Right: right,
-            Op: n.Op,
+            Op: opnode.Op,
         }
-    case model.Leaf:
-        rule := convertLeaf(n, relation)
-        node = RuleNode {
+    case *model.RewriteNode_Leaf:
+        leaf := n.Leaf
+        rule := convertLeaf(leaf, relation)
+        node = &RuleNode {
             Rule: rule,
         }
     }
@@ -47,12 +48,12 @@ func convertTree(root *model.RewriteNode, relation string) Node {
 
 // Maps a Userset Rewrite Rule from a Leaf into a rewerite Rule
 // which is used in userset rewrite expansion
-func convertLeaf(leaf model.Leaf, relation string) Rule {
+func convertLeaf(leaf *model.Leaf, relation string) Rule {
     var rule Rule
 
-    switch rule := leaf.Rule.GetRule().(type) {
+    switch r := leaf.Rule.GetRule().(type) {
 
-    case model.This:
+    case *model.Rule_This:
         // This is really just a shorthand for a Computed Userset
         // where the target relation is the one being defined.
         // Since during userset expansion we'd need to propagate
@@ -61,22 +62,24 @@ func convertLeaf(leaf model.Leaf, relation string) Rule {
         args := make([]string, 1)
         args[0] = relation
         rule = Rule{
-            Type: RuleType_This,
+            Type: RuleType_THIS,
             Args: args,
         }
 
-    case model.TupleToUserset:
+    case *model.Rule_TupleToUserset:
+        ttu := r.TupleToUserset
         args := make([]string, 2)
-        args[0] = rule.TuplesetRelation
-        args[1] = rule.ComputedUsersetRelation
+        args[0] = ttu.TuplesetRelation
+        args[1] = ttu.ComputedUsersetRelation
         rule = Rule{
             Type: RuleType_TTU,
             Args: args,
         }
 
-    case model.ComputedUserset:
+    case *model.Rule_ComputedUserset:
+        cu := r.ComputedUserset
         args := make([]string, 1)
-        args[0] = rule.Relation
+        args[0] = cu.Relation
         rule = Rule{
             Type: RuleType_CU,
             Args: args,

@@ -2,6 +2,7 @@ package rewrite
 
 import (
     "testing"
+    "reflect"
 
     "github.com/sourcenetwork/source-zanzibar/model"
 )
@@ -10,27 +11,27 @@ import (
 func TestBuildExpressionTree(t *testing.T) {
     relation := getTestRelation()
 
-    got := relationToTree(relation, "name")
+    got := convertTree(relation.Rewrite.ExpressionTree, "name")
 
-    want := OpNode {
-        Op: Operation_UNION,
-        Left: RuleNode {
+    want := &OpNode {
+        Op: model.Operation_UNION,
+        Left: &RuleNode {
             Child: nil,
             Rule: Rule {
                 Type: RuleType_THIS,
                 Args: []string{"name"},
             },
         },
-        Right: OpNode {
-            Op: Operation_UNION,
-            Left: RuleNode{
+        Right: &OpNode {
+            Op: model.Operation_UNION,
+            Left: &RuleNode{
                 Child: nil,
                 Rule: Rule{
                     Type: RuleType_CU,
                     Args: []string{"cu"},
                 },
             },
-            Right: RuleNode{
+            Right: &RuleNode{
                 Child: nil,
                 Rule: Rule{
                     Type: RuleType_TTU,
@@ -40,36 +41,58 @@ func TestBuildExpressionTree(t *testing.T) {
         },
     }
 
-    if tree != want {
-        t.Errorf("relationToTree = %d; want %d", got, want)
+    if reflect.DeepEqual(got, want) {
+        t.Errorf("relationToTree = %#v; want %#v", got, want)
     }
 }
 
 // Build Relation tree with 3 rewrite rules: this, ttu and cu
 // The tree contains 2 op nodes and 3 leaves
 func getTestRelation() model.Relation {
-    tree := rewrite.OpNode {
-        Op: rewrite.Operation_UNION,
-        Left: rewrite.RewriteNode {
-            Node: rewrite.Leaf {
-                Rule: Rewrite.This {},
-            },
-        },
-        Right: rewrite.RewriteNode {
-            Node: rewrite.OpNode {
-                Op: rewrite.Operation_UNION,
-                Left: rewrite.RewriteNode {
-                    Node: rewrite.Leaf {
-                        Rule: Rewrite.ComputedUserset {
-                            Relation: "cu",
+    tree := &model.RewriteNode_Opnode {
+        Opnode: &model.OpNode {
+            Op: model.Operation_UNION,
+            Left: &model.RewriteNode {
+                Node: &model.RewriteNode_Leaf {
+                    Leaf: &model.Leaf {
+                        Rule: &model.Rule {
+                            Rule: &model.Rule_This {
+                                This: &model.This {},
+                            },
                         },
                     },
                 },
-                Right: rewrite.RewriteNode {
-                    Node: rewrite.Leaf {
-                        Rule: Rewrite.TupleToUserset {
-                            TuplesetRelation: "ttu1",
-                            ComputedUsersetRelation: "ttu2",
+            },
+            Right: &model.RewriteNode {
+                Node: &model.RewriteNode_Opnode {
+                    Opnode: &model.OpNode {
+                        Op: model.Operation_UNION,
+                        Left: &model.RewriteNode {
+                            Node: &model.RewriteNode_Leaf {
+                                Leaf: &model.Leaf {
+                                    Rule: &model.Rule {
+                                        Rule: &model.Rule_ComputedUserset {
+                                            ComputedUserset: &model.ComputedUserset {
+                                                Relation: "cu",
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        Right: &model.RewriteNode {
+                            Node: &model.RewriteNode_Leaf {
+                                Leaf: &model.Leaf {
+                                    Rule: &model.Rule {
+                                        Rule: &model.Rule_TupleToUserset {
+                                            TupleToUserset: &model.TupleToUserset {
+                                                TuplesetRelation: "ttu1",
+                                                ComputedUsersetRelation: "ttu2",
+                                            },
+                                        },
+                                    },
+                                },
+                            },
                         },
                     },
                 },
@@ -79,8 +102,8 @@ func getTestRelation() model.Relation {
 
     relation := model.Relation {
         Name: "name",
-        Rewrite: rewrite.UsersetRewrite {
-            ExpressionTree: rewrite.RewriteNode {
+        Rewrite: &model.UsersetRewrite {
+            ExpressionTree: &model.RewriteNode {
                 Node: tree,
             },
         },

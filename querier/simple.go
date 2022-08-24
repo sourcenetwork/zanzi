@@ -1,5 +1,7 @@
+
 package querier
 
+/*
 import (
 	"context"
 	"github.com/sourcenetwork/source-zanzibar/repository"
@@ -12,7 +14,6 @@ import (
 //
 // For efficiency reason, a rule will have a different algorithm based on the desired result.
 
-/*
 type object {
     Namespace string
     ObjectId string
