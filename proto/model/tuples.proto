@@ -54,7 +54,7 @@ message User {
  * Nodes in the Relationship Graph are infered through the edges and are not stored separetely. */
 message Tuple {
     Userset object_rel = 1;
-    Userset user = 2;
+    User user = 2;
 }
 
 /* TupleRecord represents a persisted Relationship Tuple.

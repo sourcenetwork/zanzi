@@ -4,15 +4,13 @@ package rewrite
 import (
     "context"
 
-    "github.com/sourcenetwork/source-zanzibar/repository"
     "github.com/sourcenetwork/source-zanzibar/model"
+    "github.com/sourcenetwork/source-zanzibar/utils"
 )
 
 // Build Expression Tree which are used for userset expansion
-func BuildExpressionTree(ctx context.Context, namespace string, relName string) (*Node, error) {
-    // NOTE should I use a ctx or pass the Repository instance directly here?
-    // Not sure which would be a better approach
-    var repo repository.NamespaceRepository
+func BuildExpressionTree(ctx context.Context, namespace string, relName string) (Node, error) {
+    repo := utils.GetNamespaceRepo(ctx)
 
     relation, err := repo.GetRelation(namespace, relName)
     if err != nil {
@@ -21,7 +19,7 @@ func BuildExpressionTree(ctx context.Context, namespace string, relName string) 
     }
 
     tree := convertTree(relation.Rewrite.ExpressionTree, relation.Name)
-    return &tree, nil
+    return tree, nil
 }
 
 func convertTree(root *model.RewriteNode, relation string) Node {
@@ -30,7 +28,7 @@ func convertTree(root *model.RewriteNode, relation string) Node {
     case *model.RewriteNode_Opnode:
         opnode := n.Opnode
         left := convertTree(opnode.Left, relation)
-        right := convertTree(opnode.Left, relation)
+        right := convertTree(opnode.Right, relation)
         node = &OpNode {
             Left: left,
             Right: right,
