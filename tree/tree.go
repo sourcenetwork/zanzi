@@ -1,4 +1,4 @@
-package rewrite
+package tree
 
 import (
     "github.com/sourcenetwork/source-zanzibar/model"

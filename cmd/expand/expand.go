@@ -8,7 +8,7 @@ import (
 
      "github.com/sourcenetwork/source-zanzibar/repository/maprepo"
      "github.com/sourcenetwork/source-zanzibar/querier"
-     "github.com/sourcenetwork/source-zanzibar/rewrite"
+     "github.com/sourcenetwork/source-zanzibar/tree"
      "github.com/sourcenetwork/source-zanzibar/model"
      "github.com/sourcenetwork/source-zanzibar/utils"
 )
@@ -204,23 +204,23 @@ func main() {
 }
 
 
-func printNode(lvl int, node rewrite.Node) {
+func printNode(lvl int, node tree.Node) {
     header := strings.Repeat(" ", lvl)
 
     switch n := node.(type) {
 
-    case *rewrite.RuleNode:
+    case *tree.RuleNode:
         fmt.Printf("%v RuleNode rule=%v\n", header, n.Rule)
         for _, child := range n.Children {
             printNode(lvl+1, child)
         }
 
-    case *rewrite.UsersetNode:
+    case *tree.UsersetNode:
         uset := fmt.Sprintf("{%v, %v, %v}", n.Userset.Namespace, n.Userset.ObjectId, n.Userset.Relation)
         fmt.Printf("%v UsersetNode userset=%v\n", header, uset)
         printNode(lvl+1, n.Child)
 
-    case *rewrite.OpNode:
+    case *tree.OpNode:
         fmt.Printf("%v OpNode OP=%v\n", header, n.JoinOp)
         printNode(lvl+1, n.Left)
         printNode(lvl+1, n.Right)

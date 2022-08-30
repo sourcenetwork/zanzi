@@ -5,14 +5,14 @@ import (
 	"context"
         "fmt"
 
-	"github.com/sourcenetwork/source-zanzibar/rewrite"
+	"github.com/sourcenetwork/source-zanzibar/tree"
 	"github.com/sourcenetwork/source-zanzibar/repository"
 	"github.com/sourcenetwork/source-zanzibar/model"
 	"github.com/sourcenetwork/source-zanzibar/utils"
 )
 
 
-func Expand(ctx context.Context, userset model.Userset) (*rewrite.UsersetNode, error) {
+func Expand(ctx context.Context, userset model.Userset) (*tree.UsersetNode, error) {
     exp := newExpander()
 
     expTree, err := exp.getExpTree(ctx, userset.Namespace, userset.Relation)
@@ -31,14 +31,14 @@ func Expand(ctx context.Context, userset model.Userset) (*rewrite.UsersetNode, e
 
 type expander struct {
     trail map[key]struct{}
-    trees map[key]rewrite.Node
+    trees map[key]tree.Node
     rewriteTrees map[key]*model.RewriteNode
 }
 
 func newExpander() expander {
     return expander {
         trail: make(map[key]struct{}),
-        trees: make(map[key]rewrite.Node),
+        trees: make(map[key]tree.Node),
         rewriteTrees: make(map[key]*model.RewriteNode),
     }
 }
@@ -46,7 +46,7 @@ func newExpander() expander {
 // Expand an Userset Rewrite Expression Tree
 // Uses local cache if an expand call has already been evaluated
 // keeps a trail through the depth search to avoid cyclic expands
-func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset model.Userset) (*rewrite.UsersetNode, error) {
+func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset model.Userset) (*tree.UsersetNode, error) {
     // expandTree is the recusion entrypoint for Expand subcalls
     // Therefore it's a centralized point to check whether ctx is still valid before continuing
     select {
@@ -61,7 +61,7 @@ func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset
     // return a non-expanded leaf with the uset in it
     //_, ok := e.trail[key]
     //if ok {
-        //node := &rewrite.UsersetNode {
+        //node := &tree.UsersetNode {
             //Userset: uset,
         //}
         //return node, nil
@@ -81,7 +81,7 @@ func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset
         return nil, err
     }
 
-    node := &rewrite.UsersetNode {
+    node := &tree.UsersetNode {
         Userset: uset,
         Child: exprNode,
     }
@@ -93,7 +93,7 @@ func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset
     return node, nil
 }
 
-func (e *expander) expandExprNode(ctx context.Context, root *model.RewriteNode, uset model.Userset) (rewrite.ExpressionNode, error) {
+func (e *expander) expandExprNode(ctx context.Context, root *model.RewriteNode, uset model.Userset) (tree.ExpressionNode, error) {
     switch n := root.Node.(type) {
     case *model.RewriteNode_Opnode:
         opnode := n.Opnode
@@ -109,7 +109,7 @@ func (e *expander) expandExprNode(ctx context.Context, root *model.RewriteNode, 
 
 
 // Expand OpNode by expand its left and right children
-func (e *expander) expandOpNode(ctx context.Context, root *model.OpNode, uset model.Userset) (*rewrite.OpNode, error) {
+func (e *expander) expandOpNode(ctx context.Context, root *model.OpNode, uset model.Userset) (*tree.OpNode, error) {
     left, err := e.expandExprNode(ctx, root.Left, uset)
     if err != nil {
         return nil, err
@@ -120,7 +120,7 @@ func (e *expander) expandOpNode(ctx context.Context, root *model.OpNode, uset mo
         return nil, err
     }
 
-    node := &rewrite.OpNode {
+    node := &tree.OpNode {
         Left: left,
         Right: right,
         JoinOp: root.Op,
@@ -128,25 +128,25 @@ func (e *expander) expandOpNode(ctx context.Context, root *model.OpNode, uset mo
     return node, nil
 }
 
-func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset model.Userset) (*rewrite.RuleNode, error) {
+func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset model.Userset) (*tree.RuleNode, error) {
 
     var neighbors []model.Userset
-    var rule rewrite.Rule
+    var rule tree.Rule
     var err error
 
     switch r := root.Rule.GetRule().(type) {
 
     case *model.Rule_This:
         neighbors, err = produceThis(ctx, uset)
-        rule = rewrite.Rule {
-            Type: rewrite.RuleType_THIS,
+        rule = tree.Rule {
+            Type: tree.RuleType_THIS,
         }
 
     case *model.Rule_TupleToUserset:
         ttu := r.TupleToUserset
         neighbors, err = produceTTU(ctx, uset, ttu.TuplesetRelation, ttu.ComputedUsersetRelation)
-        rule = rewrite.Rule {
-            Type: rewrite.RuleType_TTU,
+        rule = tree.Rule {
+            Type: tree.RuleType_TTU,
             Args: map[string]string{
                 "TuplesetRelation": ttu.TuplesetRelation,
                 "ComputedUsersetRelation": ttu.ComputedUsersetRelation,
@@ -156,8 +156,8 @@ func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset mo
     case *model.Rule_ComputedUserset:
         cu := r.ComputedUserset
         neighbors = produceCU(ctx, uset, cu.Relation)
-        rule = rewrite.Rule {
-            Type: rewrite.RuleType_CU,
+        rule = tree.Rule {
+            Type: tree.RuleType_CU,
             Args: map[string]string{
                 "Relation": cu.Relation,
             },
@@ -187,8 +187,8 @@ func (e *expander) getExpTree(ctx context.Context, namespace, relation string) (
 }
 
 
-func (e *expander) expandRule(ctx context.Context, uset model.Userset, neighbors []model.Userset, rule rewrite.Rule) (*rewrite.RuleNode, error) {
-    children := make([]*rewrite.UsersetNode, 0, len(neighbors))
+func (e *expander) expandRule(ctx context.Context, uset model.Userset, neighbors []model.Userset, rule tree.Rule) (*tree.RuleNode, error) {
+    children := make([]*tree.UsersetNode, 0, len(neighbors))
     for _, neigh := range neighbors {
         expTree, err := e.getExpTree(ctx, neigh.Namespace, neigh.Relation)
         if err != nil {
@@ -204,7 +204,7 @@ func (e *expander) expandRule(ctx context.Context, uset model.Userset, neighbors
         children = append(children, child)
     }
 
-    node := &rewrite.RuleNode {
+    node := &tree.RuleNode {
         Rule: rule,
         Children: children,
     }

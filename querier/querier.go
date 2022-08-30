@@ -8,14 +8,13 @@ import (
     "context"
 
 	"github.com/sourcenetwork/source-zanzibar/model"
-	"github.com/sourcenetwork/source-zanzibar/structures"
-	"github.com/sourcenetwork/source-zanzibar/rewrite"
+	"github.com/sourcenetwork/source-zanzibar/tree"
 )
 
 // Querier abstracts graph traversal and search operations
 type Querier interface {
 	// Build Tree of all Usersets related to the given Userset
-	Expand(ctx context.Context, userset model.Userset) (rewrite.Node, error)
+	Expand(ctx context.Context, userset model.Userset) (tree.UsersetNode, error)
 
 	// Verify whether object has relation with user.
 	// Check calls can be short circuited,
@@ -28,5 +27,5 @@ type Querier interface {
 	// Return all objects an user is related to expressed through a Tree.
 	// Node children are annotated with the source of the relation,
 	// either through direct lookup or userset rewrites
-	ExplainedReverseLookup(ctx context.Context, user model.User) (*structures.LookupTree, error)
+	ExplainedReverseLookup(ctx context.Context, user model.User) (tree.UsersetNode, error)
 }
