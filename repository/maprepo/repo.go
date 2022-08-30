@@ -60,7 +60,7 @@ func (r *Tuples) SetTuple(tuple model.Tuple) error {
 func (r *Tuples) GetTuple(tuple model.Tuple) (model.TupleRecord, error){
     record, ok := r.tuples[tuple.String()]
     if !ok {
-        return model.TupleRecord{}, fmt.Errorf("tuple %#v not found", tuple)
+        return model.TupleRecord{}, repository.NewEntityNotFound("Tuple", tuple)
     }
     return record, nil
 }
@@ -68,8 +68,7 @@ func (r *Tuples) GetTuple(tuple model.Tuple) (model.TupleRecord, error){
 func (r *Tuples) GetRelatedUsersets(userset model.Userset) ([]model.TupleRecord, error){
     usets, ok := r.usersets[userset.String()]
     if !ok {
-        return nil, fmt.Errorf("Userset %#v not found", userset)
-
+        return nil, repository.NewEntityNotFound("Userset", userset)
     }
     return usets, nil
 }
@@ -85,7 +84,7 @@ func (r *Tuples) RemoveTuple(tuple model.Tuple) error{
 func (r *Namespaces) GetNamespace(namespace string) (model.Namespace, error) { 
     n, ok := r.namespaces[namespace]
     if !ok {
-        return model.Namespace{}, fmt.Errorf("Namespace %#v not found", namespace)
+        return model.Namespace{}, repository.NewEntityNotFound("Namespace", namespace)
     }
     return n, nil
 }
@@ -110,5 +109,5 @@ func (r *Namespaces) GetRelation(namespace, relation string) (model.Relation, er
         }
     }
 
-    return model.Relation{}, fmt.Errorf("Relation %#v not found", relation)
+    return model.Relation{}, repository.NewEntityNotFound("Relation", namespace, relation)
 }

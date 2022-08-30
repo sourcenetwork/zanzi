@@ -1,6 +1,7 @@
 // Package rewrite defines types for Userset Rewrite Expression tree handling
 package rewrite
 
+/*
 import (
     "context"
 
@@ -27,12 +28,18 @@ func convertTree(root *model.RewriteNode, relation string) Node {
     switch n := root.Node.(type) {
     case *model.RewriteNode_Opnode:
         opnode := n.Opnode
-        left := convertTree(opnode.Left, relation)
-        right := convertTree(opnode.Right, relation)
+        left := Child {
+            Node: convertTree(opnode.Left, relation),
+            Reason: Reason_RULE,
+        }
+        right := Child {
+            Node: convertTree(opnode.Right, relation),
+            Reason: Reason_RULE,
+        }
         node = &OpNode {
             Left: left,
             Right: right,
-            Op: opnode.Op,
+            JoinOp: opnode.Op,
         }
     case *model.RewriteNode_Leaf:
         leaf := n.Leaf
@@ -43,6 +50,7 @@ func convertTree(root *model.RewriteNode, relation string) Node {
     }
     return node
 }
+
 
 // Maps a Userset Rewrite Rule from a Leaf into a rewerite Rule
 // which is used in userset rewrite expansion
@@ -87,3 +95,4 @@ func convertLeaf(leaf *model.Leaf, relation string) Rule {
 }
 
 // TODO an Eager builder which builds the trees TTU and CU rules
+*/

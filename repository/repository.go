@@ -8,6 +8,8 @@ package repository
 // potentially through [github.com/cosmos/cosmos-sdk/store/types.CommitMultiStore.MountStoreWithDB]
 
 import (
+    "fmt"
+
     _ "github.com/tendermint/tm-db"
 
     "github.com/sourcenetwork/source-zanzibar/model"
@@ -59,59 +61,22 @@ type NamespaceRepository interface {
     // Return a Relation definition from a namespace
     // NOTE use relation index?
     GetRelation(namespace, relation string) (model.Relation, error)
-
 }
 
-// Define methods to recursively search a repository by following usersets indirection
-// NOTE the idea behind this type is that it could work with any repository.
-// so perhaps turn this into a struct with a concrete implementation
-type Chaser interface {
-
-    // Recursively fetches tuples matching namespace, objectId and relation
-    ChaseUsersets(userset model.Userset) ([]model.TupleRecord, error)
-
-    // Perform an inverse lookup of all tuples whose user match the given userset.
-    // ie. Starting from an user node, walks up the tuple graph by following usersets
-    //ReverseChaseUserset(namespace, id, relation string) ([]model.TupleRecord, error)
+type EntityNotFound struct {
+    Entity string
+    Args []any
 }
 
-
-// Minor c# idiom until i figure out what to do with repochaser
-type ChaserImpl struct {
-    repo TupleRepository
-}
-
-func (r *ChaserImpl) ChaseUsersets(userset model.Userset) ([]model.TupleRecord, error) {
-    records, err := r.repo.GetRelatedUsersets(userset)
-    if err != nil {
-        // TODO wrap err
-        return nil, err
-    }
-
-    usersets := make([]*model.Userset, 0, len(records))
-    for _, record := range records {
-        user := record.Tuple.User
-        if user.Type == model.UserType_USER_SET {
-            usersets = append(usersets, user.Userset)
-        }
-    }
-
-    for _, userset := range usersets {
-        subRecords, err := r.ChaseUsersets(*userset)
-        if err != nil {
-            // TODO wrap err
-            return nil, err
-        }
-        records = append(records, subRecords...)
-    }
-
-    return records, nil
-}
-
-func NewChaser(repo TupleRepository) Chaser {
-    return &ChaserImpl {
-        repo: repo,
+func NewEntityNotFound(entity string, args ...any) error {
+    return &EntityNotFound {
+        Entity: entity,
+        Args: args,
     }
 }
 
-var _ Chaser = (*ChaserImpl)(nil)
+func (e *EntityNotFound) Error() string {
+    return fmt.Sprintf("Entity not found: entity=%v, args=%v", e.Entity, e.Args)
+}
+
+var _ error = (*EntityNotFound)(nil)

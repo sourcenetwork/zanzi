@@ -1,15 +1,16 @@
 package main
 
 import (
-    "context"
-    "log"
+     "context"
+     "log"
     "strings"
+    "fmt"
 
-    "github.com/sourcenetwork/source-zanzibar/repository/maprepo"
-    "github.com/sourcenetwork/source-zanzibar/querier"
-    "github.com/sourcenetwork/source-zanzibar/rewrite"
-    "github.com/sourcenetwork/source-zanzibar/model"
-    "github.com/sourcenetwork/source-zanzibar/utils"
+     "github.com/sourcenetwork/source-zanzibar/repository/maprepo"
+     "github.com/sourcenetwork/source-zanzibar/querier"
+     "github.com/sourcenetwork/source-zanzibar/rewrite"
+     "github.com/sourcenetwork/source-zanzibar/model"
+     "github.com/sourcenetwork/source-zanzibar/utils"
 )
 
 func namespacesFixture() []model.Namespace {
@@ -67,63 +68,110 @@ func namespacesFixture() []model.Namespace {
         },
     }
 
-    doc := model.Namespace{
-        Name: "Doc",
-        Relations: []*model.Relation{
-            owner,
-            reader,
+    member := &model.Relation {
+        Name: "Member",
+        Rewrite: &model.UsersetRewrite {
+            ExpressionTree: &model.RewriteNode {
+                Node: &model.RewriteNode_Leaf {
+                    Leaf: &model.Leaf {
+                        Rule: &model.Rule {
+                            Rule: &model.Rule_This {
+                                This: &model.This {},
+                            },
+                        },
+                    },
+                },
+            },
         },
     }
 
+    empty := &model.Relation {
+        Name: "...",
+        Rewrite: &model.UsersetRewrite {
+            ExpressionTree: &model.RewriteNode {
+                Node: &model.RewriteNode_Leaf {
+                    Leaf: &model.Leaf {
+                        Rule: &model.Rule {
+                            Rule: &model.Rule_This {
+                                This: &model.This {},
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
+
+    namespace := model.Namespace {
+        Name: "Test",
+        Relations: []*model.Relation{owner, reader, member, empty},
+    }
+
     return []model.Namespace{
-        doc,
+        namespace,
     }
 }
 
 func tuplesFixture() []model.Tuple {
     tuples := []model.Tuple{
-        model.Tuple { //(group:admin, member, bob)
+        model.Tuple { //(object, owner, bob)
             ObjectRel: &model.Userset{
-                Namespace: "Group",
-                ObjectId: "Admin",
-                Relation: "Member",
+                Namespace: "Test",
+                ObjectId: "Object",
+                Relation: "Owner",
             },
             User: &model.User{
                 Type: model.UserType_USER,
                 Userset: &model.Userset{
-                    Namespace: "Users",
+                    Namespace: "Test",
                     ObjectId: "Bob",
                     Relation: "...",
                 },
             },
         },
 
-        model.Tuple { //(doc:readme, owner, (group:admin, member))
+        model.Tuple { //(object, reader, (group, member))
             ObjectRel: &model.Userset{
-                Namespace: "Doc",
-                ObjectId: "Readme",
-                Relation: "Owner",
+                Namespace: "Test",
+                ObjectId: "Object",
+                Relation: "Reader",
             },
             User: &model.User{
                 Type: model.UserType_USER_SET,
                 Userset: &model.Userset{
-                    Namespace: "Group",
-                    ObjectId: "Admin",
+                    Namespace: "Test",
+                    ObjectId: "Group",
                     Relation: "Member",
                 },
             },
         },
 
-        model.Tuple { //(doc:readme, reader, alice)
+        model.Tuple { //(object, reader, (group, member))
             ObjectRel: &model.Userset{
-                Namespace: "Doc",
-                ObjectId: "Readme",
+                Namespace: "Test",
+                ObjectId: "Object",
                 Relation: "Reader",
             },
             User: &model.User{
                 Type: model.UserType_USER,
                 Userset: &model.Userset{
-                    Namespace: "Users",
+                    Namespace: "Test",
+                    ObjectId: "Charlie",
+                    Relation: "...",
+                },
+            },
+        },
+
+        model.Tuple { //(group, member, alice)
+            ObjectRel: &model.Userset{
+                Namespace: "Test",
+                ObjectId: "Group",
+                Relation: "Member",
+            },
+            User: &model.User{
+                Type: model.UserType_USER,
+                Userset: &model.Userset{
+                    Namespace: "Test",
                     ObjectId: "Alice",
                     Relation: "...",
                 },
@@ -142,8 +190,8 @@ func main() {
     ctx = utils.WithNamespaceRepository(ctx, nr)
 
     uset := model.Userset{
-        Namespace: "Doc",
-        ObjectId: "Readme",
+        Namespace: "Test",
+        ObjectId: "Object",
         Relation: "Reader",
     }
 
@@ -152,21 +200,29 @@ func main() {
         log.Fatal(err)
     }
 
-    builder := strings.Builder {}
-    buildTree(tree, &builder, 1)
-    output := builder.String()
-    print(output)
+    printNode(1, tree)
 }
 
-func buildTree(root rewrite.Node, builder *strings.Builder, level int) {
-    header := strings.Repeat("#", level)
-    builder.WriteString(header)
-    builder.WriteString(" ")
-    builder.WriteString(root.Display())
-    builder.WriteString("\n")
 
-    children := root.GetChildren()
-    for _, child := range children {
-        buildTree(child, builder, level+1)
+func printNode(lvl int, node rewrite.Node) {
+    header := strings.Repeat(" ", lvl)
+
+    switch n := node.(type) {
+
+    case *rewrite.RuleNode:
+        fmt.Printf("%v RuleNode rule=%v\n", header, n.Rule)
+        for _, child := range n.Children {
+            printNode(lvl+1, child)
+        }
+
+    case *rewrite.UsersetNode:
+        uset := fmt.Sprintf("{%v, %v, %v}", n.Userset.Namespace, n.Userset.ObjectId, n.Userset.Relation)
+        fmt.Printf("%v UsersetNode userset=%v\n", header, uset)
+        printNode(lvl+1, n.Child)
+
+    case *rewrite.OpNode:
+        fmt.Printf("%v OpNode OP=%v\n", header, n.JoinOp)
+        printNode(lvl+1, n.Left)
+        printNode(lvl+1, n.Right)
     }
 }
