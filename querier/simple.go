@@ -262,7 +262,10 @@ func produceTTU(ctx context.Context, uset model.Userset, tsetRel string, cuRel s
     }
 
     usets := utils.MapSlice(records, tupleToUserset)
-    
+    for i := range usets {
+        usets[i].Relation = cuRel
+    }
+
     return usets, nil
 }
 

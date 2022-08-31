@@ -1,0 +1,9 @@
+- document tree
+- cleanup repository, path and tendermint stuff is of no concern to the interfaces
+- doc maprepo
+- implement tree caching
+- implement cycle prevention
+
+- builder for relations
+- figure out how to ignore `...`
+- add constant for `ALL` users

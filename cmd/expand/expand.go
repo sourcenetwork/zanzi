@@ -50,12 +50,33 @@ func namespacesFixture() []model.Namespace {
                             },
                         },
                         Right: &model.RewriteNode {
-                            Node: &model.RewriteNode_Leaf {
-                                Leaf: &model.Leaf {
-                                    Rule: &model.Rule {
-                                        Rule: &model.Rule_ComputedUserset {
-                                            ComputedUserset: &model.ComputedUserset {
-                                                Relation: "Owner",
+                            Node: &model.RewriteNode_Opnode {
+                                Opnode: &model.OpNode {
+                                    Op: model.Operation_UNION,
+                                    Left: &model.RewriteNode {
+                                        Node: &model.RewriteNode_Leaf {
+                                            Leaf: &model.Leaf {
+                                                Rule: &model.Rule {
+                                                    Rule: &model.Rule_ComputedUserset {
+                                                        ComputedUserset: &model.ComputedUserset {
+                                                            Relation: "Owner",
+                                                        },
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    },
+                                    Right: &model.RewriteNode {
+                                        Node: &model.RewriteNode_Leaf {
+                                            Leaf: &model.Leaf {
+                                                Rule: &model.Rule {
+                                                    Rule: &model.Rule_TupleToUserset {
+                                                        TupleToUserset: &model.TupleToUserset {
+                                                            TuplesetRelation: "Parent",
+                                                            ComputedUsersetRelation: "Owner",
+                                                        },
+                                                    },
+                                                },
                                             },
                                         },
                                     },
@@ -102,9 +123,26 @@ func namespacesFixture() []model.Namespace {
         },
     }
 
+    parent := &model.Relation {
+        Name: "Parent",
+        Rewrite: &model.UsersetRewrite {
+            ExpressionTree: &model.RewriteNode {
+                Node: &model.RewriteNode_Leaf {
+                    Leaf: &model.Leaf {
+                        Rule: &model.Rule {
+                            Rule: &model.Rule_This {
+                                This: &model.This {},
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
+
     namespace := model.Namespace {
         Name: "Test",
-        Relations: []*model.Relation{owner, reader, member, empty},
+        Relations: []*model.Relation{owner, reader, member, empty, parent},
     }
 
     return []model.Namespace{
@@ -177,6 +215,39 @@ func tuplesFixture() []model.Tuple {
                 },
             },
         },
+
+        model.Tuple { //(object, parent, (directory, ...))
+            ObjectRel: &model.Userset{
+                Namespace: "Test",
+                ObjectId: "Object",
+                Relation: "Parent",
+            },
+            User: &model.User{
+                Type: model.UserType_USER,
+                Userset: &model.Userset{
+                    Namespace: "Test",
+                    ObjectId: "Directory",
+                    Relation: "...",
+                },
+            },
+        },
+
+        model.Tuple { //(directory, owner, charlie)
+            ObjectRel: &model.Userset{
+                Namespace: "Test",
+                ObjectId: "Directory",
+                Relation: "Owner",
+            },
+            User: &model.User{
+                Type: model.UserType_USER,
+                Userset: &model.Userset{
+                    Namespace: "Test",
+                    ObjectId: "Steve",
+                    Relation: "...",
+                },
+            },
+        },
+
     }
     return tuples
 }
