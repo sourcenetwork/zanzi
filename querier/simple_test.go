@@ -9,7 +9,6 @@ import (
 	"github.com/sourcenetwork/source-zanzibar/model"
 	"github.com/sourcenetwork/source-zanzibar/repository"
 	"github.com/sourcenetwork/source-zanzibar/repository/maprepo"
-	"github.com/sourcenetwork/source-zanzibar/rewrite"
 	"github.com/sourcenetwork/source-zanzibar/utils"
 )
 

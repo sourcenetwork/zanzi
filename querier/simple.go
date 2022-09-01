@@ -21,23 +21,32 @@ func Expand(ctx context.Context, userset model.Userset) (*tree.UsersetNode, erro
 
 	tree, err := exp.expandTree(ctx, expTree, userset)
 	if err != nil {
+		// wrap
 		return nil, err
 	}
 
 	return tree, nil
 }
 
+func Check(ctx context.Context, userset model.Userset) (*tree.UsersetNode, error) {
+    usetNode, err := Expand(ctx, userset)
+    if err != nil {
+        // wrap
+        return err
+    }
+
+    usets := tree.Eval(usetNode)
+    key := model.ToKey
+    return usets.Contains(key)
+}
+
 type expander struct {
-	trail        map[key]struct{}
-	trees        map[key]tree.Node
-	rewriteTrees map[key]*model.RewriteNode
+	trail        map[model.KeyableUset]struct{}
 }
 
 func newExpander() expander {
 	return expander{
-		trail:        make(map[key]struct{}),
-		trees:        make(map[key]tree.Node),
-		rewriteTrees: make(map[key]*model.RewriteNode),
+		trail:        make(map[model.KeyableUset]struct{}),
 	}
 }
 
@@ -53,25 +62,20 @@ func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset
 	default:
 	}
 
-	//key = toKey(uset)
+        key := model.ToKey(uset)
 
 	// handles a backtrail expand call such as: A -> B -> A
 	// return a non-expanded leaf with the uset in it
-	//_, ok := e.trail[key]
-	//if ok {
-	//node := &tree.UsersetNode {
-	//Userset: uset,
-	//}
-	//return node, nil
-	//}
+	_, ok := e.trail[key]
+        if ok {
+            node := &tree.UsersetNode {
+                Userset: uset,
+            }
+            return node, nil
+        }
 
-	// check whether expand was already evaluated, return if it was
-	//tree, ok := e.trees[key]
-	//if ok {
-	//return tree, nil
-	//}
-
-	//e.trail[key] = struct{}{}
+	e.trail[key] = struct{}{}
+	defer delete(e.trail, key)
 
 	exprNode, err := e.expandExprNode(ctx, root, uset)
 	if err != nil {
@@ -79,15 +83,11 @@ func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset
 		return nil, err
 	}
 
+
 	node := &tree.UsersetNode{
 		Userset: uset,
 		Child:   exprNode,
 	}
-
-	// remove from trail and cache result
-	//delete(e.trail, key)
-	//e.trees[key] = node
-
 	return node, nil
 }
 
@@ -176,7 +176,6 @@ func (e *expander) getExpTree(ctx context.Context, namespace, relation string) (
 
 	rel, err := repo.GetRelation(namespace, relation)
 	if err != nil {
-		// wrap err?
 		return nil, err
 	}
 
@@ -270,21 +269,5 @@ func tupleToUserset(tuple model.TupleRecord) model.Userset {
 		Namespace: tuple.Tuple.User.Userset.Namespace,
 		ObjectId:  tuple.Tuple.User.Userset.ObjectId,
 		Relation:  tuple.Tuple.User.Userset.Relation,
-	}
-}
-
-// Key represents a stripped down version of Userset,
-// such that it can be used as a map key
-type key struct {
-	Namespace string
-	ObjectId  string
-	Relation  string
-}
-
-func toKey(userset model.Userset) key {
-	return key{
-		Namespace: userset.Namespace,
-		ObjectId:  userset.ObjectId,
-		Relation:  userset.Relation,
 	}
 }

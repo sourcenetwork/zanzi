@@ -177,12 +177,18 @@ func main() {
 		Relation:  "Reader",
 	}
 
-	tree, err := querier.Expand(ctx, uset)
+	usetNode, err := querier.Expand(ctx, uset)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	printNode(1, tree)
+        usets := tree.Eval(usetNode)
+
+        for _, uset := range usets {
+            println(uset.String())
+        }
+
+	printNode(1, usetNode)
 }
 
 func printNode(lvl int, node tree.Node) {

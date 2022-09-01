@@ -3,6 +3,7 @@ module github.com/sourcenetwork/source-zanzibar
 go 1.18
 
 require (
+	github.com/deckarep/golang-set/v2 v2.1.0
 	github.com/stretchr/testify v1.7.0
 	github.com/tendermint/tm-db v0.6.7
 	google.golang.org/protobuf v1.28.1
