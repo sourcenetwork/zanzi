@@ -8,3 +8,7 @@ proto: proto/*/*.proto
 .PHONY: test
 test:
 	go test ./...
+
+.PHONY: fmt
+fmt:
+	gofmt -w $(fd '\.go$')

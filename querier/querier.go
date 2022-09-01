@@ -5,7 +5,7 @@
 package querier
 
 import (
-    "context"
+	"context"
 
 	"github.com/sourcenetwork/source-zanzibar/model"
 	"github.com/sourcenetwork/source-zanzibar/tree"

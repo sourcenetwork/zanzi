@@ -2,14 +2,14 @@
 package tmdb
 
 import (
-    _ "github.com/tendermint/tm-db"
+	_ "github.com/tendermint/tm-db"
 )
 
 // tentative paths to segregate keys
 const (
-    tuplePath      = "tuples/"
-    namespacePath  = "namespaces/"
-    usersetIdxPath = "usersets/"
+	tuplePath      = "tuples/"
+	namespacePath  = "namespaces/"
+	usersetIdxPath = "usersets/"
 )
 
 // NOTE: Potential integration entypoint method in [github.com/cosmos/cosmos-sdk/store/types.CommitMultiStore.MountStoreWithDB]
