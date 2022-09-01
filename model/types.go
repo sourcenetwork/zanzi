@@ -1,6 +1,5 @@
 package model
 
-
 // KeyableUset represents a stripped down version of Userset,
 // such that it can be used as a map key
 type KeyableUset struct {
