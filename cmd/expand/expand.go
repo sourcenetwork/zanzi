@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/source-zanzibar/model"
+	"github.com/sourcenetwork/source-zanzibar/model/builder"
 	"github.com/sourcenetwork/source-zanzibar/querier"
 	"github.com/sourcenetwork/source-zanzibar/repository/maprepo"
 	"github.com/sourcenetwork/source-zanzibar/tree"
@@ -17,126 +18,37 @@ func namespacesFixture() []model.Namespace {
 	owner := &model.Relation{
 		Name: "Owner",
 		Rewrite: &model.UsersetRewrite{
-			ExpressionTree: &model.RewriteNode{
-				Node: &model.RewriteNode_Leaf{
-					Leaf: &model.Leaf{
-						Rule: &model.Rule{
-							Rule: &model.Rule_This{
-								This: &model.This{},
-							},
-						},
-					},
-				},
-			},
+			ExpressionTree: builder.This(),
 		},
 	}
 
 	reader := &model.Relation{
 		Name: "Reader",
 		Rewrite: &model.UsersetRewrite{
-			ExpressionTree: &model.RewriteNode{
-				Node: &model.RewriteNode_Opnode{
-					Opnode: &model.OpNode{
-						Op: model.Operation_UNION,
-						Left: &model.RewriteNode{
-							Node: &model.RewriteNode_Leaf{
-								Leaf: &model.Leaf{
-									Rule: &model.Rule{
-										Rule: &model.Rule_This{
-											This: &model.This{},
-										},
-									},
-								},
-							},
-						},
-						Right: &model.RewriteNode{
-							Node: &model.RewriteNode_Opnode{
-								Opnode: &model.OpNode{
-									Op: model.Operation_UNION,
-									Left: &model.RewriteNode{
-										Node: &model.RewriteNode_Leaf{
-											Leaf: &model.Leaf{
-												Rule: &model.Rule{
-													Rule: &model.Rule_ComputedUserset{
-														ComputedUserset: &model.ComputedUserset{
-															Relation: "Owner",
-														},
-													},
-												},
-											},
-										},
-									},
-									Right: &model.RewriteNode{
-										Node: &model.RewriteNode_Leaf{
-											Leaf: &model.Leaf{
-												Rule: &model.Rule{
-													Rule: &model.Rule_TupleToUserset{
-														TupleToUserset: &model.TupleToUserset{
-															TuplesetRelation:        "Parent",
-															ComputedUsersetRelation: "Owner",
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			ExpressionTree: builder.Union(builder.This(),
+				builder.Union(builder.CU("Owner"), builder.TTU("Parent", "Owner")),
+			),
 		},
 	}
 
 	member := &model.Relation{
 		Name: "Member",
 		Rewrite: &model.UsersetRewrite{
-			ExpressionTree: &model.RewriteNode{
-				Node: &model.RewriteNode_Leaf{
-					Leaf: &model.Leaf{
-						Rule: &model.Rule{
-							Rule: &model.Rule_This{
-								This: &model.This{},
-							},
-						},
-					},
-				},
-			},
+			ExpressionTree: builder.This(),
 		},
 	}
 
 	empty := &model.Relation{
 		Name: "...",
 		Rewrite: &model.UsersetRewrite{
-			ExpressionTree: &model.RewriteNode{
-				Node: &model.RewriteNode_Leaf{
-					Leaf: &model.Leaf{
-						Rule: &model.Rule{
-							Rule: &model.Rule_This{
-								This: &model.This{},
-							},
-						},
-					},
-				},
-			},
+			ExpressionTree: builder.This(),
 		},
 	}
 
 	parent := &model.Relation{
 		Name: "Parent",
 		Rewrite: &model.UsersetRewrite{
-			ExpressionTree: &model.RewriteNode{
-				Node: &model.RewriteNode_Leaf{
-					Leaf: &model.Leaf{
-						Rule: &model.Rule{
-							Rule: &model.Rule_This{
-								This: &model.This{},
-							},
-						},
-					},
-				},
-			},
+			ExpressionTree: builder.This(),
 		},
 	}
 
