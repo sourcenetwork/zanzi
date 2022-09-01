@@ -1,16 +1,19 @@
-package tree
+// Package tree define data types which expresses the result of Userset Rewrite expansions
+package tree 
 
-import (
-    "github.com/sourcenetwork/source-zanzibar/model"
-)
 
-type Node interface {
-	GetNodeType() NodeType
-        GetChildren() []Node
+// Rule represents an userset rewrite rule.
+// Each Rule has a type (a fixed set of variantes)
+// and a map of arguments specified at namespace definition
+type Rule struct {
+    Type RuleType
+    Args map[string]string
 }
+
 
 // Enum which identifies the Node variant Node variant
 type NodeType uint8
+
 const (
     NodeType_USERSET NodeType= iota
     NodeType_OP
@@ -30,20 +33,9 @@ func (n NodeType) String() string {
     }
 }
 
-type ExpressionNode interface {
-    Node
-    isExpressionNode()
-}
-
-var (
-    _ ExpressionNode = (*RuleNode)(nil)
-    _ ExpressionNode = (*OpNode)(nil)
-)
-
-func (n *OpNode) isExpressionNode() { }
-func (n *RuleNode) isExpressionNode() { }
 
 type RuleType uint8
+
 const (
     RuleType_THIS RuleType = iota
     RuleType_CU
@@ -63,49 +55,17 @@ func (n RuleType) String() string {
     }
 }
 
-
-type Rule struct {
-    Type RuleType
-    Args map[string]string
+// Node type represents a variant of the defined tree
+type Node interface {
+    GetChildren() []Node
 }
 
-
-type OpNode struct {
-    Left ExpressionNode
-    Right ExpressionNode
-    JoinOp model.Operation
-}
-
-type RuleNode struct {
-    Rule Rule
-    Children []*UsersetNode
-}
-
-type UsersetNode struct {
-    Userset model.Userset
-    Child ExpressionNode
-}
-
-func (n *OpNode) GetNodeType() NodeType {
-	return NodeType_OP
-}
-
-func (n *OpNode) GetChildren() []Node {
-    return []Node{n.Left, n.Right}
-}
-
-func (n *UsersetNode) GetChildren() []Node {
-    return []Node{n.Child}
-}
-
-func (n *UsersetNode) GetNodeType() NodeType {
-    return NodeType_USERSET
-}
-
-func (n *RuleNode) GetChildren() []Node {
-    return nil
-}
-
-func (n *RuleNode) GetNodeType() NodeType {
-    return NodeType_RULE
+// Expression nodes represent the subset of the nodes
+// which deal with userset rewrite rules
+//
+// ExpressionNode can model a single Userset rewrite rule
+// or a deeply nested complex relationship.
+type ExpressionNode interface {
+    Node
+    isExpressionNode()
 }

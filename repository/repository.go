@@ -1,37 +1,17 @@
 // Package repository provides an interface to interact with the stored relation tuples.
-//
-// Internally repository manages database indexes, keeps indexes and provides queries.
 package repository
-
-// Repository leverages the "tm-db" DB interface as a storage backend abstraction.
-// This choice was tentatively made to ease future integration with a dApp powered by Cosmos SDK,
-// potentially through [github.com/cosmos/cosmos-sdk/store/types.CommitMultiStore.MountStoreWithDB]
 
 import (
     "fmt"
 
-    _ "github.com/tendermint/tm-db"
-
     "github.com/sourcenetwork/source-zanzibar/model"
 )
 
-const (
-    tuplePath      = "tuples/"
-    namespacePath  = "namespaces/"
-    usersetIdxPath = "usersets/"
-)
 
-// possible indexes:
+// TupleRepository abstract interfacing with tuple storage.
 //
-// tuples:
-// tuples/{namespace}/{obj_id}/{relation}/{namespace}/{id}/{relation} -> TupleRecord
-// tuples/reversed/{user_namespace}/{id}/{relation}/{namespace}/{object_id}/{relation} -> TupleRecord  (reverse lookup)
-//
-// namespaces:
-// namespaces/{namespace-name} -> Namespace
-// namespaces/{namespace-name}/{relation-name} -> Relation
-// namespace/{namespace_name}/{relation_name}/referenced_by/{relation_name} -> Relation (reverse relation lookup used in reverse lookup)
-
+// Contract: methods should return instance of `EntityNotFound` 
+// when some operation failed because the lookup resulted in an empty set.
 type TupleRepository interface {
     // Store a new tuple. Update all indexes
     SetTuple(tuple model.Tuple) error
@@ -51,6 +31,11 @@ type TupleRepository interface {
     RemoveTuple(tuple model.Tuple) error
 }
 
+
+// NamespaceRepository abstract interfacing with namespace storage.
+//
+// Contract: methods should return instance of `EntityNotFound` 
+// when some operation failed because the lookup resulted in an empty set.
 type NamespaceRepository interface {
     GetNamespace(namespace string) (model.Namespace, error)
 
@@ -59,15 +44,22 @@ type NamespaceRepository interface {
     RemoveNamespace(namespace string) error
 
     // Return a Relation definition from a namespace
-    // NOTE use relation index?
     GetRelation(namespace, relation string) (model.Relation, error)
 }
 
+
+// EntityNotFound type implements error interface.
+// Caller code may compare against it to verify whether
+// returned error was a storage error or a not found error
 type EntityNotFound struct {
     Entity string
     Args []any
 }
 
+// Build instance of EntityNotFound.
+// Caller may specify entity name and any filters used during
+// lookup
+// Supplied information will be used to generate final error message.
 func NewEntityNotFound(entity string, args ...any) error {
     return &EntityNotFound {
         Entity: entity,

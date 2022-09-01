@@ -1,3 +1,4 @@
+// package maperpo implements app's repository interfaces using Go's `map` type
 package maprepo
 
 import (
@@ -8,20 +9,14 @@ import (
 )
 
 var (
-    _ repository.TupleRepository = (*Tuples)(nil)
-    _ repository.NamespaceRepository = (*Namespaces)(nil)
+    _ repository.TupleRepository = (*tupleRepo)(nil)
+    _ repository.NamespaceRepository = (*namespaceRepo)(nil)
 )
 
 
-type Tuples struct {
-    tuples map[string]model.TupleRecord
-    usersets map[string][]model.TupleRecord
-}
-
-type Namespaces struct {
-    namespaces map[string]model.Namespace
-}
-
+// Return an instance of TupleRepository from a slice of tuples
+//
+// Note that the repository is not persisted and only lookup operations are implemented
 func NewTupleRepo(ts []model.Tuple) repository.TupleRepository {
     tuples := make(map[string]model.TupleRecord)
     usersets := make(map[string][]model.TupleRecord)
@@ -35,29 +30,37 @@ func NewTupleRepo(ts []model.Tuple) repository.TupleRepository {
         usersets[tuple.ObjectRel.String()] = append(usersets[tuple.ObjectRel.String()], record)
     }
 
-    return &Tuples {
+    return &tupleRepo {
         tuples: tuples,
         usersets: usersets,
     }
 }
 
+// Return an instance of NamespaceRepository from a slice of namespaces
+//
+// Note that the repository is not persisted and only lookup operations are implemented
 func NewNamespaceRepo(ns []model.Namespace) repository.NamespaceRepository {
     namespaces := make(map[string]model.Namespace)
     for _, namespace := range ns {
         namespaces[namespace.Name] = namespace
     }
 
-    return &Namespaces {
+    return &namespaceRepo {
         namespaces: namespaces,
     }
 }
 
 
-func (r *Tuples) SetTuple(tuple model.Tuple) error {
+type tupleRepo struct {
+    tuples map[string]model.TupleRecord
+    usersets map[string][]model.TupleRecord
+}
+
+func (r *tupleRepo) SetTuple(tuple model.Tuple) error {
     return fmt.Errorf("SetTuple not implemented")
 }
 
-func (r *Tuples) GetTuple(tuple model.Tuple) (model.TupleRecord, error){
+func (r *tupleRepo) GetTuple(tuple model.Tuple) (model.TupleRecord, error){
     record, ok := r.tuples[tuple.String()]
     if !ok {
         return model.TupleRecord{}, repository.NewEntityNotFound("Tuple", tuple)
@@ -65,7 +68,7 @@ func (r *Tuples) GetTuple(tuple model.Tuple) (model.TupleRecord, error){
     return record, nil
 }
 
-func (r *Tuples) GetRelatedUsersets(userset model.Userset) ([]model.TupleRecord, error){
+func (r *tupleRepo) GetRelatedUsersets(userset model.Userset) ([]model.TupleRecord, error){
     usets, ok := r.usersets[userset.String()]
     if !ok {
         return nil, repository.NewEntityNotFound("Userset", userset)
@@ -73,15 +76,20 @@ func (r *Tuples) GetRelatedUsersets(userset model.Userset) ([]model.TupleRecord,
     return usets, nil
 }
 
-func (r *Tuples) GetParentTuples(userset model.Userset) ([]model.TupleRecord, error){ 
+func (r *tupleRepo) GetParentTuples(userset model.Userset) ([]model.TupleRecord, error){
     return nil, fmt.Errorf("GetParentTuples not implemented")
 }
 
-func (r *Tuples) RemoveTuple(tuple model.Tuple) error{ 
+func (r *tupleRepo) RemoveTuple(tuple model.Tuple) error{ 
     return fmt.Errorf("RemoveTuple not implemented")
 }
 
-func (r *Namespaces) GetNamespace(namespace string) (model.Namespace, error) { 
+
+type namespaceRepo struct {
+    namespaces map[string]model.Namespace
+}
+
+func (r *namespaceRepo) GetNamespace(namespace string) (model.Namespace, error) {
     n, ok := r.namespaces[namespace]
     if !ok {
         return model.Namespace{}, repository.NewEntityNotFound("Namespace", namespace)
@@ -89,15 +97,15 @@ func (r *Namespaces) GetNamespace(namespace string) (model.Namespace, error) {
     return n, nil
 }
 
-func (r *Namespaces) SetNamespace(namespace model.Namespace) error { 
+func (r *namespaceRepo) SetNamespace(namespace model.Namespace) error { 
     return fmt.Errorf("SetNamespace not implemented")
 }
 
-func (r *Namespaces) RemoveNamespace(namespace string) error { 
+func (r *namespaceRepo) RemoveNamespace(namespace string) error { 
     return fmt.Errorf("RemoveNamespace not implemented")
 }
 
-func (r *Namespaces) GetRelation(namespace, relation string) (model.Relation, error) {
+func (r *namespaceRepo) GetRelation(namespace, relation string) (model.Relation, error) {
     n, err := r.GetNamespace(namespace)
     if err != nil {
         return model.Relation{}, err
