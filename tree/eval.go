@@ -34,7 +34,7 @@ func evalExprNode(exprNode ExpressionNode) mapset.Set[model.KeyableUset] {
 		usets := mapset.NewSet[model.KeyableUset]()
 		// This is bad
 		for _, child := range node.Children {
-			key := model.ToKey(child.Userset)
+			key := child.Userset.ToKey()
 			usets.Add(key)
 			result := evalExprNode(child.Child)
 			usets = usets.Union(result)

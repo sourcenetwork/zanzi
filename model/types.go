@@ -3,23 +3,23 @@ package model
 // KeyableUset represents a stripped down version of Userset,
 // such that it can be used as a map key
 type KeyableUset struct {
-	Namespace string
-	ObjectId  string
-	Relation  string
+	namespace string
+	objectId  string
+	relation  string
 }
 
-func ToKey(userset Userset) KeyableUset {
+func (u *Userset) ToKey() KeyableUset {
 	return KeyableUset{
-		Namespace: userset.Namespace,
-		ObjectId:  userset.ObjectId,
-		Relation:  userset.Relation,
+		namespace: u.Namespace,
+		objectId:  u.ObjectId,
+		relation:  u.Relation,
 	}
 }
 
-func ToUset(key KeyableUset) Userset {
+func (k *KeyableUset) ToUset() Userset {
 	return Userset{
-		Namespace: key.Namespace,
-		ObjectId:  key.ObjectId,
-		Relation:  key.Relation,
+		Namespace: k.namespace,
+		ObjectId:  k.objectId,
+		Relation:  k.relation,
 	}
 }

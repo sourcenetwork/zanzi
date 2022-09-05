@@ -24,7 +24,7 @@ type TupleRepository interface {
 
 	// Return tuples that have an outgoing edge to userset (aka reverse lookup)
 	// Does not perform userset chasing
-	GetParentTuples(userset model.Userset) ([]model.TupleRecord, error)
+	GetIncomingUsersets(userset model.Userset) ([]model.TupleRecord, error)
 
 	// Purge tuple from storage.
 	RemoveTuple(tuple model.Tuple) error
@@ -43,6 +43,9 @@ type NamespaceRepository interface {
 
 	// Return a Relation definition from a namespace
 	GetRelation(namespace, relation string) (model.Relation, error)
+
+	// Return all relations which reference the given `relation`.
+        //GetReferrers(namespace, relation string) ([]model.Relation, error)
 }
 
 // EntityNotFound type implements error interface.

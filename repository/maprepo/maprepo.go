@@ -74,8 +74,8 @@ func (r *tupleRepo) GetRelatedUsersets(userset model.Userset) ([]model.TupleReco
 	return usets, nil
 }
 
-func (r *tupleRepo) GetParentTuples(userset model.Userset) ([]model.TupleRecord, error) {
-	return nil, fmt.Errorf("GetParentTuples not implemented")
+func (r *tupleRepo) GetIncomingUsersets(userset model.Userset) ([]model.TupleRecord, error) {
+	return nil, fmt.Errorf("GetIncomingUsersets not implemented")
 }
 
 func (r *tupleRepo) RemoveTuple(tuple model.Tuple) error {

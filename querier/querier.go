@@ -22,7 +22,7 @@ type Querier interface {
 	Check(ctx context.Context, namespace, objectId string) (bool, error)
 
 	// Reverse lookup return all tuples user is related to
-	ReverseLookup(ctx context.Context, user model.User) ([]model.TupleRecord, error)
+	ReverseLookup(ctx context.Context, user model.User) (tree.UsersetNode, error)
 
 	// Return all objects an user is related to expressed through a Tree.
 	// Node children are annotated with the source of the relation,

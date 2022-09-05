@@ -28,17 +28,6 @@ func Expand(ctx context.Context, userset model.Userset) (*tree.UsersetNode, erro
 	return tree, nil
 }
 
-func Check(ctx context.Context, userset model.Userset) (*tree.UsersetNode, error) {
-	usetNode, err := Expand(ctx, userset)
-	if err != nil {
-		// wrap
-		return err
-	}
-
-	usets := tree.Eval(usetNode)
-	key := model.ToKey
-	return usets.Contains(key)
-}
 
 type expander struct {
 	trail map[model.KeyableUset]struct{}
@@ -62,7 +51,7 @@ func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset
 	default:
 	}
 
-	key := model.ToKey(uset)
+	key := uset.ToKey()
 
 	// handles a backtrail expand call such as: A -> B -> A
 	// return a non-expanded leaf with the uset in it

@@ -182,12 +182,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	usets := tree.Eval(usetNode)
-
-	for _, uset := range usets {
-		println(uset.String())
-	}
-
 	printNode(1, usetNode)
 }
 
