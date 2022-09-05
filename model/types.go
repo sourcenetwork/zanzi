@@ -8,6 +8,7 @@ type KeyableUset struct {
 	relation  string
 }
 
+// Map Userset into a keyable type
 func (u *Userset) ToKey() KeyableUset {
 	return KeyableUset{
 		namespace: u.Namespace,
@@ -16,6 +17,7 @@ func (u *Userset) ToKey() KeyableUset {
 	}
 }
 
+// Restore Key to Userset
 func (k *KeyableUset) ToUset() Userset {
 	return Userset{
 		Namespace: k.namespace,
