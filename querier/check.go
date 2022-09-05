@@ -9,14 +9,14 @@ import (
 
 // Simple Check implementation leverages a full expand in order to verify whether 
 // userset is included in final expand tree
-func Check(ctx context.Context, userset model.Userset) (bool, error) {
-	usetNode, err := Expand(ctx, userset)
+func Check(ctx context.Context, objRel model.Userset, user model.Userset) (bool, error) {
+	root, err := Expand(ctx, objRel)
 	if err != nil {
 		// wrap
 		return false, err
 	}
 
-	usets := tree.Eval(usetNode)
-	key := userset.ToKey()
+	key := user.ToKey()
+	usets := tree.Eval(root)
 	return usets.Contains(key), nil
 }

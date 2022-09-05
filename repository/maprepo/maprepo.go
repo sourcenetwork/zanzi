@@ -116,3 +116,7 @@ func (r *namespaceRepo) GetRelation(namespace, relation string) (model.Relation,
 
 	return model.Relation{}, repository.NewEntityNotFound("Relation", namespace, relation)
 }
+
+func (r *namespaceRepo) GetReferrers(namespace, relation string) ([]model.Relation, error) {
+    return nil, fmt.Errorf("GetReferrers not implemented")
+}

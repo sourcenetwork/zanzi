@@ -45,7 +45,7 @@ type NamespaceRepository interface {
 	GetRelation(namespace, relation string) (model.Relation, error)
 
 	// Return all relations which reference the given `relation`.
-        //GetReferrers(namespace, relation string) ([]model.Relation, error)
+        GetReferrers(namespace, relation string) ([]model.Relation, error)
 }
 
 // EntityNotFound type implements error interface.
