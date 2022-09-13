@@ -6,9 +6,9 @@ import (
 	"log"
 	"strings"
 
+	"github.com/sourcenetwork/source-zanzibar/authorizer/simple"
 	"github.com/sourcenetwork/source-zanzibar/model"
 	"github.com/sourcenetwork/source-zanzibar/model/builder"
-	"github.com/sourcenetwork/source-zanzibar/querier"
 	"github.com/sourcenetwork/source-zanzibar/repository/maprepo"
 	"github.com/sourcenetwork/source-zanzibar/tree"
 	"github.com/sourcenetwork/source-zanzibar/utils"
@@ -177,12 +177,13 @@ func main() {
 		Relation:  "Reader",
 	}
 
-	usetNode, err := querier.Expand(ctx, uset)
+	expander := simple.Expander{}
+	usetNode, err := expander.Expand(ctx, uset)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	printNode(1, usetNode)
+	printNode(1, &usetNode)
 }
 
 func printNode(lvl int, node tree.Node) {

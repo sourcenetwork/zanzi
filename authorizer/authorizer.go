@@ -1,8 +1,6 @@
-// Package querier provides an abstraction to perform complex lookups over relationships.
-//
-// Querier defines an interface for the possible operations and exposes implementations
-// which differ in performance and resource requirements
-package querier
+// Package authorizer provides abstractions to perform authorization verification operations.
+// The primary operations are part of Zanzibar's spec, eg Check, Expand and Reverse Lookup
+package authorizer
 
 import (
 	"context"
@@ -30,12 +28,5 @@ type ReverseLookuper interface {
 
 type Expander interface {
 	// Build Tree of all Usersets related to the given Userset
-	Expand(ctx context.Context, userset model.Userset) (*tree.UsersetNode, error)
-}
-
-// Querier abstracts graph traversal and search operations
-type Querier interface {
-        Checker
-        //ReverseLookuper
-        //Expander
+	Expand(ctx context.Context, userset model.Userset) (tree.UsersetNode, error)
 }

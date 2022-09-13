@@ -54,8 +54,8 @@ type tupleRepo struct {
 	usersets map[string][]model.TupleRecord
 }
 
-func (r *tupleRepo) SetTuple(tuple model.Tuple) error {
-	return fmt.Errorf("SetTuple not implemented")
+func (r *tupleRepo) SetTuple(tuple model.Tuple) (model.TupleRecord, error) {
+	return model.TupleRecord{}, fmt.Errorf("SetTuple not implemented")
 }
 
 func (r *tupleRepo) GetTuple(tuple model.Tuple) (model.TupleRecord, error) {
@@ -82,6 +82,10 @@ func (r *tupleRepo) RemoveTuple(tuple model.Tuple) error {
 	return fmt.Errorf("RemoveTuple not implemented")
 }
 
+func (r *tupleRepo) GetTuplesFromRelationAndUserObject(relation string, objNamespace string, objectId string) ([]model.TupleRecord, error) {
+	return nil, nil
+}
+
 type namespaceRepo struct {
 	namespaces map[string]model.Namespace
 }
@@ -94,8 +98,8 @@ func (r *namespaceRepo) GetNamespace(namespace string) (model.Namespace, error) 
 	return n, nil
 }
 
-func (r *namespaceRepo) SetNamespace(namespace model.Namespace) error {
-	return fmt.Errorf("SetNamespace not implemented")
+func (r *namespaceRepo) SetNamespace(namespace model.Namespace) (model.Namespace, error) {
+	return model.Namespace{}, fmt.Errorf("SetNamespace not implemented")
 }
 
 func (r *namespaceRepo) RemoveNamespace(namespace string) error {
@@ -118,5 +122,5 @@ func (r *namespaceRepo) GetRelation(namespace, relation string) (model.Relation,
 }
 
 func (r *namespaceRepo) GetReferrers(namespace, relation string) ([]model.Relation, error) {
-    return nil, fmt.Errorf("GetReferrers not implemented")
+	return nil, fmt.Errorf("GetReferrers not implemented")
 }

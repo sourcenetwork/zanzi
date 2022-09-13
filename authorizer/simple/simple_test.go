@@ -1,4 +1,4 @@
-package querier
+package simple
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/sourcenetwork/source-zanzibar/utils"
 )
 
+/*
 func produceNamespaceRepo() repository.NamespaceRepository {
 	owner := &model.Relation{
 		Name: "Owner",
@@ -206,3 +207,4 @@ func TestExpandWithThisRelations(t *testing.T) {
 
 	assert.Equal(t, got, want)
 }
+*/

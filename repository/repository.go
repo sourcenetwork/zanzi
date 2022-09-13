@@ -13,7 +13,7 @@ import (
 // when some operation failed because the lookup resulted in an empty set.
 type TupleRepository interface {
 	// Store a new tuple. Update all indexes
-	SetTuple(tuple model.Tuple) error
+	SetTuple(tuple model.Tuple) (model.TupleRecord, error)
 
 	// Looks up a relation tuple from the backend storage
 	GetTuple(tuple model.Tuple) (model.TupleRecord, error)
@@ -28,6 +28,14 @@ type TupleRepository interface {
 
 	// Purge tuple from storage.
 	RemoveTuple(tuple model.Tuple) error
+
+	// Return all tuples that match the filter:
+	// tuple.Relation == relation
+	// tuple.User.ObjectId == objectId
+	//
+	// This peculiar query is used to reverse tuple to userset rules
+	// during reverse lookup
+	GetTuplesFromRelationAndUserObject(relation string, objNamespace string, objectId string) ([]model.TupleRecord, error)
 }
 
 // NamespaceRepository abstract interfacing with namespace storage.
@@ -37,7 +45,7 @@ type TupleRepository interface {
 type NamespaceRepository interface {
 	GetNamespace(namespace string) (model.Namespace, error)
 
-	SetNamespace(namespace model.Namespace) error
+	SetNamespace(namespace model.Namespace) (model.Namespace, error)
 
 	RemoveNamespace(namespace string) error
 
@@ -45,7 +53,7 @@ type NamespaceRepository interface {
 	GetRelation(namespace, relation string) (model.Relation, error)
 
 	// Return all relations which reference the given `relation`.
-        GetReferrers(namespace, relation string) ([]model.Relation, error)
+	GetReferrers(namespace, relation string) ([]model.Relation, error)
 }
 
 // EntityNotFound type implements error interface.
