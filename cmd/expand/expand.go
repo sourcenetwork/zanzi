@@ -177,7 +177,7 @@ func main() {
 		Relation:  "Reader",
 	}
 
-	expander := simple.Expander{}
+	expander := simple.NewExpander()
 	usetNode, err := expander.Expand(ctx, uset)
 	if err != nil {
 		log.Fatal(err)

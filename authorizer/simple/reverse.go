@@ -8,14 +8,16 @@ import (
 	"github.com/sourcenetwork/source-zanzibar/model"
 )
 
-type Lookuper struct {
+var _ authorizer.Reverser = (*reverser)(nil)
+
+type reverser struct {
 	checker      authorizer.Checker
 	root         model.Userset
 	checkResults map[model.KeyableUset]bool
 	visitedNodes map[model.KeyableUset]struct{}
 }
 
-func (l *Lookuper) ReverseLookup(ctx context.Context, user model.User) ([]model.Userset, error) {
+func (l *reverser) ReverseLookup(ctx context.Context, user model.User) ([]model.Userset, error) {
 	l.root = *user.Userset
 
 	err := l.reverseLookup(ctx, *user.Userset)
@@ -32,19 +34,11 @@ func (l *Lookuper) ReverseLookup(ctx context.Context, user model.User) ([]model.
 	return usets, nil
 }
 
-func NewLookuper(checker authorizer.Checker) Lookuper {
-	return Lookuper{
-		checker:      checker,
-		checkResults: make(map[model.KeyableUset]bool),
-		visitedNodes: make(map[model.KeyableUset]struct{}),
-	}
-}
-
 // Perform DFS search over nodes which are reachable from `node`
-// for the user specified during lookuper construction
+// for the user specified during reverser construction
 //
 // Uses `checker` to validate whether potential neighbors are in fact reachable.
-func (l *Lookuper) reverseLookup(ctx context.Context, uset model.Userset) error {
+func (l *reverser) reverseLookup(ctx context.Context, uset model.Userset) error {
 	l.visitedNodes[uset.ToKey()] = struct{}{}
 
 	select {
@@ -86,7 +80,7 @@ func (l *Lookuper) reverseLookup(ctx context.Context, uset model.Userset) error 
 }
 
 // check whether a node should be included in the final result set
-func (l *Lookuper) check(ctx context.Context, node model.Userset) (bool, error) {
+func (l *reverser) check(ctx context.Context, node model.Userset) (bool, error) {
 	key := node.ToKey()
 
 	result, ok := l.checkResults[key]
@@ -101,4 +95,12 @@ func (l *Lookuper) check(ctx context.Context, node model.Userset) (bool, error) 
 
 	l.checkResults[key] = result
 	return result, nil
+}
+
+func ReverserFromChecker(checker authorizer.Checker) authorizer.Reverser {
+	return &reverser{
+		checker:      checker,
+		checkResults: make(map[model.KeyableUset]bool),
+		visitedNodes: make(map[model.KeyableUset]struct{}),
+	}
 }

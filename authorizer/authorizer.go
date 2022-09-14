@@ -16,14 +16,14 @@ type Checker interface {
 	Check(ctx context.Context, objRel model.Userset, user model.Userset) (bool, error)
 }
 
-type ReverseLookuper interface {
+type Reverser interface {
 	// Reverse lookup return all tuples user is related to
-	ReverseLookup(ctx context.Context, user model.User) (*tree.UsersetNode, error)
+	ReverseLookup(ctx context.Context, user model.User) ([]model.Userset, error)
 
 	// Return all objects an user is related to expressed through a Tree.
 	// Node children are annotated with the source of the relation,
 	// either through direct lookup or userset rewrites
-	ExplainedReverseLookup(ctx context.Context, user model.User) (*tree.UsersetNode, error)
+	//ExplainedReverseLookup(ctx context.Context, user model.User) (*tree.UsersetNode, error)
 }
 
 type Expander interface {

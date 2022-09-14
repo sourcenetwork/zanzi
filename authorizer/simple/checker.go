@@ -10,15 +10,6 @@ import (
 
 var _ authorizer.Checker = (*checker)(nil)
 
-// Return an instance of Checker from an Expander
-// Checker will perform an expand call and verify whether the final
-// expand tree contains the desired user
-func FromExpander(expander authorizer.Expander) authorizer.Checker {
-	return &checker{
-		expander: expander,
-	}
-}
-
 type checker struct {
 	expander authorizer.Expander
 }
@@ -35,4 +26,13 @@ func (c *checker) Check(ctx context.Context, objRel model.Userset, user model.Us
 	key := user.ToKey()
 	usets := tree.Eval(&root)
 	return usets.Contains(key), nil
+}
+
+// Return an instance of Checker from an Expander
+// Checker will perform an expand call and verify whether the final
+// expand tree contains the desired user
+func CheckerFromExpander(expander authorizer.Expander) authorizer.Checker {
+	return &checker{
+		expander: expander,
+	}
 }

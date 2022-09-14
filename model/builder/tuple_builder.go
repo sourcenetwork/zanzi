@@ -1,0 +1,52 @@
+package builder
+
+import (
+	"github.com/sourcenetwork/source-zanzibar/model"
+)
+
+type TupleBuilder struct {
+	objRel *model.Userset
+	user   *model.User
+}
+
+func (b *TupleBuilder) ObjRel(namespace, objectId, relation string) *TupleBuilder {
+	b.objRel = &model.Userset{
+		Namespace: namespace,
+		ObjectId:  objectId,
+		Relation:  relation,
+	}
+	return b
+}
+
+func (b *TupleBuilder) User(userId string) *TupleBuilder {
+	uset := &model.Userset{
+		Namespace: model.USERS_NAMESPACE,
+		ObjectId:  userId,
+		Relation:  model.EMPTY_REL,
+	}
+	b.user = &model.User{
+		Type:    model.UserType_USER,
+		Userset: uset,
+	}
+	return b
+}
+
+func (b *TupleBuilder) Userset(namespace, objectId, relation string) *TupleBuilder {
+	uset := &model.Userset{
+		Namespace: namespace,
+		ObjectId:  objectId,
+		Relation:  relation,
+	}
+	b.user = &model.User{
+		Type:    model.UserType_USER_SET,
+		Userset: uset,
+	}
+	return b
+}
+
+func (b *TupleBuilder) Build() model.Tuple {
+	return model.Tuple{
+		ObjectRel: b.objRel,
+		User:      b.user,
+	}
+}

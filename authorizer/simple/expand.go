@@ -11,14 +11,14 @@ import (
 	"github.com/sourcenetwork/source-zanzibar/utils"
 )
 
-var _ authorizer.Expander = (*Expander)(nil)
+var _ authorizer.Expander = (*expander)(nil)
 
 // Expander implements the authorizer Expander interface
-type Expander struct {
+type expander struct {
 	trail map[model.KeyableUset]struct{}
 }
 
-func (e *Expander) Expand(ctx context.Context, userset model.Userset) (tree.UsersetNode, error) {
+func (e *expander) Expand(ctx context.Context, userset model.Userset) (tree.UsersetNode, error) {
 	e.trail = make(map[model.KeyableUset]struct{})
 
 	expTree, err := e.getExpTree(ctx, userset.Namespace, userset.Relation)
@@ -39,7 +39,7 @@ func (e *Expander) Expand(ctx context.Context, userset model.Userset) (tree.User
 // Expand an Userset Rewrite Expression Tree
 // Uses local cache if an expand call has already been evaluated
 // keeps a trail through the depth search to avoid cyclic expands
-func (e *Expander) expandTree(ctx context.Context, root *model.RewriteNode, uset model.Userset) (*tree.UsersetNode, error) {
+func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset model.Userset) (*tree.UsersetNode, error) {
 	// expandTree is the recusion entrypoint for Expand subcalls
 	// Therefore it's a centralized point to check whether ctx is still valid before continuing
 	select {
@@ -76,7 +76,7 @@ func (e *Expander) expandTree(ctx context.Context, root *model.RewriteNode, uset
 	return node, nil
 }
 
-func (e *Expander) expandExprNode(ctx context.Context, root *model.RewriteNode, uset model.Userset) (tree.ExpressionNode, error) {
+func (e *expander) expandExprNode(ctx context.Context, root *model.RewriteNode, uset model.Userset) (tree.ExpressionNode, error) {
 	switch n := root.Node.(type) {
 	case *model.RewriteNode_Opnode:
 		opnode := n.Opnode
@@ -91,7 +91,7 @@ func (e *Expander) expandExprNode(ctx context.Context, root *model.RewriteNode, 
 }
 
 // Expand OpNode by expand its left and right children
-func (e *Expander) expandOpNode(ctx context.Context, root *model.OpNode, uset model.Userset) (*tree.OpNode, error) {
+func (e *expander) expandOpNode(ctx context.Context, root *model.OpNode, uset model.Userset) (*tree.OpNode, error) {
 	left, err := e.expandExprNode(ctx, root.Left, uset)
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ func (e *Expander) expandOpNode(ctx context.Context, root *model.OpNode, uset mo
 	return node, nil
 }
 
-func (e *Expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset model.Userset) (*tree.RuleNode, error) {
+func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset model.Userset) (*tree.RuleNode, error) {
 
 	var neighbors []model.Userset
 	var rule tree.Rule
@@ -156,7 +156,7 @@ func (e *Expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset mo
 	return e.expandRule(ctx, uset, neighbors, rule)
 }
 
-func (e *Expander) getExpTree(ctx context.Context, namespace, relation string) (*model.RewriteNode, error) {
+func (e *expander) getExpTree(ctx context.Context, namespace, relation string) (*model.RewriteNode, error) {
 	repo := utils.GetNamespaceRepo(ctx)
 
 	rel, err := repo.GetRelation(namespace, relation)
@@ -167,7 +167,7 @@ func (e *Expander) getExpTree(ctx context.Context, namespace, relation string) (
 	return rel.Rewrite.ExpressionTree, nil
 }
 
-func (e *Expander) expandRule(ctx context.Context, uset model.Userset, neighbors []model.Userset, rule tree.Rule) (*tree.RuleNode, error) {
+func (e *expander) expandRule(ctx context.Context, uset model.Userset, neighbors []model.Userset, rule tree.Rule) (*tree.RuleNode, error) {
 	children := make([]*tree.UsersetNode, 0, len(neighbors))
 	for _, neigh := range neighbors {
 		expTree, err := e.getExpTree(ctx, neigh.Namespace, neigh.Relation)
