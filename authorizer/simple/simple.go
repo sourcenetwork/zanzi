@@ -7,18 +7,23 @@ package simple
 
 import (
 	"github.com/sourcenetwork/source-zanzibar/authorizer"
+	"github.com/sourcenetwork/source-zanzibar/repository"
 )
 
-func NewChecker() authorizer.Checker {
-	expander := NewExpander()
+
+func NewChecker(nsRepo repository.NamespaceRepository, tupleRepo repository.TupleRepository) authorizer.Checker {
+	expander := NewExpander(nsRepo, tupleRepo)
 	return CheckerFromExpander(expander)
 }
 
-func NewExpander() authorizer.Expander {
-	return &expander{}
+func NewExpander(nsRepo repository.NamespaceRepository, tupleRepo repository.TupleRepository) authorizer.Expander {
+	return &expander{
+            tupleRepo: tupleRepo,
+            nsRepo: nsRepo,
+        }
 }
 
-func NewReverser() authorizer.Reverser {
-	checker := NewChecker()
-	return ReverserFromChecker(checker)
+func NewReverser(nsRepo repository.NamespaceRepository, tupleRepo repository.TupleRepository) authorizer.Reverser {
+	checker := NewChecker(nsRepo, tupleRepo)
+	return ReverserFromChecker(nsRepo, tupleRepo, checker)
 }

@@ -16,42 +16,77 @@ var (
 // Return an instance of TupleRepository from a slice of tuples
 //
 // Note that the repository is not persisted and only lookup operations are implemented
-func NewTupleRepo(ts []model.Tuple) repository.TupleRepository {
-	tuples := make(map[string]model.TupleRecord)
-	usersets := make(map[string][]model.TupleRecord)
+func NewTupleRepo(tuples ...model.Tuple) repository.TupleRepository {
+	records := make(map[string]model.TupleRecord)
+	usersets := make(map[model.KeyableUset][]model.TupleRecord)
+	reverse := make(map[model.KeyableUset][]model.TupleRecord)
 
-	for _, t := range ts {
+	for _, t := range tuples {
 		tuple := t
 		record := model.TupleRecord{
 			Tuple: &tuple,
 		}
-		tuples[tuple.String()] = record
-		usersets[tuple.ObjectRel.String()] = append(usersets[tuple.ObjectRel.String()], record)
+		records[tuple.String()] = record
+
+                key := tuple.ObjectRel.ToKey()
+		usersets[key] = append(usersets[key], record)
+
+                revKey := tuple.User.Userset.ToKey()
+		reverse[revKey] = append(reverse[revKey], record)
 	}
 
 	return &tupleRepo{
-		tuples:   tuples,
+		tuples:   records,
 		usersets: usersets,
+                reverse: reverse,
 	}
 }
 
 // Return an instance of NamespaceRepository from a slice of namespaces
 //
 // Note that the repository is not persisted and only lookup operations are implemented
-func NewNamespaceRepo(ns []model.Namespace) repository.NamespaceRepository {
+func NewNamespaceRepo(ns ...model.Namespace) repository.NamespaceRepository {
 	namespaces := make(map[string]model.Namespace)
+        referrers := make(map[string][]model.Relation)
+
 	for _, namespace := range ns {
 		namespaces[namespace.Name] = namespace
+
+                for _, rel := range namespace.Relations {
+
+                    tree := rel.Rewrite.ExpressionTree
+                    leaves := tree.GetLeaves()
+                    for _, leaf := range leaves {
+                        switch rule := leaf.Rule.Rule.(type) {
+                        case *model.Rule_This:
+                            continue
+                        case *model.Rule_TupleToUserset:
+                            ttu := rule.TupleToUserset
+                            key := namespace.Name + ttu.ComputedUsersetRelation 
+                            referrers[key] = append(referrers[key], *rel)
+
+                        case *model.Rule_ComputedUserset:
+                            cu := rule.ComputedUserset
+                            key := namespace.Name + cu.Relation 
+                            referrers[key] = append(referrers[key], *rel)
+
+                        default:
+                            panic("uknown rule type")
+                        }
+                    }
+                }
 	}
 
 	return &namespaceRepo{
 		namespaces: namespaces,
+                referrers: referrers,
 	}
 }
 
 type tupleRepo struct {
 	tuples   map[string]model.TupleRecord
-	usersets map[string][]model.TupleRecord
+	usersets map[model.KeyableUset][]model.TupleRecord
+        reverse map[model.KeyableUset][]model.TupleRecord
 }
 
 func (r *tupleRepo) SetTuple(tuple model.Tuple) (model.TupleRecord, error) {
@@ -67,7 +102,7 @@ func (r *tupleRepo) GetTuple(tuple model.Tuple) (model.TupleRecord, error) {
 }
 
 func (r *tupleRepo) GetRelatedUsersets(userset model.Userset) ([]model.TupleRecord, error) {
-	usets, ok := r.usersets[userset.String()]
+	usets, ok := r.usersets[userset.ToKey()]
 	if !ok {
 		return nil, repository.NewEntityNotFound("Userset", userset)
 	}
@@ -75,7 +110,11 @@ func (r *tupleRepo) GetRelatedUsersets(userset model.Userset) ([]model.TupleReco
 }
 
 func (r *tupleRepo) GetIncomingUsersets(userset model.Userset) ([]model.TupleRecord, error) {
-	return nil, fmt.Errorf("GetIncomingUsersets not implemented")
+	records, ok := r.reverse[userset.ToKey()]
+	if !ok {
+		return nil, repository.NewEntityNotFound("Reverse Userset", userset)
+	}
+	return records, nil
 }
 
 func (r *tupleRepo) RemoveTuple(tuple model.Tuple) error {
@@ -88,6 +127,7 @@ func (r *tupleRepo) GetTuplesFromRelationAndUserObject(relation string, objNames
 
 type namespaceRepo struct {
 	namespaces map[string]model.Namespace
+        referrers map[string][]model.Relation
 }
 
 func (r *namespaceRepo) GetNamespace(namespace string) (model.Namespace, error) {
@@ -122,5 +162,10 @@ func (r *namespaceRepo) GetRelation(namespace, relation string) (model.Relation,
 }
 
 func (r *namespaceRepo) GetReferrers(namespace, relation string) ([]model.Relation, error) {
-	return nil, fmt.Errorf("GetReferrers not implemented")
+    refs, ok := r.referrers[namespace+relation]
+    if !ok {
+	return nil, repository.NewEntityNotFound("Relation", namespace, relation)
+
+    }
+    return refs, nil
 }

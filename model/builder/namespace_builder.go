@@ -84,8 +84,8 @@ func Relation(name string, expTree *model.RewriteNode) *model.Relation {
 }
 
 
-func Namespace(name string, relations ...*model.Relation) *model.Namespace {
-	return &model.Namespace{
+func Namespace(name string, relations ...*model.Relation) model.Namespace {
+	return model.Namespace{
 		Name:      name,
                 Relations: relations,
 	}

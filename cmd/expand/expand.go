@@ -11,7 +11,6 @@ import (
 	"github.com/sourcenetwork/source-zanzibar/model/builder"
 	"github.com/sourcenetwork/source-zanzibar/repository/maprepo"
 	"github.com/sourcenetwork/source-zanzibar/tree"
-	"github.com/sourcenetwork/source-zanzibar/utils"
 )
 
 func namespacesFixture() []model.Namespace {
@@ -164,12 +163,10 @@ func tuplesFixture() []model.Tuple {
 }
 
 func main() {
-	tr := maprepo.NewTupleRepo(tuplesFixture())
-	nr := maprepo.NewNamespaceRepo(namespacesFixture())
+	tr := maprepo.NewTupleRepo(tuplesFixture()...)
+	nr := maprepo.NewNamespaceRepo(namespacesFixture()...)
 
 	ctx := context.Background()
-	ctx = utils.WithTupleRepository(ctx, tr)
-	ctx = utils.WithNamespaceRepository(ctx, nr)
 
 	uset := model.Userset{
 		Namespace: "Test",
@@ -177,7 +174,7 @@ func main() {
 		Relation:  "Reader",
 	}
 
-	expander := simple.NewExpander()
+	expander := simple.NewExpander(nr, tr)
 	usetNode, err := expander.Expand(ctx, uset)
 	if err != nil {
 		log.Fatal(err)

@@ -16,6 +16,8 @@ var _ authorizer.Expander = (*expander)(nil)
 // Expander implements the authorizer Expander interface
 type expander struct {
 	trail map[model.KeyableUset]struct{}
+        tupleRepo repository.TupleRepository
+        nsRepo repository.NamespaceRepository
 }
 
 func (e *expander) Expand(ctx context.Context, userset model.Userset) (tree.UsersetNode, error) {
@@ -23,13 +25,13 @@ func (e *expander) Expand(ctx context.Context, userset model.Userset) (tree.User
 
 	expTree, err := e.getExpTree(ctx, userset.Namespace, userset.Relation)
 	if err != nil {
-		// wrap
+                err = fmt.Errorf("Expand failed for %v: %w", userset, err)
 		return tree.UsersetNode{}, err
 	}
 
 	node, err := e.expandTree(ctx, expTree, userset)
 	if err != nil {
-		// wrap
+                err = fmt.Errorf("Expand failed for %v: %w", userset, err)
 		return tree.UsersetNode{}, err
 	}
 
@@ -37,7 +39,6 @@ func (e *expander) Expand(ctx context.Context, userset model.Userset) (tree.User
 }
 
 // Expand an Userset Rewrite Expression Tree
-// Uses local cache if an expand call has already been evaluated
 // keeps a trail through the depth search to avoid cyclic expands
 func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset model.Userset) (*tree.UsersetNode, error) {
 	// expandTree is the recusion entrypoint for Expand subcalls
@@ -48,31 +49,35 @@ func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset
 	default:
 	}
 
-	key := uset.ToKey()
+        node := &tree.UsersetNode{
+            Userset: uset,
+        }
 
 	// handles a backtrail expand call such as: A -> B -> A
 	// return a non-expanded leaf with the uset in it
+	key := uset.ToKey()
 	_, ok := e.trail[key]
 	if ok {
-		node := &tree.UsersetNode{
-			Userset: uset,
-		}
-		return node, nil
+            return node, nil
 	}
+
+        // Handle an empty expression tree
+        // Should only happen when uset.Relation is the empty relation constant
+        if root == nil {
+            return node, nil
+        }
 
 	e.trail[key] = struct{}{}
 	defer delete(e.trail, key)
 
+
 	exprNode, err := e.expandExprNode(ctx, root, uset)
 	if err != nil {
-		// TODO wrap
+                err = fmt.Errorf("expandTree failed for userset: %v: %v", uset, err)
 		return nil, err
 	}
 
-	node := &tree.UsersetNode{
-		Userset: uset,
-		Child:   exprNode,
-	}
+        node.Child = exprNode
 	return node, nil
 }
 
@@ -85,8 +90,8 @@ func (e *expander) expandExprNode(ctx context.Context, root *model.RewriteNode, 
 		leaf := n.Leaf
 		return e.expandRuleNode(ctx, leaf, uset)
 	default:
-		err := fmt.Errorf("Rewrite Node type unknown: %#v", root)
-		return nil, err
+            err := fmt.Errorf("Rewrite Node type unknown: %#v", root)
+            panic(err)
 	}
 }
 
@@ -119,14 +124,14 @@ func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset mo
 	switch r := root.Rule.GetRule().(type) {
 
 	case *model.Rule_This:
-		neighbors, err = produceThis(ctx, uset)
+		neighbors, err = e.produceThis(ctx, uset)
 		rule = tree.Rule{
 			Type: tree.RuleType_THIS,
 		}
 
 	case *model.Rule_TupleToUserset:
 		ttu := r.TupleToUserset
-		neighbors, err = produceTTU(ctx, uset, ttu.TuplesetRelation, ttu.ComputedUsersetRelation)
+		neighbors, err = e.produceTTU(ctx, uset, ttu.TuplesetRelation, ttu.ComputedUsersetRelation)
 		rule = tree.Rule{
 			Type: tree.RuleType_TTU,
 			Args: map[string]string{
@@ -137,7 +142,7 @@ func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset mo
 
 	case *model.Rule_ComputedUserset:
 		cu := r.ComputedUserset
-		neighbors = produceCU(ctx, uset, cu.Relation)
+		neighbors = e.produceCU(ctx, uset, cu.Relation)
 		rule = tree.Rule{
 			Type: tree.RuleType_CU,
 			Args: map[string]string{
@@ -147,6 +152,7 @@ func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset mo
 
 	default:
 		err = fmt.Errorf("Unknown rule type: %#v", r)
+                panic(err)
 	}
 
 	if err != nil {
@@ -157,9 +163,13 @@ func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset mo
 }
 
 func (e *expander) getExpTree(ctx context.Context, namespace, relation string) (*model.RewriteNode, error) {
-	repo := utils.GetNamespaceRepo(ctx)
+        // Empty relation shouldn't be explcitly defined per namespace
+        // therefore we skip it
+        if relation == model.EMPTY_REL {
+            return nil, nil
+        }
 
-	rel, err := repo.GetRelation(namespace, relation)
+	rel, err := e.nsRepo.GetRelation(namespace, relation)
 	if err != nil {
 		return nil, err
 	}
@@ -193,10 +203,8 @@ func (e *expander) expandRule(ctx context.Context, uset model.Userset, neighbors
 
 // Receive releation and object, builds userset and performs a bfs search on graph
 // for all reachable nodes.
-func produceThis(ctx context.Context, uset model.Userset) ([]model.Userset, error) {
-	repo := utils.GetTupleRepo(ctx)
-
-	tuples, err := repo.GetRelatedUsersets(uset)
+func (e *expander) produceThis(ctx context.Context, uset model.Userset) ([]model.Userset, error) {
+	tuples, err := e.tupleRepo.GetRelatedUsersets(uset)
 
 	if _, ok := err.(*repository.EntityNotFound); ok {
 		return nil, nil
@@ -212,8 +220,8 @@ func produceThis(ctx context.Context, uset model.Userset) ([]model.Userset, erro
 	return usets, nil
 }
 
-// return a joinable node because the result might be a leaf or a opnode
-func produceCU(ctx context.Context, uset model.Userset, relation string) []model.Userset {
+
+func (e *expander) produceCU(ctx context.Context, uset model.Userset, relation string) []model.Userset {
 	return []model.Userset{
 		model.Userset{
 			Namespace: uset.Namespace,
@@ -223,21 +231,22 @@ func produceCU(ctx context.Context, uset model.Userset, relation string) []model
 	}
 }
 
-func produceTTU(ctx context.Context, uset model.Userset, tsetRel string, cuRel string) ([]model.Userset, error) {
-	repo := utils.GetTupleRepo(ctx)
-
+// Return all Nodes reachable from uset by following a TTU.
+// TTU rule is defined by tsetRel and cuRel
+func (e *expander) produceTTU(ctx context.Context, uset model.Userset, tsetRel string, cuRel string) ([]model.Userset, error) {
 	tuplesetFilter := model.Userset{
 		Namespace: uset.Namespace,
 		ObjectId:  uset.ObjectId,
 		Relation:  tsetRel,
 	}
 
-	records, err := repo.GetRelatedUsersets(tuplesetFilter)
+	records, err := e.tupleRepo.GetRelatedUsersets(tuplesetFilter)
 	if _, ok := err.(*repository.EntityNotFound); ok {
+            // An empty result set from a TTU call cannot be considered
+            // an error, as there is no guarantee the target will exist
 		return nil, nil
 	}
 	if err != nil {
-		// wrap
 		return nil, err
 	}
 
@@ -249,6 +258,7 @@ func produceTTU(ctx context.Context, uset model.Userset, tsetRel string, cuRel s
 	return usets, nil
 }
 
+// Map a record's User to an Userset
 func tupleToUserset(tuple model.TupleRecord) model.Userset {
 	return model.Userset{
 		Namespace: tuple.Tuple.User.Userset.Namespace,

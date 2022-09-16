@@ -5,41 +5,40 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-        "github.com/davecgh/go-spew/spew"
+        _ "github.com/davecgh/go-spew/spew"
 
 
 	"github.com/sourcenetwork/source-zanzibar/model"
 	"github.com/sourcenetwork/source-zanzibar/tree"
 	"github.com/sourcenetwork/source-zanzibar/repository/maprepo"
-	"github.com/sourcenetwork/source-zanzibar/utils"
 	"github.com/sourcenetwork/source-zanzibar/model/builder"
 )
 
 func TestExpandOnAVirtualNode(t *testing.T) {
 
     // given test namespace where owner implies reader
-    ns := []model.Namespace{
-        *builder.Namespace("test", 
+    nr := maprepo.NewNamespaceRepo(
+        builder.Namespace("test", 
             builder.ThisRelation("owner"),
             builder.ThisRelation(""),
             builder.Relation("reader", builder.Union(builder.This(), builder.CU("owner"))),
         ),
-    }
+    )
 
     tb := builder.TupleBuilder{}
-    tuples := []model.Tuple {
+    tr := maprepo.NewTupleRepo(
         tb.ObjRel("test", "obj", "owner").Userset("test", "bob", "").Build(),
-    }
-    
+    )
 
-    expander := NewExpander()
+    ctx := context.Background()
+    expander := NewExpander(nr, tr)
 
     uset := model.Userset{
         Namespace: "test",
         ObjectId: "obj",
         Relation: "reader",
     }
-    ctx := setupCtx(tuples, ns)
+
     got, err := expander.Expand(ctx, uset)
 
     assert.Nil(t, err)
@@ -95,14 +94,4 @@ func TestExpandOnAVirtualNode(t *testing.T) {
     }
 
     assert.Equal(t, got, want)
-}
-
-func setupCtx(tuples []model.Tuple, ns []model.Namespace) context.Context {
-	tr := maprepo.NewTupleRepo(tuples)
-	nr := maprepo.NewNamespaceRepo(ns)
-
-	ctx := context.Background()
-	ctx = utils.WithTupleRepository(ctx, tr)
-	ctx = utils.WithNamespaceRepository(ctx, nr)
-        return ctx
 }

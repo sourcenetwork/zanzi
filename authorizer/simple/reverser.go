@@ -6,6 +6,7 @@ import (
 	"github.com/sourcenetwork/source-zanzibar/authorizer"
 	"github.com/sourcenetwork/source-zanzibar/graph"
 	"github.com/sourcenetwork/source-zanzibar/model"
+	"github.com/sourcenetwork/source-zanzibar/repository"
 )
 
 var _ authorizer.Reverser = (*reverser)(nil)
@@ -15,6 +16,8 @@ type reverser struct {
 	root         model.Userset
 	checkResults map[model.KeyableUset]bool
 	visitedNodes map[model.KeyableUset]struct{}
+        nsRepo repository.NamespaceRepository
+        tupleRepo repository.TupleRepository
 }
 
 func (l *reverser) ReverseLookup(ctx context.Context, user model.User) ([]model.Userset, error) {
@@ -47,7 +50,7 @@ func (l *reverser) reverseLookup(ctx context.Context, uset model.Userset) error 
 	default:
 	}
 
-	fetcher := graph.AncestorFetcher{}
+	fetcher := graph.NewFetcher(l.nsRepo, l.tupleRepo)
 	ancestors, err := fetcher.FetchAll(ctx, uset)
 	if err != nil {
 		return err
@@ -97,10 +100,12 @@ func (l *reverser) check(ctx context.Context, node model.Userset) (bool, error) 
 	return result, nil
 }
 
-func ReverserFromChecker(checker authorizer.Checker) authorizer.Reverser {
+func ReverserFromChecker(nsRepo repository.NamespaceRepository, tupleRepo repository.TupleRepository, checker authorizer.Checker) authorizer.Reverser {
 	return &reverser{
 		checker:      checker,
 		checkResults: make(map[model.KeyableUset]bool),
 		visitedNodes: make(map[model.KeyableUset]struct{}),
+                nsRepo: nsRepo,
+                tupleRepo: tupleRepo,
 	}
 }

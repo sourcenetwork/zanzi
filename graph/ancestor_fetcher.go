@@ -4,12 +4,22 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/source-zanzibar/model"
+	"github.com/sourcenetwork/source-zanzibar/repository"
 	"github.com/sourcenetwork/source-zanzibar/utils"
 )
 
 // Ancestor Fetcher is used to fetch a node's stored and logical ancestors
 type AncestorFetcher struct {
 	logicalAncestors []model.Userset
+        nsRepo repository.NamespaceRepository
+        tupleRepo repository.TupleRepository
+}
+
+func NewFetcher(nsRepo repository.NamespaceRepository, tupleRepo repository.TupleRepository) AncestorFetcher {
+    return AncestorFetcher {
+        nsRepo: nsRepo,
+        tupleRepo: tupleRepo,
+    }
 }
 
 // Return all ancestors nodes of uset
@@ -33,9 +43,7 @@ func (f *AncestorFetcher) FetchAll(ctx context.Context, uset model.Userset) ([]m
 func (f *AncestorFetcher) FetchLogicalAncestors(ctx context.Context, uset model.Userset) ([]model.Userset, error) {
 	f.logicalAncestors = nil
 
-	nsRepo := utils.GetNamespaceRepo(ctx)
-
-	referringRels, err := nsRepo.GetReferrers(uset.Namespace, uset.Relation)
+	referringRels, err := f.nsRepo.GetReferrers(uset.Namespace, uset.Relation)
 	if err != nil {
 		return nil, err
 	}
@@ -52,8 +60,7 @@ func (f *AncestorFetcher) FetchLogicalAncestors(ctx context.Context, uset model.
 
 // Fetch all directly accessible Ancestors of uset
 func (f *AncestorFetcher) FetchAncestors(ctx context.Context, uset model.Userset) ([]model.Userset, error) {
-	repo := utils.GetTupleRepo(ctx)
-	records, err := repo.GetIncomingUsersets(uset)
+	records, err := f.tupleRepo.GetIncomingUsersets(uset)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +127,7 @@ func (f *AncestorFetcher) buildAncestorsFromRule(ctx context.Context, uset model
 	case *model.Rule_TupleToUserset:
 		ttu := rule.TupleToUserset
 
-		usets, err := revertTTU(ctx, uset, relation.Name, *ttu)
+		usets, err := f.revertTTU(ctx, uset, relation.Name, *ttu)
 		if err != nil {
 			return err
 		}
@@ -128,7 +135,7 @@ func (f *AncestorFetcher) buildAncestorsFromRule(ctx context.Context, uset model
 		f.logicalAncestors = append(f.logicalAncestors, usets...)
 
 	case *model.Rule_ComputedUserset:
-		uset := revertCU(uset, relation.Name)
+		uset := f.revertCU(uset, relation.Name)
 		f.logicalAncestors = append(f.logicalAncestors, uset)
 
 	default:
@@ -139,7 +146,7 @@ func (f *AncestorFetcher) buildAncestorsFromRule(ctx context.Context, uset model
 
 // Apply a CU rule backwards and return the original node
 // Returned node is not guaranteed to exist
-func revertCU(uset model.Userset, referer string) model.Userset {
+func (f *AncestorFetcher) revertCU(uset model.Userset, referer string) model.Userset {
 	return model.Userset{
 		Namespace: uset.Namespace,
 		ObjectId:  uset.ObjectId,
@@ -149,10 +156,8 @@ func revertCU(uset model.Userset, referer string) model.Userset {
 
 // Apply a TTU rule backwards and return nodes that may reach uset
 // Returned nodes are not guaranteed to exist
-func revertTTU(ctx context.Context, uset model.Userset, referer string, ttu model.TupleToUserset) ([]model.Userset, error) {
-	repo := utils.GetTupleRepo(ctx)
-
-	tuples, err := repo.GetTuplesFromRelationAndUserObject(ttu.TuplesetRelation, uset.Namespace, uset.ObjectId)
+func (f *AncestorFetcher) revertTTU(ctx context.Context, uset model.Userset, referer string, ttu model.TupleToUserset) ([]model.Userset, error) {
+	tuples, err := f.tupleRepo.GetTuplesFromRelationAndUserObject(ttu.TuplesetRelation, uset.Namespace, uset.ObjectId)
 	if err != nil {
 		return nil, err
 	}
