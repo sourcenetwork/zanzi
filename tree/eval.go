@@ -40,8 +40,8 @@ func evalExprNode(exprNode ExpressionNode) mapset.Set[model.KeyableUset] {
 			usets = usets.Union(result)
 		}
 		return usets
-        case nil:
-            return mapset.NewSet[model.KeyableUset]()
+	case nil:
+		return mapset.NewSet[model.KeyableUset]()
 	default:
 		panic("invalid ExpressionNode type")
 	}

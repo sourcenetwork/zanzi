@@ -71,22 +71,21 @@ func TTU(tuplesetRelation, computedUsersetRelation string) *model.RewriteNode {
 }
 
 func ThisRelation(name string) *model.Relation {
-    return Relation(name, This())
+	return Relation(name, This())
 }
 
 func Relation(name string, expTree *model.RewriteNode) *model.Relation {
-    return &model.Relation {
-        Name: name,
-        Rewrite: &model.UsersetRewrite{
-            ExpressionTree: expTree,
-        },
-    }
+	return &model.Relation{
+		Name: name,
+		Rewrite: &model.UsersetRewrite{
+			ExpressionTree: expTree,
+		},
+	}
 }
-
 
 func Namespace(name string, relations ...*model.Relation) model.Namespace {
 	return model.Namespace{
 		Name:      name,
-                Relations: relations,
+		Relations: relations,
 	}
 }

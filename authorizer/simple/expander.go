@@ -15,9 +15,9 @@ var _ authorizer.Expander = (*expander)(nil)
 
 // Expander implements the authorizer Expander interface
 type expander struct {
-	trail map[model.KeyableUset]struct{}
-        tupleRepo repository.TupleRepository
-        nsRepo repository.NamespaceRepository
+	trail     map[model.KeyableUset]struct{}
+	tupleRepo repository.TupleRepository
+	nsRepo    repository.NamespaceRepository
 }
 
 func (e *expander) Expand(ctx context.Context, userset model.Userset) (tree.UsersetNode, error) {
@@ -25,13 +25,13 @@ func (e *expander) Expand(ctx context.Context, userset model.Userset) (tree.User
 
 	expTree, err := e.getExpTree(ctx, userset.Namespace, userset.Relation)
 	if err != nil {
-                err = fmt.Errorf("Expand failed for %v: %w", userset, err)
+		err = fmt.Errorf("Expand failed for %v: %w", userset, err)
 		return tree.UsersetNode{}, err
 	}
 
 	node, err := e.expandTree(ctx, expTree, userset)
 	if err != nil {
-                err = fmt.Errorf("Expand failed for %v: %w", userset, err)
+		err = fmt.Errorf("Expand failed for %v: %w", userset, err)
 		return tree.UsersetNode{}, err
 	}
 
@@ -49,35 +49,34 @@ func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset
 	default:
 	}
 
-        node := &tree.UsersetNode{
-            Userset: uset,
-        }
+	node := &tree.UsersetNode{
+		Userset: uset,
+	}
 
 	// handles a backtrail expand call such as: A -> B -> A
 	// return a non-expanded leaf with the uset in it
 	key := uset.ToKey()
 	_, ok := e.trail[key]
 	if ok {
-            return node, nil
+		return node, nil
 	}
 
-        // Handle an empty expression tree
-        // Should only happen when uset.Relation is the empty relation constant
-        if root == nil {
-            return node, nil
-        }
+	// Handle an empty expression tree
+	// Should only happen when uset.Relation is the empty relation constant
+	if root == nil {
+		return node, nil
+	}
 
 	e.trail[key] = struct{}{}
 	defer delete(e.trail, key)
 
-
 	exprNode, err := e.expandExprNode(ctx, root, uset)
 	if err != nil {
-                err = fmt.Errorf("expandTree failed for userset: %v: %v", uset, err)
+		err = fmt.Errorf("expandTree failed for userset: %v: %v", uset, err)
 		return nil, err
 	}
 
-        node.Child = exprNode
+	node.Child = exprNode
 	return node, nil
 }
 
@@ -90,8 +89,8 @@ func (e *expander) expandExprNode(ctx context.Context, root *model.RewriteNode, 
 		leaf := n.Leaf
 		return e.expandRuleNode(ctx, leaf, uset)
 	default:
-            err := fmt.Errorf("Rewrite Node type unknown: %#v", root)
-            panic(err)
+		err := fmt.Errorf("Rewrite Node type unknown: %#v", root)
+		panic(err)
 	}
 }
 
@@ -152,7 +151,7 @@ func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset mo
 
 	default:
 		err = fmt.Errorf("Unknown rule type: %#v", r)
-                panic(err)
+		panic(err)
 	}
 
 	if err != nil {
@@ -163,11 +162,11 @@ func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset mo
 }
 
 func (e *expander) getExpTree(ctx context.Context, namespace, relation string) (*model.RewriteNode, error) {
-        // Empty relation shouldn't be explcitly defined per namespace
-        // therefore we skip it
-        if relation == model.EMPTY_REL {
-            return nil, nil
-        }
+	// Empty relation shouldn't be explcitly defined per namespace
+	// therefore we skip it
+	if relation == model.EMPTY_REL {
+		return nil, nil
+	}
 
 	rel, err := e.nsRepo.GetRelation(namespace, relation)
 	if err != nil {
@@ -220,7 +219,6 @@ func (e *expander) produceThis(ctx context.Context, uset model.Userset) ([]model
 	return usets, nil
 }
 
-
 func (e *expander) produceCU(ctx context.Context, uset model.Userset, relation string) []model.Userset {
 	return []model.Userset{
 		model.Userset{
@@ -242,8 +240,8 @@ func (e *expander) produceTTU(ctx context.Context, uset model.Userset, tsetRel s
 
 	records, err := e.tupleRepo.GetRelatedUsersets(tuplesetFilter)
 	if _, ok := err.(*repository.EntityNotFound); ok {
-            // An empty result set from a TTU call cannot be considered
-            // an error, as there is no guarantee the target will exist
+		// An empty result set from a TTU call cannot be considered
+		// an error, as there is no guarantee the target will exist
 		return nil, nil
 	}
 	if err != nil {

@@ -11,15 +11,15 @@ import (
 // Ancestor Fetcher is used to fetch a node's stored and logical ancestors
 type AncestorFetcher struct {
 	logicalAncestors []model.Userset
-        nsRepo repository.NamespaceRepository
-        tupleRepo repository.TupleRepository
+	nsRepo           repository.NamespaceRepository
+	tupleRepo        repository.TupleRepository
 }
 
 func NewFetcher(nsRepo repository.NamespaceRepository, tupleRepo repository.TupleRepository) AncestorFetcher {
-    return AncestorFetcher {
-        nsRepo: nsRepo,
-        tupleRepo: tupleRepo,
-    }
+	return AncestorFetcher{
+		nsRepo:    nsRepo,
+		tupleRepo: tupleRepo,
+	}
 }
 
 // Return all ancestors nodes of uset

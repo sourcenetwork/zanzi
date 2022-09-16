@@ -16,8 +16,8 @@ type reverser struct {
 	root         model.Userset
 	checkResults map[model.KeyableUset]bool
 	visitedNodes map[model.KeyableUset]struct{}
-        nsRepo repository.NamespaceRepository
-        tupleRepo repository.TupleRepository
+	nsRepo       repository.NamespaceRepository
+	tupleRepo    repository.TupleRepository
 }
 
 func (l *reverser) ReverseLookup(ctx context.Context, user model.User) ([]model.Userset, error) {
@@ -105,7 +105,7 @@ func ReverserFromChecker(nsRepo repository.NamespaceRepository, tupleRepo reposi
 		checker:      checker,
 		checkResults: make(map[model.KeyableUset]bool),
 		visitedNodes: make(map[model.KeyableUset]struct{}),
-                nsRepo: nsRepo,
-                tupleRepo: tupleRepo,
+		nsRepo:       nsRepo,
+		tupleRepo:    tupleRepo,
 	}
 }

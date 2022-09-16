@@ -28,17 +28,17 @@ func NewTupleRepo(tuples ...model.Tuple) repository.TupleRepository {
 		}
 		records[tuple.String()] = record
 
-                key := tuple.ObjectRel.ToKey()
+		key := tuple.ObjectRel.ToKey()
 		usersets[key] = append(usersets[key], record)
 
-                revKey := tuple.User.Userset.ToKey()
+		revKey := tuple.User.Userset.ToKey()
 		reverse[revKey] = append(reverse[revKey], record)
 	}
 
 	return &tupleRepo{
 		tuples:   records,
 		usersets: usersets,
-                reverse: reverse,
+		reverse:  reverse,
 	}
 }
 
@@ -47,46 +47,46 @@ func NewTupleRepo(tuples ...model.Tuple) repository.TupleRepository {
 // Note that the repository is not persisted and only lookup operations are implemented
 func NewNamespaceRepo(ns ...model.Namespace) repository.NamespaceRepository {
 	namespaces := make(map[string]model.Namespace)
-        referrers := make(map[string][]model.Relation)
+	referrers := make(map[string][]model.Relation)
 
 	for _, namespace := range ns {
 		namespaces[namespace.Name] = namespace
 
-                for _, rel := range namespace.Relations {
+		for _, rel := range namespace.Relations {
 
-                    tree := rel.Rewrite.ExpressionTree
-                    leaves := tree.GetLeaves()
-                    for _, leaf := range leaves {
-                        switch rule := leaf.Rule.Rule.(type) {
-                        case *model.Rule_This:
-                            continue
-                        case *model.Rule_TupleToUserset:
-                            ttu := rule.TupleToUserset
-                            key := namespace.Name + ttu.ComputedUsersetRelation 
-                            referrers[key] = append(referrers[key], *rel)
+			tree := rel.Rewrite.ExpressionTree
+			leaves := tree.GetLeaves()
+			for _, leaf := range leaves {
+				switch rule := leaf.Rule.Rule.(type) {
+				case *model.Rule_This:
+					continue
+				case *model.Rule_TupleToUserset:
+					ttu := rule.TupleToUserset
+					key := namespace.Name + ttu.ComputedUsersetRelation
+					referrers[key] = append(referrers[key], *rel)
 
-                        case *model.Rule_ComputedUserset:
-                            cu := rule.ComputedUserset
-                            key := namespace.Name + cu.Relation 
-                            referrers[key] = append(referrers[key], *rel)
+				case *model.Rule_ComputedUserset:
+					cu := rule.ComputedUserset
+					key := namespace.Name + cu.Relation
+					referrers[key] = append(referrers[key], *rel)
 
-                        default:
-                            panic("uknown rule type")
-                        }
-                    }
-                }
+				default:
+					panic("uknown rule type")
+				}
+			}
+		}
 	}
 
 	return &namespaceRepo{
 		namespaces: namespaces,
-                referrers: referrers,
+		referrers:  referrers,
 	}
 }
 
 type tupleRepo struct {
 	tuples   map[string]model.TupleRecord
 	usersets map[model.KeyableUset][]model.TupleRecord
-        reverse map[model.KeyableUset][]model.TupleRecord
+	reverse  map[model.KeyableUset][]model.TupleRecord
 }
 
 func (r *tupleRepo) SetTuple(tuple model.Tuple) (model.TupleRecord, error) {
@@ -127,7 +127,7 @@ func (r *tupleRepo) GetTuplesFromRelationAndUserObject(relation string, objNames
 
 type namespaceRepo struct {
 	namespaces map[string]model.Namespace
-        referrers map[string][]model.Relation
+	referrers  map[string][]model.Relation
 }
 
 func (r *namespaceRepo) GetNamespace(namespace string) (model.Namespace, error) {
@@ -162,10 +162,10 @@ func (r *namespaceRepo) GetRelation(namespace, relation string) (model.Relation,
 }
 
 func (r *namespaceRepo) GetReferrers(namespace, relation string) ([]model.Relation, error) {
-    refs, ok := r.referrers[namespace+relation]
-    if !ok {
-	return nil, repository.NewEntityNotFound("Relation", namespace, relation)
+	refs, ok := r.referrers[namespace+relation]
+	if !ok {
+		return nil, repository.NewEntityNotFound("Relation", namespace, relation)
 
-    }
-    return refs, nil
+	}
+	return refs, nil
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/sourcenetwork/source-zanzibar/repository"
 )
 
-
 func NewChecker(nsRepo repository.NamespaceRepository, tupleRepo repository.TupleRepository) authorizer.Checker {
 	expander := NewExpander(nsRepo, tupleRepo)
 	return CheckerFromExpander(expander)
@@ -18,9 +17,9 @@ func NewChecker(nsRepo repository.NamespaceRepository, tupleRepo repository.Tupl
 
 func NewExpander(nsRepo repository.NamespaceRepository, tupleRepo repository.TupleRepository) authorizer.Expander {
 	return &expander{
-            tupleRepo: tupleRepo,
-            nsRepo: nsRepo,
-        }
+		tupleRepo: tupleRepo,
+		nsRepo:    nsRepo,
+	}
 }
 
 func NewReverser(nsRepo repository.NamespaceRepository, tupleRepo repository.TupleRepository) authorizer.Reverser {
