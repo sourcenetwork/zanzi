@@ -79,4 +79,13 @@ func (e *EntityNotFound) Error() string {
 	return fmt.Sprintf("Entity not found: entity=%v, args=%v", e.Entity, e.Args)
 }
 
+func (e *EntityNotFound) Is(target error) bool {
+	switch target.(type) {
+	case *EntityNotFound:
+		return true
+	default:
+		return false
+	}
+}
+
 var _ error = (*EntityNotFound)(nil)

@@ -58,6 +58,34 @@ func TestReverserOnDirectEdges(t *testing.T) {
 	user := model.User{
 		Userset: &model.Userset{
 			Namespace: "users",
+			ObjectId:  "alice",
+			Relation:  model.EMPTY_REL,
+		},
+		Type: model.UserType_USER,
+	}
+
+	ctx := context.Background()
+	rev := NewReverser(nr, tr)
+	got, err := rev.ReverseLookup(ctx, user)
+
+	require.Nil(t, err)
+	want := []model.Userset{
+		model.Userset{
+			Namespace: "test",
+			ObjectId:  "readme",
+			Relation:  "reader",
+		},
+	}
+
+	usetEquals(t, want, got)
+}
+
+func TestReverserWithComputedUsersetRule(t *testing.T) {
+	nr, tr := revFixture()
+
+	user := model.User{
+		Userset: &model.Userset{
+			Namespace: "users",
 			ObjectId:  "bob",
 			Relation:  model.EMPTY_REL,
 		},
@@ -72,8 +100,14 @@ func TestReverserOnDirectEdges(t *testing.T) {
 	want := []model.Userset{
 		model.Userset{
 			Namespace: "test",
-			ObjectId:  "obj",
+			ObjectId:  "readme",
 			Relation:  "owner",
+		},
+
+		{
+			Namespace: "test",
+			ObjectId:  "readme",
+			Relation:  "reader",
 		},
 
 		model.Userset{
@@ -81,7 +115,75 @@ func TestReverserOnDirectEdges(t *testing.T) {
 			ObjectId:  "group",
 			Relation:  "member",
 		},
+
+		model.Userset{
+			Namespace: "test",
+			ObjectId:  "secret-doc",
+			Relation:  "reader",
+		},
+
+		model.Userset{
+			Namespace: "test",
+			ObjectId:  "secret-doc",
+			Relation:  "owner",
+		},
 	}
 
-	require.Equal(t, want, got)
+	usetEquals(t, want, got)
+}
+
+func TestReverserWithTTURule(t *testing.T) {
+	nr, tr := revFixture()
+
+	user := model.User{
+		Userset: &model.Userset{
+			Namespace: "users",
+			ObjectId:  "charlie",
+			Relation:  model.EMPTY_REL,
+		},
+		Type: model.UserType_USER,
+	}
+
+	ctx := context.Background()
+	rev := NewReverser(nr, tr)
+	got, err := rev.ReverseLookup(ctx, user)
+
+	require.Nil(t, err)
+	want := []model.Userset{
+		{
+			Namespace: "test",
+			ObjectId:  "readme",
+			Relation:  "reader",
+		},
+
+		model.Userset{
+			Namespace: "test",
+			ObjectId:  "directory",
+			Relation:  "owner",
+		},
+
+		model.Userset{
+			Namespace: "test",
+			ObjectId:  "directory",
+			Relation:  "reader",
+		},
+	}
+
+	usetEquals(t, want, got)
+}
+
+func usetEquals(t *testing.T, want, got []model.Userset) {
+
+	wantMap := make(map[model.KeyableUset]struct{})
+	gotMap := make(map[model.KeyableUset]struct{})
+
+	for _, uset := range want {
+		wantMap[uset.ToKey()] = struct{}{}
+	}
+
+	for _, uset := range got {
+		gotMap[uset.ToKey()] = struct{}{}
+	}
+
+	require.Equal(t, wantMap, gotMap)
 }

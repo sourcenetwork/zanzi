@@ -2,6 +2,7 @@ package simple
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/sourcenetwork/source-zanzibar/authorizer"
@@ -25,13 +26,13 @@ func (e *expander) Expand(ctx context.Context, userset model.Userset) (tree.User
 
 	expTree, err := e.getExpTree(ctx, userset.Namespace, userset.Relation)
 	if err != nil {
-		err = fmt.Errorf("Expand failed for %v: %w", userset, err)
+		err = fmt.Errorf("Expand failed for %v: %v", userset, err)
 		return tree.UsersetNode{}, err
 	}
 
 	node, err := e.expandTree(ctx, expTree, userset)
 	if err != nil {
-		err = fmt.Errorf("Expand failed for %v: %w", userset, err)
+		err = fmt.Errorf("Expand failed for %v: %v", userset, err)
 		return tree.UsersetNode{}, err
 	}
 
@@ -72,7 +73,7 @@ func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset
 
 	exprNode, err := e.expandExprNode(ctx, root, uset)
 	if err != nil {
-		err = fmt.Errorf("expandTree failed for userset: %v: %v", uset, err)
+		err = fmt.Errorf("expandTree failed for userset %v: %v", uset, err)
 		return nil, err
 	}
 
@@ -98,11 +99,13 @@ func (e *expander) expandExprNode(ctx context.Context, root *model.RewriteNode, 
 func (e *expander) expandOpNode(ctx context.Context, root *model.OpNode, uset model.Userset) (*tree.OpNode, error) {
 	left, err := e.expandExprNode(ctx, root.Left, uset)
 	if err != nil {
+		err = fmt.Errorf("failed expanding opnode %v: %v", root, err)
 		return nil, err
 	}
 
 	right, err := e.expandExprNode(ctx, root.Right, uset)
 	if err != nil {
+		err = fmt.Errorf("failed expanding opnode %v: %v", root, err)
 		return nil, err
 	}
 
@@ -123,14 +126,14 @@ func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset mo
 	switch r := root.Rule.GetRule().(type) {
 
 	case *model.Rule_This:
-		neighbors, err = e.produceThis(ctx, uset)
+		neighbors, err = e.produceThis(uset)
 		rule = tree.Rule{
 			Type: tree.RuleType_THIS,
 		}
 
 	case *model.Rule_TupleToUserset:
 		ttu := r.TupleToUserset
-		neighbors, err = e.produceTTU(ctx, uset, ttu.TuplesetRelation, ttu.ComputedUsersetRelation)
+		neighbors, err = e.produceTTU(uset, ttu.TuplesetRelation, ttu.ComputedUsersetRelation)
 		rule = tree.Rule{
 			Type: tree.RuleType_TTU,
 			Args: map[string]string{
@@ -141,7 +144,7 @@ func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset mo
 
 	case *model.Rule_ComputedUserset:
 		cu := r.ComputedUserset
-		neighbors = e.produceCU(ctx, uset, cu.Relation)
+		neighbors = e.produceCU(uset, cu.Relation)
 		rule = tree.Rule{
 			Type: tree.RuleType_CU,
 			Args: map[string]string{
@@ -155,6 +158,7 @@ func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset mo
 	}
 
 	if err != nil {
+		err = fmt.Errorf("Failed expanding rule %v for node %v: %v", root.Rule.GetRule(), uset, err)
 		return nil, err
 	}
 
@@ -176,17 +180,21 @@ func (e *expander) getExpTree(ctx context.Context, namespace, relation string) (
 	return rel.Rewrite.ExpressionTree, nil
 }
 
+// Recurses and builds an expand tree for all neighbors.
+// Return a RuleNode with the built trees as children.
 func (e *expander) expandRule(ctx context.Context, uset model.Userset, neighbors []model.Userset, rule tree.Rule) (*tree.RuleNode, error) {
 	children := make([]*tree.UsersetNode, 0, len(neighbors))
 	for _, neigh := range neighbors {
 		expTree, err := e.getExpTree(ctx, neigh.Namespace, neigh.Relation)
 		if err != nil {
+			err = fmt.Errorf("failed fetching exp tree: %v", err)
 			return nil, err
 		}
 
 		// bfs call
 		child, err := e.expandTree(ctx, expTree, neigh)
 		if err != nil {
+			err = fmt.Errorf("failed building subrtree: %v", err)
 			return nil, err
 		}
 
@@ -200,17 +208,16 @@ func (e *expander) expandRule(ctx context.Context, uset model.Userset, neighbors
 	return node, nil
 }
 
-// Receive releation and object, builds userset and performs a bfs search on graph
-// for all reachable nodes.
-func (e *expander) produceThis(ctx context.Context, uset model.Userset) ([]model.Userset, error) {
+// Return direct descendents of uset
+func (e *expander) produceThis(uset model.Userset) ([]model.Userset, error) {
 	tuples, err := e.tupleRepo.GetRelatedUsersets(uset)
 
-	if _, ok := err.(*repository.EntityNotFound); ok {
+	if errors.Is(err, &repository.EntityNotFound{}) {
 		return nil, nil
 	}
 
 	if err != nil {
-		// wrap err
+		err = fmt.Errorf("failed fetching descendents for node: %v", err)
 		return nil, err
 	}
 
@@ -219,7 +226,8 @@ func (e *expander) produceThis(ctx context.Context, uset model.Userset) ([]model
 	return usets, nil
 }
 
-func (e *expander) produceCU(ctx context.Context, uset model.Userset, relation string) []model.Userset {
+// Return logical descendent made by evaluating a Computed Userset rule
+func (e *expander) produceCU(uset model.Userset, relation string) []model.Userset {
 	return []model.Userset{
 		model.Userset{
 			Namespace: uset.Namespace,
@@ -229,9 +237,9 @@ func (e *expander) produceCU(ctx context.Context, uset model.Userset, relation s
 	}
 }
 
-// Return all Nodes reachable from uset by following a TTU.
+// Return logical descendents reachable from uset by computing a TTU rule.
 // TTU rule is defined by tsetRel and cuRel
-func (e *expander) produceTTU(ctx context.Context, uset model.Userset, tsetRel string, cuRel string) ([]model.Userset, error) {
+func (e *expander) produceTTU(uset model.Userset, tsetRel string, cuRel string) ([]model.Userset, error) {
 	tuplesetFilter := model.Userset{
 		Namespace: uset.Namespace,
 		ObjectId:  uset.ObjectId,
@@ -239,12 +247,13 @@ func (e *expander) produceTTU(ctx context.Context, uset model.Userset, tsetRel s
 	}
 
 	records, err := e.tupleRepo.GetRelatedUsersets(tuplesetFilter)
-	if _, ok := err.(*repository.EntityNotFound); ok {
+	if errors.Is(err, &repository.EntityNotFound{}) {
 		// An empty result set from a TTU call cannot be considered
 		// an error, as there is no guarantee the target will exist
 		return nil, nil
 	}
 	if err != nil {
+		err = fmt.Errorf("failed to produce TTU neighbors for userset %v: %v", uset, err)
 		return nil, err
 	}
 

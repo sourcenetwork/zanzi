@@ -2,6 +2,7 @@ package simple
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sourcenetwork/source-zanzibar/authorizer"
 	"github.com/sourcenetwork/source-zanzibar/graph"
@@ -25,9 +26,12 @@ func (l *reverser) ReverseLookup(ctx context.Context, user model.User) ([]model.
 
 	err := l.reverseLookup(ctx, *user.Userset)
 	if err != nil {
-		// wrap
+		err = fmt.Errorf("failed reverse lookup for user %v: %v", user, err)
 		return nil, err
 	}
+
+	// remove subjects from result set
+	delete(l.visitedNodes, l.root.ToKey())
 
 	usets := make([]model.Userset, 0, len(l.visitedNodes))
 	for key, _ := range l.visitedNodes {

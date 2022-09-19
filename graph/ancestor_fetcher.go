@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sourcenetwork/source-zanzibar/model"
 	"github.com/sourcenetwork/source-zanzibar/repository"
@@ -45,12 +46,14 @@ func (f *AncestorFetcher) FetchLogicalAncestors(ctx context.Context, uset model.
 
 	referringRels, err := f.nsRepo.GetReferrers(uset.Namespace, uset.Relation)
 	if err != nil {
+		err = fmt.Errorf("failed FetchLogicalAncestors for %v: %v", uset, err)
 		return nil, err
 	}
 
 	for _, relation := range referringRels {
 		err := f.buildAncestorsFromRel(ctx, uset, relation)
 		if err != nil {
+			err = fmt.Errorf("failed building ancestors for %v: %v", uset, err)
 			return nil, err
 		}
 	}
@@ -62,6 +65,7 @@ func (f *AncestorFetcher) FetchLogicalAncestors(ctx context.Context, uset model.
 func (f *AncestorFetcher) FetchAncestors(ctx context.Context, uset model.Userset) ([]model.Userset, error) {
 	records, err := f.tupleRepo.GetIncomingUsersets(uset)
 	if err != nil {
+		err = fmt.Errorf("fetch ancestors failed for %v: %v", uset, err)
 		return nil, err
 	}
 	return utils.MapSlice(records, recordToObjRel), nil
@@ -76,6 +80,7 @@ func (f *AncestorFetcher) buildAncestorsFromRel(ctx context.Context, uset model.
 	for _, rule := range rules {
 		err := f.buildAncestorsFromRule(ctx, uset, relation, rule)
 		if err != nil {
+			fmt.Errorf("failed building ancestors for relation %v: %v", relation.Name, err)
 			return err
 		}
 	}
@@ -159,13 +164,14 @@ func (f *AncestorFetcher) revertCU(uset model.Userset, referer string) model.Use
 func (f *AncestorFetcher) revertTTU(ctx context.Context, uset model.Userset, referer string, ttu model.TupleToUserset) ([]model.Userset, error) {
 	tuples, err := f.tupleRepo.GetTuplesFromRelationAndUserObject(ttu.TuplesetRelation, uset.Namespace, uset.ObjectId)
 	if err != nil {
+		err = fmt.Errorf("failed reverting TTU rule %v: %v", ttu, err)
 		return nil, err
 	}
 
 	usets := utils.MapSlice(tuples, recordToObjRel)
 
-	for _, u := range usets {
-		u.Relation = referer
+	for i, _ := range usets {
+		usets[i].Relation = referer
 	}
 
 	return usets, nil

@@ -110,10 +110,7 @@ func (r *tupleRepo) GetRelatedUsersets(userset model.Userset) ([]model.TupleReco
 }
 
 func (r *tupleRepo) GetIncomingUsersets(userset model.Userset) ([]model.TupleRecord, error) {
-	records, ok := r.reverse[userset.ToKey()]
-	if !ok {
-		return nil, repository.NewEntityNotFound("Reverse Userset", userset)
-	}
+	records, _ := r.reverse[userset.ToKey()]
 	return records, nil
 }
 
@@ -122,7 +119,15 @@ func (r *tupleRepo) RemoveTuple(tuple model.Tuple) error {
 }
 
 func (r *tupleRepo) GetTuplesFromRelationAndUserObject(relation string, objNamespace string, objectId string) ([]model.TupleRecord, error) {
-	return nil, nil
+	results := make([]model.TupleRecord, 0, 10)
+	for _, record := range r.tuples {
+		tuple := record.Tuple
+		userUset := tuple.User.Userset
+		if tuple.ObjectRel.Relation == relation && userUset.ObjectId == objectId && userUset.Namespace == objNamespace {
+			results = append(results, record)
+		}
+	}
+	return results, nil
 }
 
 type namespaceRepo struct {
@@ -162,10 +167,6 @@ func (r *namespaceRepo) GetRelation(namespace, relation string) (model.Relation,
 }
 
 func (r *namespaceRepo) GetReferrers(namespace, relation string) ([]model.Relation, error) {
-	refs, ok := r.referrers[namespace+relation]
-	if !ok {
-		return nil, repository.NewEntityNotFound("Relation", namespace, relation)
-
-	}
+	refs, _ := r.referrers[namespace+relation]
 	return refs, nil
 }
