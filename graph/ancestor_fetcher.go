@@ -10,14 +10,14 @@ import (
 )
 
 // Ancestor Fetcher is used to fetch a node's stored and logical ancestors
-type AncestorFetcher struct {
-	logicalAncestors []model.Userset
+type AncestorFetcher[T model.TupleRecord] struct {
+	logicalAncestors []model.AuthNode
 	nsRepo           repository.NamespaceRepository
-	tupleRepo        repository.TupleRepository
+	tupleRepo        repository.TupleRepository[T]
 }
 
-func NewFetcher(nsRepo repository.NamespaceRepository, tupleRepo repository.TupleRepository) AncestorFetcher {
-	return AncestorFetcher{
+func NewFetcher[T model.TupleRecord](nsRepo repository.NamespaceRepository, tupleRepo repository.TupleRepository[T]) AncestorFetcher[T] {
+	return AncestorFetcher[T]{
 		nsRepo:    nsRepo,
 		tupleRepo: tupleRepo,
 	}
@@ -25,7 +25,7 @@ func NewFetcher(nsRepo repository.NamespaceRepository, tupleRepo repository.Tupl
 
 // Return all ancestors nodes of uset
 // Includes direct ancestors and logical ones (obtained by reverting rewrite rules)
-func (f *AncestorFetcher) FetchAll(ctx context.Context, uset model.Userset) ([]model.Userset, error) {
+func (f *AncestorFetcher[T]) FetchAll(ctx context.Context, uset model.AuthNode) ([]model.AuthNode, error) {
 	directAncestors, err := f.FetchAncestors(ctx, uset)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (f *AncestorFetcher) FetchAll(ctx context.Context, uset model.Userset) ([]m
 
 // fetchLogicalAncestors return TupleRecords which are "logical ancestors" of uset.
 // Logical Ancestors are edges reachable through userset rewrite rules.
-func (f *AncestorFetcher) FetchLogicalAncestors(ctx context.Context, uset model.Userset) ([]model.Userset, error) {
+func (f *AncestorFetcher[T]) FetchLogicalAncestors(ctx context.Context, uset model.AuthNode) ([]model.AuthNode, error) {
 	f.logicalAncestors = nil
 
 	referringRels, err := f.nsRepo.GetReferrers(uset.Namespace, uset.Relation)
@@ -62,8 +62,8 @@ func (f *AncestorFetcher) FetchLogicalAncestors(ctx context.Context, uset model.
 }
 
 // Fetch all directly accessible Ancestors of uset
-func (f *AncestorFetcher) FetchAncestors(ctx context.Context, uset model.Userset) ([]model.Userset, error) {
-	records, err := f.tupleRepo.GetIncomingUsersets(uset)
+func (f *AncestorFetcher[T]) FetchAncestors(ctx context.Context, uset model.AuthNode) ([]model.AuthNode, error) {
+	records, err := f.tupleRepo.GetIncomingAuthNodes(uset)
 	if err != nil {
 		err = fmt.Errorf("fetch ancestors failed for %v: %v", uset, err)
 		return nil, err
@@ -74,7 +74,7 @@ func (f *AncestorFetcher) FetchAncestors(ctx context.Context, uset model.Userset
 // Extracts all rules from relation which reference uset.Relation
 // for each matching rule, build possible ancestors and
 // append results to f.logicalAncestors
-func (f *AncestorFetcher) buildAncestorsFromRel(ctx context.Context, uset model.Userset, relation model.Relation) error {
+func (f *AncestorFetcher[T]) buildAncestorsFromRel(ctx context.Context, uset model.AuthNode, relation model.Relation) error {
 	rules := f.getReferrers(relation, uset)
 
 	for _, rule := range rules {
@@ -93,7 +93,7 @@ func (f *AncestorFetcher) buildAncestorsFromRel(ctx context.Context, uset model.
 // let uset.Relation = "Owner"
 // let relation exp tree contain a rule of type CU(Owner)
 // getReferrers would return only the Owner CU rule
-func (f *AncestorFetcher) getReferrers(relation model.Relation, uset model.Userset) []model.Rule {
+func (f *AncestorFetcher[T]) getReferrers(relation model.Relation, uset model.AuthNode) []model.Rule {
 	leaves := relation.Rewrite.ExpressionTree.GetLeaves()
 
 	referencedRel := uset.Relation
@@ -104,16 +104,16 @@ func (f *AncestorFetcher) getReferrers(relation model.Relation, uset model.Users
 		case *model.Rule_This:
 			// "This" rules never references any relation
 			continue
-		case *model.Rule_TupleToUserset:
-			// Tuple To Userset references a relation through the
-			// ComputedUserset property
-			ttu := rule.TupleToUserset
-			if ttu.ComputedUsersetRelation == referencedRel {
+		case *model.Rule_TupleToAuthNode:
+			// Tuple To AuthNode references a relation through the
+			// ComputedAuthNode property
+			ttu := rule.TupleToAuthNode
+			if ttu.ComputedAuthNodeRelation == referencedRel {
 				rules = append(rules, *leaf.Rule)
 			}
-		case *model.Rule_ComputedUserset:
-			// Computed Userset directly references a relation
-			cu := rule.ComputedUserset
+		case *model.Rule_ComputedAuthNode:
+			// Computed AuthNode directly references a relation
+			cu := rule.ComputedAuthNode
 			if cu.Relation == referencedRel {
 				rules = append(rules, *leaf.Rule)
 			}
@@ -127,10 +127,10 @@ func (f *AncestorFetcher) getReferrers(relation model.Relation, uset model.Users
 // Append potential logical ancestors of uset for a relation, rule pair
 // Assume rules were previously filtered to only contain TTU and CU rules
 // which applies to the given uset
-func (f *AncestorFetcher) buildAncestorsFromRule(ctx context.Context, uset model.Userset, relation model.Relation, rule model.Rule) error {
+func (f *AncestorFetcher[T]) buildAncestorsFromRule(ctx context.Context, uset model.AuthNode, relation model.Relation, rule model.Rule) error {
 	switch rule := rule.Rule.(type) {
-	case *model.Rule_TupleToUserset:
-		ttu := rule.TupleToUserset
+	case *model.Rule_TupleToAuthNode:
+		ttu := rule.TupleToAuthNode
 
 		usets, err := f.revertTTU(ctx, uset, relation.Name, *ttu)
 		if err != nil {
@@ -139,7 +139,7 @@ func (f *AncestorFetcher) buildAncestorsFromRule(ctx context.Context, uset model
 
 		f.logicalAncestors = append(f.logicalAncestors, usets...)
 
-	case *model.Rule_ComputedUserset:
+	case *model.Rule_ComputedAuthNode:
 		uset := f.revertCU(uset, relation.Name)
 		f.logicalAncestors = append(f.logicalAncestors, uset)
 
@@ -151,17 +151,18 @@ func (f *AncestorFetcher) buildAncestorsFromRule(ctx context.Context, uset model
 
 // Apply a CU rule backwards and return the original node
 // Returned node is not guaranteed to exist
-func (f *AncestorFetcher) revertCU(uset model.Userset, referer string) model.Userset {
-	return model.Userset{
+func (f *AncestorFetcher) revertCU(uset model.AuthNode, referer string) model.AuthNode {
+	return model.AuthNode{
 		Namespace: uset.Namespace,
 		ObjectId:  uset.ObjectId,
 		Relation:  referer,
+                Type: uset.Type
 	}
 }
 
 // Apply a TTU rule backwards and return nodes that may reach uset
 // Returned nodes are not guaranteed to exist
-func (f *AncestorFetcher) revertTTU(ctx context.Context, uset model.Userset, referer string, ttu model.TupleToUserset) ([]model.Userset, error) {
+func (f *AncestorFetcher) revertTTU(ctx context.Context, uset model.AuthNode, referer string, ttu model.TupleToAuthNode) ([]model.AuthNode, error) {
 	tuples, err := f.tupleRepo.GetTuplesFromRelationAndUserObject(ttu.TuplesetRelation, uset.Namespace, uset.ObjectId)
 	if err != nil {
 		err = fmt.Errorf("failed reverting TTU rule %v: %v", ttu, err)
@@ -178,10 +179,6 @@ func (f *AncestorFetcher) revertTTU(ctx context.Context, uset model.Userset, ref
 }
 
 // Map the object, rel userset in a tuple record to a userset
-func recordToObjRel(record model.TupleRecord) model.Userset {
-	return model.Userset{
-		Namespace: record.Tuple.ObjectRel.Namespace,
-		ObjectId:  record.Tuple.ObjectRel.ObjectId,
-		Relation:  record.Tuple.ObjectRel.Relation,
-	}
+func recordToObjRel[T model.TupleRecord](record T) model.AuthNode {
+	return record.GetObject()
 }
