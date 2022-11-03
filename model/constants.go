@@ -7,5 +7,3 @@ const ALL_USERS string = "*"
 // EMPTY_REL does constitute a valid relation to declare edges
 // EMPTY_REL should not be declared within namespaces
 const EMPTY_REL string = "..."
-
-const USERS_NAMESPACE string = "users"

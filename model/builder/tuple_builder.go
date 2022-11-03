@@ -27,7 +27,7 @@ func (b *TupleBuilder) ObjRel(namespace, objectId, relation string) *TupleBuilde
 
 func (b *TupleBuilder) User(userId string) *TupleBuilder {
 	uset := &model.Userset{
-		Namespace: model.USERS_NAMESPACE,
+		Namespace: b.userNamespace,
 		ObjectId:  userId,
 		Relation:  model.EMPTY_REL,
 	}
