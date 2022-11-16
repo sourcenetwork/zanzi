@@ -17,13 +17,13 @@ var (
 //
 // Note that the repository is not persisted and only lookup operations are implemented
 func NewTupleRepo(tuples ...model.Tuple) repository.TupleRepository {
-	records := make(map[string]model.TupleRecord)
-	usersets := make(map[model.KeyableUset][]model.TupleRecord)
-	reverse := make(map[model.KeyableUset][]model.TupleRecord)
+	records := make(map[string]model.Relationship)
+	usersets := make(map[model.KeyableUset][]model.Relationship)
+	reverse := make(map[model.KeyableUset][]model.Relationship)
 
 	for _, t := range tuples {
 		tuple := t
-		record := model.TupleRecord{
+		record := model.Relationship{
 			Tuple: &tuple,
 		}
 		records[tuple.String()] = record
@@ -84,24 +84,24 @@ func NewNamespaceRepo(ns ...model.Namespace) repository.NamespaceRepository {
 }
 
 type tupleRepo struct {
-	tuples   map[string]model.TupleRecord
-	usersets map[model.KeyableUset][]model.TupleRecord
-	reverse  map[model.KeyableUset][]model.TupleRecord
+	tuples   map[string]model.Relationship
+	usersets map[model.KeyableUset][]model.Relationship
+	reverse  map[model.KeyableUset][]model.Relationship
 }
 
-func (r *tupleRepo) SetTuple(tuple model.Tuple) (model.TupleRecord, error) {
-	return model.TupleRecord{}, fmt.Errorf("SetTuple not implemented")
+func (r *tupleRepo) SetTuple(tuple model.Tuple) (model.Relationship, error) {
+	return model.Relationship{}, fmt.Errorf("SetTuple not implemented")
 }
 
-func (r *tupleRepo) GetTuple(tuple model.Tuple) (model.TupleRecord, error) {
+func (r *tupleRepo) GetTuple(tuple model.Tuple) (model.Relationship, error) {
 	record, ok := r.tuples[tuple.String()]
 	if !ok {
-		return model.TupleRecord{}, repository.NewEntityNotFound("Tuple", tuple)
+		return model.Relationship{}, repository.NewEntityNotFound("Tuple", tuple)
 	}
 	return record, nil
 }
 
-func (r *tupleRepo) GetRelatedUsersets(userset model.Userset) ([]model.TupleRecord, error) {
+func (r *tupleRepo) GetRelatedUsersets(userset model.AuthNode) ([]model.Relationship, error) {
 	usets, ok := r.usersets[userset.ToKey()]
 	if !ok {
 		return nil, repository.NewEntityNotFound("Userset", userset)
@@ -109,7 +109,7 @@ func (r *tupleRepo) GetRelatedUsersets(userset model.Userset) ([]model.TupleReco
 	return usets, nil
 }
 
-func (r *tupleRepo) GetIncomingUsersets(userset model.Userset) ([]model.TupleRecord, error) {
+func (r *tupleRepo) GetIncomingUsersets(userset model.AuthNode) ([]model.Relationship, error) {
 	records, _ := r.reverse[userset.ToKey()]
 	return records, nil
 }
@@ -118,8 +118,8 @@ func (r *tupleRepo) RemoveTuple(tuple model.Tuple) error {
 	return fmt.Errorf("RemoveTuple not implemented")
 }
 
-func (r *tupleRepo) GetTuplesFromRelationAndUserObject(relation string, objNamespace string, objectId string) ([]model.TupleRecord, error) {
-	results := make([]model.TupleRecord, 0, 10)
+func (r *tupleRepo) GetTuplesFromRelationAndUserObject(relation string, objNamespace string, objectId string) ([]model.Relationship, error) {
+	results := make([]model.Relationship, 0, 10)
 	for _, record := range r.tuples {
 		tuple := record.Tuple
 		userUset := tuple.User.Userset

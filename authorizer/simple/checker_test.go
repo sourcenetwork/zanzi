@@ -39,7 +39,7 @@ func fixture() (repository.NamespaceRepository, repository.TupleRepository) {
 	// Alice is a reader of readme
 	// bob is an owner of readme
 	// charlie is an owner of readme
-	tb := builder.WithUserNamespace("users")
+	tb := builder.WithActorNamespace("users")
 	tr := maprepo.NewTupleRepo(
 		tb.ObjRel("test", "readme", "reader").User("alice").Build(),
 		tb.ObjRel("test", "readme", "owner").Userset("test", "group", "member").Build(),

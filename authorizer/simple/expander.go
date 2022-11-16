@@ -16,13 +16,13 @@ var _ authorizer.Expander = (*expander)(nil)
 
 // Expander implements the authorizer Expander interface
 type expander struct {
-	trail     map[model.KeyableUset]struct{}
+	trail     map[model.AuthNode]struct{}
 	tupleRepo repository.TupleRepository
 	nsRepo    repository.NamespaceRepository
 }
 
-func (e *expander) Expand(ctx context.Context, userset model.Userset) (tree.UsersetNode, error) {
-	e.trail = make(map[model.KeyableUset]struct{})
+func (e *expander) Expand(ctx context.Context, userset model.AuthNode) (tree.UsersetNode, error) {
+	e.trail = make(map[model.AuthNode]struct{})
 
 	expTree, err := e.getExpTree(ctx, userset.Namespace, userset.Relation)
 	if err != nil {
@@ -41,7 +41,7 @@ func (e *expander) Expand(ctx context.Context, userset model.Userset) (tree.User
 
 // Expand an Userset Rewrite Expression Tree
 // keeps a trail through the depth search to avoid cyclic expands
-func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset model.Userset) (*tree.UsersetNode, error) {
+func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset model.AuthNode) (*tree.UsersetNode, error) {
 	// expandTree is the recusion entrypoint for Expand subcalls
 	// Therefore it's a centralized point to check whether ctx is still valid before continuing
 	select {
@@ -56,8 +56,7 @@ func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset
 
 	// handles a backtrail expand call such as: A -> B -> A
 	// return a non-expanded leaf with the uset in it
-	key := uset.ToKey()
-	_, ok := e.trail[key]
+	_, ok := e.trail[uset]
 	if ok {
 		return node, nil
 	}
@@ -68,8 +67,8 @@ func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset
 		return node, nil
 	}
 
-	e.trail[key] = struct{}{}
-	defer delete(e.trail, key)
+	e.trail[uset] = struct{}{}
+	defer delete(e.trail, uset)
 
 	exprNode, err := e.expandExprNode(ctx, root, uset)
 	if err != nil {
@@ -81,7 +80,7 @@ func (e *expander) expandTree(ctx context.Context, root *model.RewriteNode, uset
 	return node, nil
 }
 
-func (e *expander) expandExprNode(ctx context.Context, root *model.RewriteNode, uset model.Userset) (tree.ExpressionNode, error) {
+func (e *expander) expandExprNode(ctx context.Context, root *model.RewriteNode, uset model.AuthNode) (tree.ExpressionNode, error) {
 	switch n := root.Node.(type) {
 	case *model.RewriteNode_Opnode:
 		opnode := n.Opnode
@@ -96,7 +95,7 @@ func (e *expander) expandExprNode(ctx context.Context, root *model.RewriteNode, 
 }
 
 // Expand OpNode by expand its left and right children
-func (e *expander) expandOpNode(ctx context.Context, root *model.OpNode, uset model.Userset) (*tree.OpNode, error) {
+func (e *expander) expandOpNode(ctx context.Context, root *model.OpNode, uset model.AuthNode) (*tree.OpNode, error) {
 	left, err := e.expandExprNode(ctx, root.Left, uset)
 	if err != nil {
 		err = fmt.Errorf("failed expanding opnode %v: %v", root, err)
@@ -117,9 +116,9 @@ func (e *expander) expandOpNode(ctx context.Context, root *model.OpNode, uset mo
 	return node, nil
 }
 
-func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset model.Userset) (*tree.RuleNode, error) {
+func (e *expander) expandRuleNode(ctx context.Context, root *model.Leaf, uset model.AuthNode) (*tree.RuleNode, error) {
 
-	var neighbors []model.Userset
+	var neighbors []model.AuthNode
 	var rule tree.Rule
 	var err error
 
@@ -182,7 +181,7 @@ func (e *expander) getExpTree(ctx context.Context, namespace, relation string) (
 
 // Recurses and builds an expand tree for all neighbors.
 // Return a RuleNode with the built trees as children.
-func (e *expander) expandRule(ctx context.Context, uset model.Userset, neighbors []model.Userset, rule tree.Rule) (*tree.RuleNode, error) {
+func (e *expander) expandRule(ctx context.Context, uset model.AuthNode, neighbors []model.AuthNode, rule tree.Rule) (*tree.RuleNode, error) {
 	children := make([]*tree.UsersetNode, 0, len(neighbors))
 	for _, neigh := range neighbors {
 		expTree, err := e.getExpTree(ctx, neigh.Namespace, neigh.Relation)
@@ -209,7 +208,7 @@ func (e *expander) expandRule(ctx context.Context, uset model.Userset, neighbors
 }
 
 // Return direct descendents of uset
-func (e *expander) produceThis(uset model.Userset) ([]model.Userset, error) {
+func (e *expander) produceThis(uset model.AuthNode) ([]model.AuthNode, error) {
 	tuples, err := e.tupleRepo.GetRelatedUsersets(uset)
 
 	if errors.Is(err, &repository.EntityNotFound{}) {
@@ -227,9 +226,9 @@ func (e *expander) produceThis(uset model.Userset) ([]model.Userset, error) {
 }
 
 // Return logical descendent made by evaluating a Computed Userset rule
-func (e *expander) produceCU(uset model.Userset, relation string) []model.Userset {
-	return []model.Userset{
-		model.Userset{
+func (e *expander) produceCU(uset model.AuthNode, relation string) []model.AuthNode {
+	return []model.AuthNode{
+		model.AuthNode{
 			Namespace: uset.Namespace,
 			ObjectId:  uset.ObjectId,
 			Relation:  relation,
@@ -239,8 +238,8 @@ func (e *expander) produceCU(uset model.Userset, relation string) []model.Userse
 
 // Return logical descendents reachable from uset by computing a TTU rule.
 // TTU rule is defined by tsetRel and cuRel
-func (e *expander) produceTTU(uset model.Userset, tsetRel string, cuRel string) ([]model.Userset, error) {
-	tuplesetFilter := model.Userset{
+func (e *expander) produceTTU(uset model.AuthNode, tsetRel string, cuRel string) ([]model.AuthNode, error) {
+	tuplesetFilter := model.AuthNode{
 		Namespace: uset.Namespace,
 		ObjectId:  uset.ObjectId,
 		Relation:  tsetRel,
@@ -266,10 +265,6 @@ func (e *expander) produceTTU(uset model.Userset, tsetRel string, cuRel string) 
 }
 
 // Map a record's User to an Userset
-func tupleToUserset(tuple model.TupleRecord) model.Userset {
-	return model.Userset{
-		Namespace: tuple.Tuple.User.Userset.Namespace,
-		ObjectId:  tuple.Tuple.User.Userset.ObjectId,
-		Relation:  tuple.Tuple.User.Userset.Relation,
-	}
+func tupleToUserset(tuple model.Relationship) model.AuthNode {
+    return tuple.GetSubject()
 }

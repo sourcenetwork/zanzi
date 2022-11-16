@@ -1,0 +1,45 @@
+/* File contains types representing Namespaces.
+ *
+ * Namespaces declare client application specific contexts and relations.
+ * A Namespace definition cointains a name and a set of relations.
+ * Namespaces are identified by their name, therefore names should be unique.  */
+
+syntax = "proto3";
+
+package internal.model.policy;
+option go_package = "github.com/sourcenetwork/source-zanzibar/model/policy";
+
+import "internal/model/policy/tree.proto";
+
+
+message Policy {
+    string id = 1;
+    string name = 2;
+    // creation date
+    // last modified
+    // creator
+    repeated Resource resources = 3;
+    repeated Actor actors = 4;
+    map<string, string> attributes = 10;
+}
+
+message Actor {
+    string name = 1;
+    repeated string types = 2;
+}
+
+message Resource {
+    string name = 1;
+    repeated Relation relations = 2;
+    repeated Permission permissions = 3;
+}
+
+message Relation {
+    string name = 1;
+    repeated string types = 2;
+}
+
+message Permission {
+    string name = 1;
+    Tree rewrite_tree = 2;
+}

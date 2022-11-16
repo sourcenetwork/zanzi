@@ -4,72 +4,61 @@ import (
 	"github.com/sourcenetwork/source-zanzibar/model"
 )
 
-type TupleBuilder struct {
-	objRel        *model.Userset
-	user          *model.User
-	userNamespace string
+type RelationshipBuilder struct {
+	objRel        model.AuthNode
+	subj          model.AuthNode
+	actorNamespace string
 }
 
-func WithUserNamespace(ns string) TupleBuilder {
-	b := TupleBuilder{}
-	b.userNamespace = ns
+func WithActorNamespace(ns string) RelationshipBuilder {
+	b := RelationshipBuilder{}
+	b.actorNamespace = ns
 	return b
 }
 
-func (b *TupleBuilder) ObjRel(namespace, objectId, relation string) *TupleBuilder {
-	b.objRel = &model.Userset{
-		Namespace: namespace,
-		ObjectId:  objectId,
-		Relation:  relation,
-	}
+func (b *RelationshipBuilder) ObjRel(namespace, objectId, relation string) *RelationshipBuilder {
+        b.objRel = ObjRelation(namespace, objectId, relation)
 	return b
 }
 
-func (b *TupleBuilder) User(userId string) *TupleBuilder {
-	uset := &model.Userset{
-		Namespace: b.userNamespace,
-		ObjectId:  userId,
-		Relation:  model.EMPTY_REL,
-	}
-	b.user = &model.User{
-		Type:    model.UserType_USER,
-		Userset: uset,
-	}
+func (b *RelationshipBuilder) WithActor(userId string) *RelationshipBuilder {
+        b.subj = Actor(b.actorNamespace, userId)
 	return b
 }
 
-func (b *TupleBuilder) Userset(namespace, objectId, relation string) *TupleBuilder {
-	uset := &model.Userset{
-		Namespace: namespace,
-		ObjectId:  objectId,
-		Relation:  relation,
-	}
-	b.user = &model.User{
-		Type:    model.UserType_USER_SET,
-		Userset: uset,
-	}
+func (b *RelationshipBuilder) WithAttribute(namespace, attribute string) *RelationshipBuilder {
+        b.subj = Attribute(namespace, attribute)
 	return b
 }
 
-func (b *TupleBuilder) Build() model.Tuple {
-	return model.Tuple{
-		ObjectRel: b.objRel,
-		User:      b.user,
+func (b *RelationshipBuilder) Build() model.Relationship {
+	return model.Relationship{
+            ObjRelation: b.objRel,
+            Subject: b.subj,
 	}
 }
 
-func Userset(ns, obj, rel string) model.Userset {
-	return model.Userset{
+func ObjRelation(ns, obj, rel string) model.AuthNode {
+	return model.AuthNode{
 		Namespace: ns,
 		ObjectId:  obj,
 		Relation:  rel,
+                Type: model.NodeType_OBJECT_RELATION,
 	}
 }
 
-func User(ns, obj string) model.Userset {
-	return model.Userset{
+func Attribute(ns, obj string) model.AuthNode {
+	return model.AuthNode{
 		Namespace: ns,
 		ObjectId:  obj,
-		Relation:  model.EMPTY_REL,
+                Type: model.NodeType_ATTRIBUTE,
+	}
+}
+
+func Actor(ns, obj string) model.AuthNode {
+	return model.AuthNode{
+		Namespace: ns,
+		ObjectId:  obj,
+                Type: model.NodeType_ACTOR,
 	}
 }

@@ -39,7 +39,7 @@ func revFixture() (repository.NamespaceRepository, repository.TupleRepository) {
 	// Alice is a reader of readme
 	// bob is an owner of readme
 	// charlie is an owner of readme
-	tb := builder.WithUserNamespace("users")
+	tb := builder.WithActorNamespace("users")
 	tr := maprepo.NewTupleRepo(
 		tb.ObjRel("test", "readme", "reader").User("alice").Build(),
 		tb.ObjRel("test", "readme", "owner").Userset("test", "group", "member").Build(),
@@ -56,7 +56,7 @@ func TestReverserOnDirectEdges(t *testing.T) {
 	nr, tr := revFixture()
 
 	user := model.User{
-		Userset: &model.Userset{
+		Userset: &model.AuthNode{
 			Namespace: "users",
 			ObjectId:  "alice",
 			Relation:  model.EMPTY_REL,
@@ -69,8 +69,8 @@ func TestReverserOnDirectEdges(t *testing.T) {
 	got, err := rev.ReverseLookup(ctx, user)
 
 	require.Nil(t, err)
-	want := []model.Userset{
-		model.Userset{
+	want := []model.AuthNode{
+		model.AuthNode{
 			Namespace: "test",
 			ObjectId:  "readme",
 			Relation:  "reader",
@@ -84,7 +84,7 @@ func TestReverserWithComputedUsersetRule(t *testing.T) {
 	nr, tr := revFixture()
 
 	user := model.User{
-		Userset: &model.Userset{
+		Userset: &model.AuthNode{
 			Namespace: "users",
 			ObjectId:  "bob",
 			Relation:  model.EMPTY_REL,
@@ -97,8 +97,8 @@ func TestReverserWithComputedUsersetRule(t *testing.T) {
 	got, err := rev.ReverseLookup(ctx, user)
 
 	require.Nil(t, err)
-	want := []model.Userset{
-		model.Userset{
+	want := []model.AuthNode{
+		model.AuthNode{
 			Namespace: "test",
 			ObjectId:  "readme",
 			Relation:  "owner",
@@ -110,19 +110,19 @@ func TestReverserWithComputedUsersetRule(t *testing.T) {
 			Relation:  "reader",
 		},
 
-		model.Userset{
+		model.AuthNode{
 			Namespace: "test",
 			ObjectId:  "group",
 			Relation:  "member",
 		},
 
-		model.Userset{
+		model.AuthNode{
 			Namespace: "test",
 			ObjectId:  "secret-doc",
 			Relation:  "reader",
 		},
 
-		model.Userset{
+		model.AuthNode{
 			Namespace: "test",
 			ObjectId:  "secret-doc",
 			Relation:  "owner",
@@ -136,7 +136,7 @@ func TestReverserWithTTURule(t *testing.T) {
 	nr, tr := revFixture()
 
 	user := model.User{
-		Userset: &model.Userset{
+		Userset: &model.AuthNode{
 			Namespace: "users",
 			ObjectId:  "charlie",
 			Relation:  model.EMPTY_REL,
@@ -149,20 +149,20 @@ func TestReverserWithTTURule(t *testing.T) {
 	got, err := rev.ReverseLookup(ctx, user)
 
 	require.Nil(t, err)
-	want := []model.Userset{
+	want := []model.AuthNode{
 		{
 			Namespace: "test",
 			ObjectId:  "readme",
 			Relation:  "reader",
 		},
 
-		model.Userset{
+		model.AuthNode{
 			Namespace: "test",
 			ObjectId:  "directory",
 			Relation:  "owner",
 		},
 
-		model.Userset{
+		model.AuthNode{
 			Namespace: "test",
 			ObjectId:  "directory",
 			Relation:  "reader",
@@ -172,7 +172,7 @@ func TestReverserWithTTURule(t *testing.T) {
 	usetEquals(t, want, got)
 }
 
-func usetEquals(t *testing.T, want, got []model.Userset) {
+func usetEquals(t *testing.T, want, got []model.AuthNode) {
 
 	wantMap := make(map[model.KeyableUset]struct{})
 	gotMap := make(map[model.KeyableUset]struct{})

@@ -1,52 +1,7 @@
-/* File contains types representing Namespaces.
- *
- * Namespaces declare client application specific contexts and relations.
- * A Namespace definition cointains a name and a set of relations.
- * Namespaces are identified by their name, therefore names should be unique.  */
-
 syntax = "proto3";
 
-package model;
-
-option go_package = "github.com/sourcenetwork/source-zanzibar/model";
-
-
-message Namespace {
-    string name = 1;
-    repeated Relation relations = 2;
-}
-
-message Relation {
-    string name = 1;
-    UsersetRewrite rewrite = 2;
-}
-
-message UsersetRewrite {
-    RewriteNode expressionTree = 1;
-}
-
-message RewriteNode {
-    oneof node {
-        OpNode opnode = 1;
-        Leaf leaf = 2;
-    }
-}
-
-message OpNode {
-    RewriteNode left = 1;
-    RewriteNode right = 2;
-    Operation op = 3;
-}
-
-message Leaf {
-    Rule rule = 1;
-}
-
-enum Operation {
-    UNION = 0;
-    INTERSECTION = 1;
-    DIFFERENCE = 2;
-}
+package internal.model.policy;
+option go_package = "github.com/sourcenetwork/source-zanzibar/internal/model/policy";
 
 
 message Rule {

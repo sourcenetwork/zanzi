@@ -6,8 +6,8 @@ build:
 	go build -o build/auth-cli cmd/auth-cli/main.go
 
 .PHONY: proto
-proto: proto/*/*.proto
-	protoc --go_out=. --go_opt=module=${GO_MOD} proto/*/*.proto
+proto:
+	protoc --go_out=. -Iproto --go_opt=module=${GO_MOD} $$(find . -iname '*.proto' | sort)
 
 .PHONY: test
 test:

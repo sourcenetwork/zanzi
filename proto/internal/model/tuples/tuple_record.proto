@@ -1,0 +1,32 @@
+// File contains types representing the Zanzibar's Permission Tuple data model. 
+// The tuple data structure is used to persist the relation tuples in the datastore
+
+syntax = "proto3";
+
+package internal.model.tuple;
+
+option go_package = "github.com/sourcenetwork/source-zanzibar/internal/model/tuple";
+
+import "google/protobuf/any.proto";
+
+
+// ObjRel represents a `Userser` in Zanzibar terminology.
+// It represents a Node in Zanzibar's relation graph.
+message ObjRelRecord {
+    string namespace = 1;
+    string id = 2;
+    string relation = 3;
+}
+
+
+// TupleRecord represents a Zanzibar Tuple that gets persisted
+message TupleRecord {
+    // Object and relation relation information
+    ObjRelRecord object_rel = 1;
+
+    // Actor, object or actor group node
+    ObjRelRecord actor = 2;
+
+    // Satellite data users can optionally embed within a tuple
+    optional google.protobuf.Any embedded_data = 3;
+}

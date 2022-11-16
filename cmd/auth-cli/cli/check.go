@@ -21,13 +21,13 @@ var checkCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(5),
 	Run: func(cmd *cobra.Command, args []string) {
 
-		objUset := model.Userset{
+		objUset := model.AuthNode{
 			Namespace: args[0],
 			ObjectId:  args[1],
 			Relation:  args[2],
 		}
 
-		user := model.Userset{
+		user := model.AuthNode{
 			Namespace: args[3],
 			ObjectId:  args[4],
 			Relation:  model.EMPTY_REL,

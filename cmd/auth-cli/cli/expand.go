@@ -22,7 +22,7 @@ var expandCmd = &cobra.Command{
 	Short: "Expand the Relation graph for a root userset and target user",
 	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
-		uset := model.Userset{
+		uset := model.AuthNode{
 			Namespace: args[0],
 			ObjectId:  args[1],
 			Relation:  args[2],

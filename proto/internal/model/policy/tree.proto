@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package internal.model.policy;
+option go_package = "github.com/sourcenetwork/source-zanzibar/model/policy";
+
+import "internal/model/policy/rules.proto";
+
+
+enum Operation {
+    UNION = 0;
+    INTERSECTION = 1;
+    DIFFERENCE = 2;
+}
+
+message Tree {
+    oneof node {
+        OpNode opnode = 1;
+        Leaf leaf = 2;
+    }
+}
+
+message OpNode {
+    Tree left = 1;
+    Tree right = 2;
+    Operation op = 3;
+}
+
+message Leaf {
+    Rule rule = 1;
+}

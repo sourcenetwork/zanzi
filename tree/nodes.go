@@ -60,7 +60,7 @@ func (n *RuleNode) isExpressionNode() {}
 // the UsersetNode may form multiple DFS trees which shall be combined
 // through operations defined in OpNode
 type UsersetNode struct {
-	Userset model.Userset
+	Userset model.AuthNode
 	Child   ExpressionNode
 }
 

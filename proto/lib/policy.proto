@@ -1,0 +1,37 @@
+// Public Policy definitions
+
+syntax = "proto3";
+
+package lib;
+
+option go_package = "github.com/sourcenetwork/source-zanzibar/lib/types";
+
+
+message Policy {
+    string id = 1;
+    string name = 2;
+    repeated Resource resources = 3;
+    repeated Actor actors = 4;
+    map<string, string> attributes = 10;
+}
+
+message Actor {
+    string name = 1;
+    repeated string kinds = 2;
+}
+
+message Resource {
+    string name = 1;
+    repeated Relation relations = 2;
+    repeated Permission permisions = 3;
+}
+
+message Relation {
+    string name = 1;
+    repeated string kinds = 2;
+}
+
+message Permission {
+    string name = 1;
+    string relation_expression = 2;
+}

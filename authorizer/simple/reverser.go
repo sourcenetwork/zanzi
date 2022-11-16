@@ -14,14 +14,14 @@ var _ authorizer.Reverser = (*reverser)(nil)
 
 type reverser struct {
 	checker      authorizer.Checker
-	root         model.Userset
+	root         model.AuthNode
 	checkResults map[model.KeyableUset]bool
 	visitedNodes map[model.KeyableUset]struct{}
 	nsRepo       repository.NamespaceRepository
 	tupleRepo    repository.TupleRepository
 }
 
-func (l *reverser) ReverseLookup(ctx context.Context, user model.User) ([]model.Userset, error) {
+func (l *reverser) ReverseLookup(ctx context.Context, user model.User) ([]model.AuthNode, error) {
 	l.root = *user.Userset
 
 	err := l.reverseLookup(ctx, *user.Userset)
@@ -33,7 +33,7 @@ func (l *reverser) ReverseLookup(ctx context.Context, user model.User) ([]model.
 	// remove subjects from result set
 	delete(l.visitedNodes, l.root.ToKey())
 
-	usets := make([]model.Userset, 0, len(l.visitedNodes))
+	usets := make([]model.AuthNode, 0, len(l.visitedNodes))
 	for key, _ := range l.visitedNodes {
 		usets = append(usets, key.ToUset())
 	}
@@ -45,7 +45,7 @@ func (l *reverser) ReverseLookup(ctx context.Context, user model.User) ([]model.
 // for the user specified during reverser construction
 //
 // Uses `checker` to validate whether potential neighbors are in fact reachable.
-func (l *reverser) reverseLookup(ctx context.Context, uset model.Userset) error {
+func (l *reverser) reverseLookup(ctx context.Context, uset model.AuthNode) error {
 	l.visitedNodes[uset.ToKey()] = struct{}{}
 
 	select {
@@ -87,7 +87,7 @@ func (l *reverser) reverseLookup(ctx context.Context, uset model.Userset) error 
 }
 
 // check whether a node should be included in the final result set
-func (l *reverser) check(ctx context.Context, node model.Userset) (bool, error) {
+func (l *reverser) check(ctx context.Context, node model.AuthNode) (bool, error) {
 	key := node.ToKey()
 
 	result, ok := l.checkResults[key]

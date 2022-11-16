@@ -21,7 +21,7 @@ var reverseCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		user := model.User{
-			Userset: &model.Userset{
+			Userset: &model.AuthNode{
 				Namespace: args[0],
 				ObjectId:  args[1],
 				Relation:  model.EMPTY_REL,

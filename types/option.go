@@ -1,4 +1,4 @@
-package utils
+package types
 
 // Option type is a container for a value
 // Option may or may not contain value
@@ -35,4 +35,3 @@ func None[T any]() Option[T] {
         empty: true,
     }
 }
-

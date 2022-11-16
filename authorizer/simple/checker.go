@@ -16,7 +16,7 @@ type checker struct {
 
 // Simple Check implementation leverages a full expand in order to verify whether
 // userset is included in final expand tree
-func (c *checker) Check(ctx context.Context, objRel model.Userset, user model.Userset) (bool, error) {
+func (c *checker) Check(ctx context.Context, objRel model.AuthNode, user model.AuthNode) (bool, error) {
 	root, err := c.expander.Expand(ctx, objRel)
 	if err != nil {
 		// wrap

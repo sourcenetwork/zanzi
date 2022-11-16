@@ -24,7 +24,7 @@ func TestExpandOnAVirtualNode(t *testing.T) {
 		),
 	)
 
-	tb := builder.TupleBuilder{}
+	tb := builder.RelationshipBuilder{}
 	tr := maprepo.NewTupleRepo(
 		tb.ObjRel("test", "obj", "owner").Userset("test", "bob", "").Build(),
 	)
@@ -32,7 +32,7 @@ func TestExpandOnAVirtualNode(t *testing.T) {
 	ctx := context.Background()
 	expander := NewExpander(nr, tr)
 
-	uset := model.Userset{
+	uset := model.AuthNode{
 		Namespace: "test",
 		ObjectId:  "obj",
 		Relation:  "reader",
@@ -61,7 +61,7 @@ func TestExpandOnAVirtualNode(t *testing.T) {
 				},
 				Children: []*tree.UsersetNode{
 					&tree.UsersetNode{
-						Userset: model.Userset{
+						Userset: model.AuthNode{
 							Namespace: "test",
 							ObjectId:  "obj",
 							Relation:  "owner",
@@ -72,7 +72,7 @@ func TestExpandOnAVirtualNode(t *testing.T) {
 							},
 							Children: []*tree.UsersetNode{
 								&tree.UsersetNode{
-									Userset: model.Userset{
+									Userset: model.AuthNode{
 										Namespace: "test",
 										ObjectId:  "bob",
 										Relation:  "",

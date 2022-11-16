@@ -2,14 +2,12 @@
 package repository
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/source-zanzibar/model"
 	"github.com/sourcenetwork/source-zanzibar/utils"
 )
 
 // TupleRepository abstract interfacing with tuple storage.
-type TupleRepository[T model.TupleRecord] interface {
+type TupleRepository[T model.Relationship] interface {
 	// Store a new tuple. Update all indexes
 	SetTuple(tuple T) error
 
@@ -41,7 +39,7 @@ type TupleRepository[T model.TupleRecord] interface {
 // Contract: methods should return instance of `EntityNotFound`
 // when some operation failed because the lookup resulted in an empty set.
 type NamespaceRepository interface {
-	GetNamespace(namespace string) (types.Option[model.Namespace], error)
+	GetNamespace(namespace string) (utils.Option[model.Namespace], error)
 
 	SetNamespace(namespace model.Namespace) (model.Namespace, error)
 

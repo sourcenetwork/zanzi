@@ -41,7 +41,7 @@ func buildSampleNamespaceRepo() repository.NamespaceRepository {
 }
 
 func buildSampleTupleRepo() repository.TupleRepository {
-	tb := builder.WithUserNamespace("staff")
+	tb := builder.WithActorNamespace("staff")
 	tr := maprepo.NewTupleRepo(
 		tb.ObjRel("department", "eng", "head").User("John").Build(),
 

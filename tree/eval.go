@@ -6,11 +6,11 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 )
 
-func Eval(node *UsersetNode) mapset.Set[model.KeyableUset] {
+func Eval(node *UsersetNode) mapset.Set[model.AuthNode] {
 	return evalExprNode(node.Child)
 }
 
-func apply(left, right mapset.Set[model.KeyableUset], op model.Operation) mapset.Set[model.KeyableUset] {
+func apply(left, right mapset.Set[model.AuthNode], op model.Operation) mapset.Set[model.AuthNode] {
 	switch op {
 	case model.Operation_UNION:
 		return left.Union(right)
@@ -23,7 +23,7 @@ func apply(left, right mapset.Set[model.KeyableUset], op model.Operation) mapset
 	}
 }
 
-func evalExprNode(exprNode ExpressionNode) mapset.Set[model.KeyableUset] {
+func evalExprNode(exprNode ExpressionNode) mapset.Set[model.AuthNode] {
 	switch node := exprNode.(type) {
 	case *OpNode:
 		left := evalExprNode(node.Left)
@@ -31,17 +31,17 @@ func evalExprNode(exprNode ExpressionNode) mapset.Set[model.KeyableUset] {
 		return apply(left, right, node.JoinOp)
 
 	case *RuleNode:
-		usets := mapset.NewSet[model.KeyableUset]()
+		usets := mapset.NewSet[model.AuthNode]()
 		// This is bad
 		for _, child := range node.Children {
-			key := child.Userset.ToKey()
-			usets.Add(key)
+			uset := child.Userset
+			usets.Add(uset)
 			result := evalExprNode(child.Child)
 			usets = usets.Union(result)
 		}
 		return usets
 	case nil:
-		return mapset.NewSet[model.KeyableUset]()
+		return mapset.NewSet[model.AuthNode]()
 	default:
 		panic("invalid ExpressionNode type")
 	}
