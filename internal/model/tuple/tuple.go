@@ -2,6 +2,7 @@ package tuples
 
 import (
     "google.golang.org/protobuf/proto"
+    "google.golang.org/protobuf/types/known/anypb"
 )
 
 
@@ -14,7 +15,7 @@ type ObjRel struct {
 }
 
 
-func (o *ObjRel) ToObjRelRec() ObjRelRecord {
+func (o *ObjRel) ToRec() ObjRelRecord {
     return ObjRelRecord {
         Namespace: o.Namespace,
         Id: o.Id,
@@ -22,7 +23,7 @@ func (o *ObjRel) ToObjRelRec() ObjRelRecord {
     }
 }
 
-func (o *ObjRelRecord) ToObjRel() ObjRel {
+func (o *ObjRelRecord) ToRel() ObjRel {
     return ObjRel {
         Namespace: o.Namespace,
         Id: o.Id,
@@ -40,20 +41,31 @@ type Tuple[T proto.Message] struct {
     Type TupleType
 }
 
-func (t *Tuple[T]) ToRecord() TupleRecord {
+func (t *Tuple[T]) ToRec() TupleRecord {
+    data, err := anypb.New(t.Data)
+    if err != nil {
+        panic(err)
+    }
+
     return TupleRecord {
-        ObjectRel: t.ObjectRel.ToObjRelRec(),
-        Actor: t.Actor.ToObjRelRec(),
+        ObjectRel: &t.ObjectRel.ToObjRelRec(),
+        Actor: &t.Actor.ToObjRelRec(),
         Type: t.Type,
-        Data: T{} // TODO
+        Data: data,
     }
 }
 
 func (t *TupleRecord) ToTuple[T proto.Message]() Tuple[T] {
+    var data T
+    err := any.UnmarshalTo(&data)
+    if err != nil {
+        panic(err)
+    }
+
     return Tuple[T] {
         ObjectRel: t.ObjectRel.ToObjRel(),
         Actor: t.Actor.ToObjRel(),
         Type: t.Type,
-        Data: T{} // TODO
+        Data: data,
     }
 }

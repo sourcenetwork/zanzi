@@ -38,9 +38,11 @@ message Relation {
     string name = 1;
     repeated string types = 2;
     Tree rewrite_tree = 3;
+    string rewrite_expr = 4;
 }
 
 message Permission {
     string name = 1;
     Tree rewrite_tree = 2;
+    string rewrite_expr = 3;
 }

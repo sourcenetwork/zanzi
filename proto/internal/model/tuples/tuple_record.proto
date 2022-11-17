@@ -10,9 +10,15 @@ option go_package = "github.com/sourcenetwork/source-zanzibar/internal/model/tup
 import "google/protobuf/any.proto";
 
 
-enum TupleType {
+// RelType indicate the type of relation defined by the tuple
+enum RelType {
+    // Defines a relation from an object to a userset
     DELEGATION = 0;
+
+    // Grant a relation to some actor
     GRANT = 1;
+
+    // Defines a relation between two objects (non actor target)
     OBJECT_REL = 2;
 }
 
@@ -34,7 +40,7 @@ message TupleRecord {
     // Actor, object or actor group node
     ObjRelRecord actor = 2;
 
-    TupleType type = 3;
+    RelType type = 3;
 
     // Satellite data users can optionally embed within a tuple
     optional google.protobuf.Any client_data = 4;
