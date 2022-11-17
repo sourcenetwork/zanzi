@@ -7,7 +7,7 @@
 syntax = "proto3";
 
 package internal.model.policy;
-option go_package = "github.com/sourcenetwork/source-zanzibar/model/policy";
+option go_package = "github.com/sourcenetwork/source-zanzibar/internal/model/policy";
 
 import "internal/model/policy/tree.proto";
 
@@ -37,6 +37,7 @@ message Resource {
 message Relation {
     string name = 1;
     repeated string types = 2;
+    Tree rewrite_tree = 3;
 }
 
 message Permission {

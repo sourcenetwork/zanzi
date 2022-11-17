@@ -1,4 +1,4 @@
-package source_zanzibar // FIXME name :)
+package source_zanzibar
 
 import (
     "google.golang.org/protobuf/proto"

@@ -10,6 +10,13 @@ option go_package = "github.com/sourcenetwork/source-zanzibar/internal/model/tup
 import "google/protobuf/any.proto";
 
 
+enum TupleType {
+    DELEGATION = 0;
+    GRANT = 1;
+    OBJECT_REL = 2;
+}
+
+
 // ObjRel represents a `Userser` in Zanzibar terminology.
 // It represents a Node in Zanzibar's relation graph.
 message ObjRelRecord {
@@ -27,6 +34,8 @@ message TupleRecord {
     // Actor, object or actor group node
     ObjRelRecord actor = 2;
 
+    TupleType type = 3;
+
     // Satellite data users can optionally embed within a tuple
-    optional google.protobuf.Any embedded_data = 3;
+    optional google.protobuf.Any client_data = 4;
 }

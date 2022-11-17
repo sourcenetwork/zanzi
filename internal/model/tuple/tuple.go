@@ -37,20 +37,23 @@ type Tuple[T proto.Message] struct {
     ObjectRel ObjRel
     Actor ObjRel
     Data T
+    Type TupleType
 }
 
 func (t *Tuple[T]) ToRecord() TupleRecord {
     return TupleRecord {
         ObjectRel: t.ObjectRel.ToObjRelRec(),
         Actor: t.Actor.ToObjRelRec(),
+        Type: t.Type,
         Data: T{} // TODO
     }
 }
 
-func (t *TupleRecord) ToRecord[T proto.Message]() Tuple {
+func (t *TupleRecord) ToTuple[T proto.Message]() Tuple[T] {
     return Tuple[T] {
         ObjectRel: t.ObjectRel.ToObjRel(),
         Actor: t.Actor.ToObjRel(),
+        Type: t.Type,
         Data: T{} // TODO
     }
 }

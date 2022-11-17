@@ -1,6 +1,6 @@
 package types
 
-wconst (
+const (
     "google.golang.org/protobuf/proto"
 )
 
