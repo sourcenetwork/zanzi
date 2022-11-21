@@ -8,6 +8,7 @@ import (
 
 
     rcdb "github.com/sourcenetwork/raccoon"
+    cosmos "github.com/cosmos/cosmos-sdk/store/types"
     "google.golang.org/protobuf/proto"
 )
 
@@ -15,7 +16,11 @@ var _ stores.TupleStore = (*TupleStore)(nil)
 
 
 var schema rcdb.RaccoonSchema = rcdb.RaccoonSchema{
-
+    Indexes []SecondaryIndex[Edg, N]
+    Store cosmos.KVStore
+    KeysPrefix []byte
+    Keyer NodeKeyer[N]
+    Marshaler Marshaler[Edg]
 }
 
 type TupleStore[T proto.Message] struct {

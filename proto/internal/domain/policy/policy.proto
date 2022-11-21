@@ -1,0 +1,65 @@
+// Policy definition
+//
+// Policy defines a client's application relation model.
+
+syntax = "proto3";
+
+package internal.domain.policy;
+option go_package = "github.com/sourcenetwork/source-zanzibar/internal/domain/policy";
+
+import "internal/domain/policy/tree.proto";
+
+
+message Policy {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    // creation date
+    // last modified
+    // creator
+    repeated Resource resources = 4;
+    repeated Actor actors = 5;
+    map<string, string> attributes = 10;
+}
+
+message TypeConstraint {
+    string rule = 1;
+    // TODO this could also include objectId / actor contraints
+}
+
+// ActorIdType specify an identifier type for an actor object.
+// Actor ids are enforced as system constants.
+enum ActorIdType {
+    STRING = 0;
+    NUMBER = 1;
+    DID = 2;
+}
+
+// Actor represents a class of system users
+message Actor {
+    string name = 1;
+    repeated ActorIdType constraints = 2;
+}
+
+// Resources represents a class of objects in the relation graph
+// Example resources: files, directories, repositories, groups
+message Resource {
+    string name = 1;
+    repeated Rule rules = 2;
+}
+
+// Specifies the type of a rule.
+// Rule Types have no runtime difference, they are a public interface aid.
+enum RuleType {
+    RELATION = 0;
+    PERMISSION = 1;
+}
+
+// A Rule defines a Relation Type in the relation graph.
+message Rule {
+    RuleType type = 1;
+    string name = 2;
+    Tree expression_tree = 3;
+    string rewrite_expr = 4;
+    repeated TypeConstraint constraints = 5;
+}

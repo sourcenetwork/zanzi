@@ -1,9 +1,11 @@
+// Usrset Rewrite Tree definitions
+
 syntax = "proto3";
 
-package internal.model.policy;
-option go_package = "github.com/sourcenetwork/source-zanzibar/internal/model/policy";
+package internal.domain.policy;
+option go_package = "github.com/sourcenetwork/source-zanzibar/internal/domain/policy";
 
-import "internal/model/policy/rules.proto";
+import "internal/domain/policy/rules.proto";
 
 
 enum Operation {
@@ -26,5 +28,5 @@ message OpNode {
 }
 
 message Leaf {
-    Rule rule = 1;
+    RewriteRule rule = 1;
 }

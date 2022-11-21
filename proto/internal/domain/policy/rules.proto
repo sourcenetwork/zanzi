@@ -1,10 +1,12 @@
+// Userset Rewrite Rules definitions
+
 syntax = "proto3";
 
-package internal.model.policy;
-option go_package = "github.com/sourcenetwork/source-zanzibar/internal/model/policy";
+package internal.domain.policy;
+option go_package = "github.com/sourcenetwork/source-zanzibar/internal/domain/policy";
 
-
-message Rule {
+// RewriteRule specifies the logical model between relations
+message RewriteRule {
     oneof rule {
         This this = 1;
         ComputedUserset computedUserset = 2;
@@ -39,6 +41,7 @@ message ComputedUserset {
 // - For each found tuple, it would compute the userset (obj=${result_tuple_userset_obj}, relation=UsersetRelation);
 //   eg. it would compute the userset (obj="dir:root", relation="owner")
 message TupleToUserset {
-    string tuplesetRelation = 1;
-    string computedUsersetRelation = 2;
+    string tuplesetNamespace = 1;
+    string tuplesetRelation = 2;
+    string computedUsersetRelation = 3;
 }
