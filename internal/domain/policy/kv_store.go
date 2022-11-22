@@ -28,5 +28,12 @@ func (s *PolicyKVStore) DeletePolicy(policyId string) error {
 }
 
 func (s *PolicyKVStore) GetPolicyGraph(policyId string) (utils.Option[PolicyGraph], error) {
-    // TODO
+    opt, err := s.store.Get([]byte(policyId))
+    if err != nil || opt.IsEmpty() {
+        return ultils.None(), err
+    }
+
+    policy := opt.Value()
+    graph := NewMapPolicyGraph(policy)
+    return graph
 }

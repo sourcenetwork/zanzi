@@ -9,8 +9,8 @@ type PolicyGraph interface {
     // there should be a single internal type for a relation permission as they are equivalent
     GetResources() []Resource
     GetActors() []Actor
-    GetRelationOrPerm(resource, name string) types.Option[Something] //??
-    GetAncestors(resource, name string) []Something // return nodes refering to this definition
+    GetRule(resource, name string) types.Option[Rule]
+    GetAncestors(resource, name string) []Rule
 }
 
 // PolicyStore abstract interfacing with namespace storage.
