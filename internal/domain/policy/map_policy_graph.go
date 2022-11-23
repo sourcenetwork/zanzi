@@ -2,14 +2,15 @@ package policy
 
 import (
     "strings"
+
+    "github.com/sourcenetwork/sourcezanzibar/pkg/mapgraph"
+    opt "github.com/sourcenetwork/sourcezanzibar/pkg/option"
 )
 
 var _ PolicyGraph = (*MapPolicyGraph)(nil)
 
 struct MapPolicyGraph {
-    nodes map[string]Rule
-    edges map[string]map[string]struct{}
-    idxMap map[string]int64
+    graph mapgraph.MapGraph[Rule]
     resources []Resource
     actors []Actor
 }
@@ -29,8 +30,7 @@ func NewMapPolicyGraph(policy Policy) PolicyGraph {
     graph := MapPolicyGraph{
         resources: resources,
         actors: actors,
-        nodes: make(map[string]Rule),
-        edges: make(map[string]map[string]struct{}),
+        graph: mapgraph.New[Rule](),
     }
     graph.buildNodes(policy)
     graph.buildEdges(policy)
@@ -41,7 +41,7 @@ func (g *MapPolicyGraph) buildNodes(policy Policy) {
     for _, resource := range policy.Resources {
         for _, rule := range resource.Rules {
             key := buildRuleKey(resource, rule)
-            g.nodes[key] = rule
+            g.graph.SetNode(key, rule)
         }
     }
 }
@@ -57,17 +57,17 @@ func buildRuleKey(resource *Resource, rule *Rule) string {
 func (g *MapPolicyGraph) buildEdges(policy Policy) {
     for _, resource := range policy.Resources {
         for _, rule := range resource.Rules {
-            key := buildRuleKey(resource, rule)
+            source := buildRuleKey(resource, rule)
             leaves := rule.ExpressionTree.GetLeaves()
             for _, leaf := range leaves {
                 switch rule := leaf.Rule.(type) {
                 case *Rule_This:
                 case *Rule_ComputedUserset:
-                    target := buildRuleKey(resource, rule.relation)
-                    g.edges[key][target] = struct{}{}
+                    dest := buildRuleKey(resource, rule.relation)
+                    g.graph.SetEdge(source, dest)
                 case *Rule_TupleToUserset:
-                    target := buildRuleKey(rule.tuplesetNamespace, rule.tuplesetRelation)
-                    g.edges[key][target] = struct{}{}
+                    dest := buildRuleKey(rule.tuplesetNamespace, rule.tuplesetRelation)
+                    g.graph.SetEdge(source, dest)
                 default:
                     panic("invalid rule type")
                 }
@@ -84,29 +84,12 @@ func (g *MapPolicyGraph) GetActors() []Actor {
     return g.actors
 }
 
-func (g *MapPolicyGraph) GetRule(resource, name string) types.Option[Rule] {
+func (g *MapPolicyGraph) GetRule(resource, name string) opt.Option[Rule] {
     key := buildRuleKey(resource, name)
-    rule, ok := g.nodes[key]
-    if !ok {
-        return utils.Empty[Rule]()
-    }
-
-    return utils.Some[Rule](rule)
+    return g.graph.GetNode(key)
 }
 
 func (g *MapPolicyGraph) GetAncestors(resource, name string) []Rule {
-    sourceKey := buildRuleKey(resource, name)
-
-    var ancestors []Rule
-    ancestorMap, ok := g.edges[sourceKey]
-    if !ok {
-        return ancestors
-    }
-
-    for _, ruleKey := range ancestorMap {
-        rule := g.nodes[ruleKey]
-        ancestors = append(ancestors, rule)
-    }
-
-    return ancestors
+    key := buildRuleKey(resource, name)
+    return g.graph.GetAncestors(key)
 }
