@@ -1,7 +1,7 @@
 package policy
 
 import (
-    opt "github.com/sourcenetwork/sourcezanzibar/pkg/option"
+    opt "github.com/sourcenetwork/source-zanzibar/pkg/option"
 )
 
 // PolicyGraph models the definitinos in a policy as a graph
@@ -18,9 +18,9 @@ type PolicyGraph interface {
 
 // PolicyStore abstract interfacing with namespace storage.
 type PolicyStore interface {
-	GetPolicy(policyId string) (opt.Option[model.Policy], error)
+	GetPolicy(policyId string) (opt.Option[Policy], error)
 
-	SetPolicy(policy model.Policy) error
+	SetPolicy(policy Policy) error
 
 	DeletePolicy(policyId string) error
 

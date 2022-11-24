@@ -3,26 +3,66 @@ package policy
 import (
     "testing"
     "fmt"
+    "reflect"
+    "strings"
 
     "github.com/stretchr/testify/assert"
+
+    "github.com/sourcenetwork/source-zanzibar/pkg/tuple"
+    "github.com/sourcenetwork/source-zanzibar/pkg/utils"
 )
 
-// General test suite for Policy Graph implementations
 
+// test represents a test function
+type test func(*testing.T) 
+
+// policyGraphBuilder represents a producer function 
+// that builds an a Policy Graph from a Policy
 type policyGraphBuilder func(Policy) PolicyGraph
 
+// policyGraphTestSuite represents a set of tests used to
+// assert correctness of PolicyGraph implementations
+type policyGraphTestSuite struct {
+    g PolicyGraph
+    p Policy
+}
+
+// Build a policyGraphTestSuite object from a builder
+func buildTestSuite(builder policyGraphBuilder) policyGraphTestSuite {
+    return policyGraphTestSuite {
+        g: builder(policyFixture),
+        p: policyFixture,
+    }
+}
+
+// Run test suite
+func (s *policyGraphTestSuite) Run(t *testing.T) {
+    selfVal := reflect.ValueOf(s)
+    typeT := reflect.TypeOf(s)
+    for i := 0; i  < typeT.NumMethod(); i++ {
+        method := typeT.Method(i)
+        if strings.HasPrefix(method.Name, "Test") {
+            f := method.Func
+            t.Run(method.Name, func(t *testing.T) {
+                tVal := reflect.ValueOf(t)
+                in := []reflect.Value {selfVal, tVal}
+                f.Call(in)
+            })
+        }
+    }
+}
+
+// Standardized policy fixture used to test policyGraph
 var policyFixture Policy = Policy{
     Id: "1",
     Name: "Test policy",
-    Descripton: "test",
     Resources: []*Resource{
         BuildResource("file",
             ThisRelation("owner"),
             ThisRelation("reader"),
             BuildPerm("read", Union(CU("write"), CU("reader"))),
-            BuildPerm("write", Union(CU("owner"), TTU("directory", "owner", "write")),
+            BuildPerm("write", Union(CU("owner"), TTU("directory", "owner", "write"))),
         ),
-
         BuildResource("directory",
             ThisRelation("owner"),
             ThisRelation("parent"),
@@ -33,51 +73,54 @@ var policyFixture Policy = Policy{
     },
 }
 
-func testGetResourcesReturnAllResources(g PolicyGraph, t *testing.T) {
-    resources := g.GetResources()
+func (s *policyGraphTestSuite) TestGetResourcesReturnAllResources(t *testing.T) {
+    resources := s.g.GetResources()
+    assert.Equal(t, len(s.p.Resources), len(resources))
 
-    assert.Equal(len(policy.Resources), len(resources)
-    for _, resouce := range policy.Resources {
-        assert.Contains(t, resources, resource)
+    names := utils.MapSlice(resources, func(r Resource) string {return r.Name})
+    for _, resource := range s.p.Resources {
+        assert.Contains(t, names, resource.Name)
     }
 }
 
-func testGetActorReturnAllActors(g PolicyGraph, t *testing.T) {
-    actors := g.GetActors()
+func (s *policyGraphTestSuite) TestGetActorReturnAllActors(t *testing.T) {
+    actors := s.g.GetActors()
+    assert.Equal(t, len(s.p.Actors), len(actors))
 
-    assert.Equal(len(policy.Actors), len(actors)
-    for _, actor := range policy.Actors {
-        assert.Contains(t, actors, actor)
+    names := utils.MapSlice(actors, func(a Actor) string {return a.Name})
+    for _, actor := range s.p.Actors {
+        assert.Contains(t, names, actor.Name)
     }
 }
 
 
-func testRulesAreFetchable(g PolicyGraph, t *testing.T) {
+func (s *policyGraphTestSuite) TestRulesAreFetchable(t *testing.T) {
 
-    rules := [](string, string) {
-        ("directory", "parent"),
-        ("directory", "owner"),
-        ("file", "owner"),
-        ("file", "reader"),
-        ("file", "read"),
-        ("file", "write"),
+    rules := []tuple.Pair[string, string]{
+        tuple.NewPair("directory", "parent"),
+        tuple.NewPair("directory", "owner"),
+        tuple.NewPair("file", "owner"),
+        tuple.NewPair("file", "reader"),
+        tuple.NewPair("file", "read"),
+        tuple.NewPair("file", "write"),
     }
 
-    for _, (resource, ruleName) := range rules {
-        testName = fmt.Sprintf("res: %s rule: %s", resource, ruleName)
+    for _, pair := range rules {
+        resource, ruleName := pair.Fst(), pair.Snd()
+        testName := fmt.Sprintf("res=%s,rule=%s", resource, ruleName)
         t.Run(testName, func(t *testing.T) {
-            opt := g.GetRule(resource, ruleName)
-            assert.False(opt.IsEmpty())
+            opt := s.g.GetRule(resource, ruleName)
+            assert.False(t, opt.IsEmpty())
             rule := opt.Value()
-            assert.Equal(ruleName, rule.Name)
-        }
+            assert.Equal(t, ruleName, rule.Name)
+        })
     }
 }
 
-func testAncestorsAreReachable(g PolicyGraph, t *testing.T) {
+func (s *policyGraphTestSuite) TestAncestorsAreReachable(t *testing.T) {
     // FIXME Add check for cross resource references
 
-    var ancestors map[string][]string {
+    var ancestors map[string][]string = map[string][]string{
         "owner": []string{"write"},
         "reader": []string{"read"},
         "write": []string{"read"},
@@ -85,24 +128,27 @@ func testAncestorsAreReachable(g PolicyGraph, t *testing.T) {
 
     for rule, expected := range ancestors {
         t.Run(rule, func(t *testing.T) {
-            ancestors := g.GetAncestors("file", rule)
+            ancestors := s.g.GetAncestors("file", rule)
             names := getNames(ancestors)
             for _, val := range expected {
                 assert.Contains(t, names, val)
             }
+        })
+    }
+}
+
+func (s *policyGraphTestSuite) TestAncestorAcrossResourceIsReachable(t *testing.T) {
+    ancestors := s.g.GetAncestors("directory", "owner")
+
+    found := false
+    for _, rule := range ancestors {
+        if rule.Name == "write" {
+            found = true
         }
     }
+    assert.True(t, found)
 }
 
 func getNames(rules []Rule) []string {
     return utils.MapSlice(rules, func(rule Rule) string {return rule.Name})
-}
-
-func policyGraphTestSuite(builder policyGraphBuilder, t *testing.T) {
-    g := builder(policyFixture)
-
-    t.Run("testGetResourcesReturnAllResources", func(t *testing.T) {testGetResourcesReturnAllResources(g, t)})
-    t.Run("testGetActorReturnAllActors", func(t *testing.T) {testGetActorReturnAllActors(g, t)})
-    t.Run("testRulesAreFetchable", func(t *testing.T) {testRulesAreFetchable(g, t)})
-    t.Run("testAncestorsAreReachable", func(t *testing.T) {testAncestorsAreReachable(g, t)})
 }

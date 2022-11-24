@@ -19,6 +19,6 @@ func (t *Tree) GetLeaves() []Leaf {
 		leaf := node.Leaf
 		return []Leaf{*leaf}
 	default:
-		panic(fmt.Sprintf("Invalid RewriteNode type: %v", rw))
+		panic(fmt.Sprintf("Invalid RewriteNode type: %v", node))
 	}
 }

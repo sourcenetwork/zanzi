@@ -3,13 +3,13 @@ package policy
 import (
     "strings"
 
-    "github.com/sourcenetwork/sourcezanzibar/pkg/mapgraph"
-    opt "github.com/sourcenetwork/sourcezanzibar/pkg/option"
+    "github.com/sourcenetwork/source-zanzibar/pkg/mapgraph"
+    opt "github.com/sourcenetwork/source-zanzibar/pkg/option"
 )
 
 var _ PolicyGraph = (*MapPolicyGraph)(nil)
 
-struct MapPolicyGraph {
+type MapPolicyGraph struct {
     graph mapgraph.MapGraph[Rule]
     resources []Resource
     actors []Actor
@@ -20,7 +20,7 @@ func NewMapPolicyGraph(policy Policy) PolicyGraph {
     var actors []Actor
 
     for _, resource := range policy.Resources {
-        resources = append(resouces, *resource)
+        resources = append(resources, *resource)
     }
 
     for _, actor := range policy.Actors {
@@ -40,33 +40,35 @@ func NewMapPolicyGraph(policy Policy) PolicyGraph {
 func (g *MapPolicyGraph) buildNodes(policy Policy) {
     for _, resource := range policy.Resources {
         for _, rule := range resource.Rules {
-            key := buildRuleKey(resource, rule)
-            g.graph.SetNode(key, rule)
+            key := buildRuleKey(resource.Name, rule.Name)
+            g.graph.SetNode(key, *rule)
         }
     }
 }
 
-func buildRuleKey(resource *Resource, rule *Rule) string {
+func buildRuleKey(resource string, rule string) string {
     var builder strings.Builder
-    builder.WriteString(resource.Name)
-    builder.WriteString('/')
-    builder.WriteString(rule.Name)
+    builder.WriteString(resource)
+    builder.WriteString("/")
+    builder.WriteString(rule)
     return builder.String()
 }
 
 func (g *MapPolicyGraph) buildEdges(policy Policy) {
     for _, resource := range policy.Resources {
         for _, rule := range resource.Rules {
-            source := buildRuleKey(resource, rule)
+            source := buildRuleKey(resource.Name, rule.Name)
             leaves := rule.ExpressionTree.GetLeaves()
             for _, leaf := range leaves {
-                switch rule := leaf.Rule.(type) {
-                case *Rule_This:
-                case *Rule_ComputedUserset:
-                    dest := buildRuleKey(resource, rule.relation)
+                switch rule := leaf.Rule.Rule.(type) {
+                case *RewriteRule_This:
+                case *RewriteRule_ComputedUserset:
+                    cu := rule.ComputedUserset
+                    dest := buildRuleKey(resource.Name, cu.Relation)
                     g.graph.SetEdge(source, dest)
-                case *Rule_TupleToUserset:
-                    dest := buildRuleKey(rule.tuplesetNamespace, rule.tuplesetRelation)
+                case *RewriteRule_TupleToUserset:
+                    ttu := rule.TupleToUserset
+                    dest := buildRuleKey(ttu.TuplesetNamespace, ttu.TuplesetRelation)
                     g.graph.SetEdge(source, dest)
                 default:
                     panic("invalid rule type")

@@ -1,31 +1,36 @@
 package policy
 
-func BuildActor(name string, types ...ActorIdType) Actor {
-    return Acotr
+func BuildActor(name string, types ...ActorIdType) *Actor {
+    return &Actor{
+        Name: name,
+    }
 }
 
-func BuildResource(name string, rules ...*Rule) {
-    // todo
+func BuildResource(name string, rules ...*Rule) *Resource {
+    return &Resource{
+        Name: name,
+        Rules: rules,
+    }
 }
 
-func BuildRule(name string, t RuleType, tree ExpressionTree) Rule {
-    return Rule{
+func BuildRule(name string, t RuleType, tree *Tree) *Rule {
+    return &Rule{
         Name: name,
         Type: t,
         ExpressionTree: tree,
     }
 }
 
-func BuilPerm(name string, tree ExpressionTree) Rule {
+func BuildPerm(name string, tree *Tree) *Rule {
     return BuildRule(name, RuleType_PERMISSION, tree)
 }
 
-func BuildRelation(name string, tree ExpressionTree) Rule {
+func BuildRelation(name string, tree *Tree) *Rule {
     return BuildRule(name, RuleType_RELATION, tree)
 }
 
-func ThisRelation(name string) Rule {
-	return BuildRelation(name, This())
+func ThisRelation(name string) *Rule {
+	return BuildRelation(name, _This())
 }
 
 
@@ -63,9 +68,9 @@ func buildLeaf(rule *RewriteRule) *Tree {
 	}
 }
 
-func This() *Tree {
+func _This() *Tree {
 	rule := &RewriteRule{
-		Rule: &RuleRewriteRule_This{
+		Rule: &RewriteRule_This{
 			This: &This{},
 		},
 	}
@@ -74,7 +79,7 @@ func This() *Tree {
 
 func CU(relation string) *Tree {
 	rule := &RewriteRule{
-		Rule: &RuleRewriteRule_ComputedUserset{
+		Rule: &RewriteRule_ComputedUserset{
 			ComputedUserset: &ComputedUserset{
 				Relation: relation,
 			},
@@ -83,10 +88,11 @@ func CU(relation string) *Tree {
 	return buildLeaf(rule)
 }
 
-func TTU(tuplesetRelation, computedUsersetRelation string) *Tree {
+func TTU(tuplesetNamespace, tuplesetRelation, computedUsersetRelation string) *Tree {
 	rule := &RewriteRule{
-		Rule: &RuleRewriteRule_TupleToUserset{
+		Rule: &RewriteRule_TupleToUserset{
 			TupleToUserset: &TupleToUserset{
+                                TuplesetNamespace: tuplesetNamespace,
 				TuplesetRelation:        tuplesetRelation,
 				ComputedUsersetRelation: computedUsersetRelation,
 			},

@@ -5,5 +5,6 @@ import (
 )
 
 func TestMapPolicyGraph(t *testing.T) {
-    policyGraphTestSuite(NewMapPolicyGraph, t)
+    s := buildTestSuite(NewMapPolicyGraph)
+    s.Run(t)
 }
