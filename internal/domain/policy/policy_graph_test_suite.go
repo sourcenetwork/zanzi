@@ -39,16 +39,22 @@ func buildTestSuite(builder policyGraphBuilder) policyGraphTestSuite {
 func (s *policyGraphTestSuite) Run(t *testing.T) {
     selfVal := reflect.ValueOf(s)
     typeT := reflect.TypeOf(s)
+
+    var tests []reflect.Method
     for i := 0; i  < typeT.NumMethod(); i++ {
         method := typeT.Method(i)
         if strings.HasPrefix(method.Name, "Test") {
-            f := method.Func
-            t.Run(method.Name, func(t *testing.T) {
-                tVal := reflect.ValueOf(t)
-                in := []reflect.Value {selfVal, tVal}
-                f.Call(in)
-            })
+            tests = append(tests, method)
         }
+    }
+
+    for _, test := range tests {
+        f := test.Func
+        t.Run(test.Name, func(t *testing.T) {
+            tVal := reflect.ValueOf(t)
+            in := []reflect.Value {selfVal, tVal}
+            f.Call(in)
+        })
     }
 }
 
@@ -118,8 +124,6 @@ func (s *policyGraphTestSuite) TestRulesAreFetchable(t *testing.T) {
 }
 
 func (s *policyGraphTestSuite) TestAncestorsAreReachable(t *testing.T) {
-    // FIXME Add check for cross resource references
-
     var ancestors map[string][]string = map[string][]string{
         "owner": []string{"write"},
         "reader": []string{"read"},
@@ -129,9 +133,10 @@ func (s *policyGraphTestSuite) TestAncestorsAreReachable(t *testing.T) {
     for rule, expected := range ancestors {
         t.Run(rule, func(t *testing.T) {
             ancestors := s.g.GetAncestors("file", rule)
-            names := getNames(ancestors)
+            namePairs := getNamePair(ancestors)
             for _, val := range expected {
-                assert.Contains(t, names, val)
+                pair := tuple.NewPair[string, string]("file", val)
+                assert.Contains(t, namePairs, pair)
             }
         })
     }
@@ -141,14 +146,14 @@ func (s *policyGraphTestSuite) TestAncestorAcrossResourceIsReachable(t *testing.
     ancestors := s.g.GetAncestors("directory", "owner")
 
     found := false
-    for _, rule := range ancestors {
-        if rule.Name == "write" {
+    for _, node := range ancestors {
+        if node.Resource == "file" && node.Rule.Name == "write" {
             found = true
         }
     }
     assert.True(t, found)
 }
 
-func getNames(rules []Rule) []string {
-    return utils.MapSlice(rules, func(rule Rule) string {return rule.Name})
+func getNamePair(nodes []PolicyNode) []tuple.Pair[string, string] {
+    return utils.MapSlice(nodes, func(node PolicyNode) tuple.Pair[string, string] {return tuple.NewPair[string, string](node.Resource, node.Rule.Name)})
 }

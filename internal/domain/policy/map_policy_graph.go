@@ -10,7 +10,7 @@ import (
 var _ PolicyGraph = (*MapPolicyGraph)(nil)
 
 type MapPolicyGraph struct {
-    graph mapgraph.MapGraph[Rule]
+    graph mapgraph.MapGraph[PolicyNode]
     resources []Resource
     actors []Actor
 }
@@ -30,7 +30,7 @@ func NewMapPolicyGraph(policy Policy) PolicyGraph {
     graph := MapPolicyGraph{
         resources: resources,
         actors: actors,
-        graph: mapgraph.New[Rule](),
+        graph: mapgraph.New[PolicyNode](),
     }
     graph.buildNodes(policy)
     graph.buildEdges(policy)
@@ -41,7 +41,11 @@ func (g *MapPolicyGraph) buildNodes(policy Policy) {
     for _, resource := range policy.Resources {
         for _, rule := range resource.Rules {
             key := buildRuleKey(resource.Name, rule.Name)
-            g.graph.SetNode(key, *rule)
+            node := PolicyNode {
+                Resource: resource.Name,
+                Rule: *rule,
+            }
+            g.graph.SetNode(key, node)
         }
     }
 }
@@ -88,10 +92,15 @@ func (g *MapPolicyGraph) GetActors() []Actor {
 
 func (g *MapPolicyGraph) GetRule(resource, name string) opt.Option[Rule] {
     key := buildRuleKey(resource, name)
-    return g.graph.GetNode(key)
+    o := g.graph.GetNode(key)
+    if o.IsEmpty() {
+        return opt.None[Rule]()
+    }
+    rule := o.Value().Rule
+    return opt.Some[Rule](rule)
 }
 
-func (g *MapPolicyGraph) GetAncestors(resource, name string) []Rule {
+func (g *MapPolicyGraph) GetAncestors(resource, name string) []PolicyNode {
     key := buildRuleKey(resource, name)
     return g.graph.GetAncestors(key)
 }
