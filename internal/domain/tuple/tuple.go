@@ -1,4 +1,4 @@
-package tuples
+package tuple
 
 import (
     "google.golang.org/protobuf/proto"
@@ -32,40 +32,58 @@ func (o *ObjRelRecord) ToRel() ObjRel {
 }
 
 
-// GenericTuple represent a tuple to be serialized with a type parameter.
+// Tuple represent a tuple to be serialized with a type parameter.
 // The type parameter allows users to embed custom application data
 type Tuple[T proto.Message] struct {
     ObjectRel ObjRel
     Actor ObjRel
-    Data T
-    Type TupleType
+    data T
+    any *anypb.Any 
+    Type RelType
+}
+
+func (t *Tuple[T]) GetData() T {
+    // FIXME
+    if false {
+        var data T
+        err := t.any.UnmarshalTo(data)
+        if err != nil {
+            panic(err)
+        }
+        t.data = data
+    }
+    return t.data
+}
+
+func (t *Tuple[T]) SetData(data T) {
+    t.data = data
 }
 
 func (t *Tuple[T]) ToRec() TupleRecord {
-    data, err := anypb.New(t.Data)
+    data, err := anypb.New(t.data)
     if err != nil {
         panic(err)
     }
 
+    objRel := t.ObjectRel.ToRec()
+    actor := t.Actor.ToRec()
     return TupleRecord {
-        ObjectRel: &t.ObjectRel.ToObjRelRec(),
-        Actor: &t.Actor.ToObjRelRec(),
+        ObjectRel: &objRel,
+        Actor: &actor,
         Type: t.Type,
-        Data: data,
+        ClientData: data,
     }
 }
 
-func (t *TupleRecord) ToTuple[T proto.Message]() Tuple[T] {
-    var data T
-    err := any.UnmarshalTo(&data)
-    if err != nil {
-        panic(err)
-    }
+func (t *Tuple[T]) Equivalent(other *Tuple[T]) bool {
+    return t.ObjectRel == other.ObjectRel && t.Actor == other.Actor && t.Type == other.Type
+}
 
+func toTuple[T proto.Message](rec *TupleRecord) Tuple[T] {
     return Tuple[T] {
-        ObjectRel: t.ObjectRel.ToObjRel(),
-        Actor: t.Actor.ToObjRel(),
-        Type: t.Type,
-        Data: data,
+        ObjectRel: rec.ObjectRel.ToRel(),
+        Actor: rec.Actor.ToRel(),
+        Type: rec.Type,
+        any: rec.ClientData,
     }
 }

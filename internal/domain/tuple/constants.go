@@ -1,4 +1,4 @@
-package model
+package tuple
 
 const ALL_USERS string = "*"
 

@@ -1,0 +1,13 @@
+// File contains internal type used as sample marshalable app data type
+
+syntax = "proto3";
+
+package internal.domain.tuple;
+
+option go_package = "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple";
+
+
+// appdata is a dummy type used to model protobuff serialiazible app data types
+message appdata {
+    string payload = 1;
+}
