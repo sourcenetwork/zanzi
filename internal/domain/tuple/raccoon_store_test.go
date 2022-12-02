@@ -18,7 +18,7 @@ func TestTupleSetAndGet(t *testing.T) {
     err := ts.SetTuple(tuple)
     assert.Nil(t, err)
 
-    opt, err := ts.GetTuple(tuple.ObjectRel, tuple.Actor)
+    opt, err := ts.GetTuple("", tuple.Source, tuple.Dest)
     assert.False(t, opt.IsEmpty())
     assert.Nil(t, err)
     got := opt.Value()
@@ -34,10 +34,10 @@ func TestTupleSetDelete(t *testing.T) {
     err := ts.SetTuple(tuple)
     assert.Nil(t, err)
 
-    err = ts.DeleteTuple(tuple.ObjectRel, tuple.Actor)
+    err = ts.DeleteTuple("", tuple.Source, tuple.Dest)
     assert.Nil(t, err)
 
-    got, err := ts.GetTuple(tuple.ObjectRel, tuple.Actor)
+    got, err := ts.GetTuple("", tuple.Source, tuple.Dest)
     assert.True(t, got.IsEmpty())
     assert.Nil(t, err)
 }
@@ -59,7 +59,7 @@ func TestGetAncestors(t *testing.T) {
     err = ts.SetTuple(t3)
     assert.Nil(t, err)
 
-    ancestors, err := ts.GetAncestors(t2.Actor)
+    ancestors, err := ts.GetAncestors("", t2.Dest)
     assert.Nil(t, err)
     assert.True(t, contains(ancestors, &t1))
     assert.True(t, contains(ancestors, &t2))
@@ -82,7 +82,7 @@ func TestGetSucessors(t *testing.T) {
     err = ts.SetTuple(t3)
     assert.Nil(t, err)
 
-    sucessors, err := ts.GetSucessors(t1.ObjectRel)
+    sucessors, err := ts.GetSucessors("", t1.Source)
     assert.Nil(t, err)
     assert.True(t, contains(sucessors, &t1))
     assert.True(t, contains(sucessors, &t2))
