@@ -10,37 +10,45 @@ option go_package = "github.com/sourcenetwork/source-zanzibar/internal/domain/tu
 import "google/protobuf/any.proto";
 
 
-// RelType indicate the type of relation defined by the tuple
-enum RelType {
-    // Defines a relation from an object to a userset
-    DELEGATION = 0;
+// NodeType indicates the type of information stored by the node
+enum NodeType {
+    // Stores an Application Actor
+    ACTOR = 0;
 
-    // Grant a relation to some actor
-    GRANT = 1;
+    // Stores a system object
+    OBJECT = 1;
 
-    // Defines a relation between two objects (non actor target)
-    OBJECT_REL = 2;
+    // Stores a source of relation from one node to another
+    // Recursively following a RELATION_SOURCE node lead to a set of actors / objects
+    RELATION_SOURCE = 2;
+
+
+    // Flags that node refers to all actors in the given namespace.
+    // Used as a system constant to specify all known actors.
+    ALL_ACTORS = 4;
 }
 
 
-// ObjRel represents a `Userser` in Zanzibar terminology.
+// TupleNodeRecord represents a `Userset` in Zanzibar terminology.
 // It represents a Node in Zanzibar's relation graph.
-message ObjRelRecord {
+message TupleNodeRecord {
     string namespace = 1;
     string id = 2;
     string relation = 3;
+    NodeType type = 4;
 }
 
 
-// TupleRecord represents a Zanzibar Tuple that gets persisted
+// TupleRecord represents a Zanzibar Relation Tuple.
+// A Relation Tuple defines a statment which relates
+// system objects
 message TupleRecord {
-    // Object and relation relation information
-    ObjRelRecord object_rel = 1;
+    TupleNodeRecord source = 1;
 
-    // Actor, object or actor group node
-    ObjRelRecord actor = 2;
+    TupleNodeRecord dest = 2;
 
-    RelType type = 3;
+    // partition_key is used to create logical partitions over tuples
+    string partition_key = 3;
 
     // Satellite data users can optionally embed within a tuple
     optional google.protobuf.Any client_data = 4;

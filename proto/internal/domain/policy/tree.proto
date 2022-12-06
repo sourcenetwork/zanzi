@@ -14,6 +14,10 @@ enum Operation {
     DIFFERENCE = 2;
 }
 
+// Tree represents a zanzibar userset rewrite tree.
+// In effect, a Tree specify an expression composed of userset rewrite rules.
+// Evaluating the rules in a RewriteTree yields
+// a node's neighbors.
 message Tree {
     oneof node {
         OpNode opnode = 1;
