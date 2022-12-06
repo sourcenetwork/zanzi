@@ -71,6 +71,10 @@ func (Operation) EnumDescriptor() ([]byte, []int) {
 	return file_internal_domain_policy_tree_proto_rawDescGZIP(), []int{0}
 }
 
+// Tree represents a zanzibar userset rewrite tree.
+// In effect, a Tree specify an expression composed of userset rewrite rules.
+// Evaluating the rules in a RewriteTree yields
+// a node's neighbors.
 type Tree struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

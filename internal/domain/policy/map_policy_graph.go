@@ -72,7 +72,7 @@ func (g *MapPolicyGraph) buildEdges(policy Policy) {
                     g.graph.SetEdge(source, dest)
                 case *RewriteRule_TupleToUserset:
                     ttu := rule.TupleToUserset
-                    dest := buildRuleKey(ttu.TuplesetNamespace, ttu.TuplesetRelation)
+                    dest := buildRuleKey(ttu.CuRelationNamespace, ttu.CuRelation)
                     g.graph.SetEdge(source, dest)
                 default:
                     panic("invalid rule type")

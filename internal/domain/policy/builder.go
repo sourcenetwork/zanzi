@@ -88,13 +88,13 @@ func CU(relation string) *Tree {
 	return buildLeaf(rule)
 }
 
-func TTU(tuplesetNamespace, tuplesetRelation, computedUsersetRelation string) *Tree {
+func TTU(tuplesetRelation, cuRelNamespace, cuRel string) *Tree {
 	rule := &RewriteRule{
 		Rule: &RewriteRule_TupleToUserset{
 			TupleToUserset: &TupleToUserset{
-                                TuplesetNamespace: tuplesetNamespace,
-				TuplesetRelation:        tuplesetRelation,
-				ComputedUsersetRelation: computedUsersetRelation,
+				TuplesetRelation: tuplesetRelation,
+                                CuRelationNamespace: cuRelNamespace,
+				CuRelation: cuRel,
 			},
 		},
 	}

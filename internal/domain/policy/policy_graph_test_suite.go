@@ -67,10 +67,10 @@ var policyFixture Policy = Policy{
             ThisRelation("owner"),
             ThisRelation("reader"),
             BuildPerm("read", Union(CU("write"), CU("reader"))),
-            BuildPerm("write", Union(CU("owner"), TTU("directory", "owner", "write"))),
+            BuildPerm("write", Union(CU("owner"), TTU("parent", "directory", "dir_owner"))),
         ),
         BuildResource("directory",
-            ThisRelation("owner"),
+            ThisRelation("dir_owner"),
             ThisRelation("parent"),
         ),
     },
@@ -104,7 +104,7 @@ func (s *policyGraphTestSuite) TestRulesAreFetchable(t *testing.T) {
 
     rules := []tuple.Pair[string, string]{
         tuple.NewPair("directory", "parent"),
-        tuple.NewPair("directory", "owner"),
+        tuple.NewPair("directory", "dir_owner"),
         tuple.NewPair("file", "owner"),
         tuple.NewPair("file", "reader"),
         tuple.NewPair("file", "read"),
@@ -143,7 +143,7 @@ func (s *policyGraphTestSuite) TestAncestorsAreReachable(t *testing.T) {
 }
 
 func (s *policyGraphTestSuite) TestAncestorAcrossResourceIsReachable(t *testing.T) {
-    ancestors := s.g.GetAncestors("directory", "owner")
+    ancestors := s.g.GetAncestors("directory", "dir_owner")
 
     found := false
     for _, node := range ancestors {
