@@ -32,7 +32,7 @@ func TestExpandOnAVirtualNode(t *testing.T) {
 	ctx := context.Background()
 	expander := NewExpander(nr, tr)
 
-	uset := model.AuthNode{
+	uset := rg.ObjRelNode{
 		Namespace: "test",
 		ObjectId:  "obj",
 		Relation:  "reader",
@@ -42,46 +42,46 @@ func TestExpandOnAVirtualNode(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	want := tree.UsersetNode{
-		Userset: uset,
-		Child: &tree.OpNode{
+	want := rg.RelationNode{
+		ObjectRelNode uset,
+		Child: &rg.OpNode{
 			JoinOp: model.Operation_UNION,
-			Left: &tree.RuleNode{
-				Rule: tree.Rule{
-					Type: tree.RuleType_THIS,
+			Left: &rg.RuleNode{
+				Rule: rg.Rule{
+					Type: rg.RuleType_THIS,
 				},
-				Children: []*tree.UsersetNode{},
+				Children: []*rg.RelationNode{},
 			},
-			Right: &tree.RuleNode{
-				Rule: tree.Rule{
-					Type: tree.RuleType_CU,
+			Right: &rg.RuleNode{
+				Rule: rg.Rule{
+					Type: rg.RuleType_CU,
 					Args: map[string]string{
 						"Relation": "owner",
 					},
 				},
-				Children: []*tree.UsersetNode{
-					&tree.UsersetNode{
-						Userset: model.AuthNode{
+				Children: []*rg.RelationNode{
+					&rg.RelationNode{
+						ObjectRelNode rg.ObjRelNode{
 							Namespace: "test",
 							ObjectId:  "obj",
 							Relation:  "owner",
 						},
-						Child: &tree.RuleNode{
-							Rule: tree.Rule{
-								Type: tree.RuleType_THIS,
+						Child: &rg.RuleNode{
+							Rule: rg.Rule{
+								Type: rg.RuleType_THIS,
 							},
-							Children: []*tree.UsersetNode{
-								&tree.UsersetNode{
-									Userset: model.AuthNode{
+							Children: []*rg.RelationNode{
+								&rg.RelationNode{
+									ObjectRelNode rg.ObjRelNode{
 										Namespace: "test",
 										ObjectId:  "bob",
 										Relation:  "",
 									},
-									Child: &tree.RuleNode{
-										Rule: tree.Rule{
-											Type: tree.RuleType_THIS,
+									Child: &rg.RuleNode{
+										Rule: rg.Rule{
+											Type: rg.RuleType_THIS,
 										},
-										Children: []*tree.UsersetNode{},
+										Children: []*rg.RelationNode{},
 									},
 								},
 							},
