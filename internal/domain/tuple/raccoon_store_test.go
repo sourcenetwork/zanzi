@@ -6,13 +6,15 @@ import (
     "github.com/stretchr/testify/assert"
     "github.com/cosmos/cosmos-sdk/store/mem"
     "google.golang.org/protobuf/proto"
+
+    "github.com/sourcenetwork/source-zanzibar/internal/test_utils"
 )
 
 
 func TestTupleSetAndGet(t *testing.T) {
     kv := mem.NewStore()
-    ts := NewRaccoonStore[*Appdata](kv, nil)
-    builder := TupleBuilder[*Appdata]{}
+    ts := NewRaccoonStore[*test_utils.Appdata](kv, nil)
+    builder := TupleBuilder[*test_utils.Appdata]{}
 
     tuple := builder.Grant("file", "readme", "owner", "bob")
     err := ts.SetTuple(tuple)
@@ -27,8 +29,8 @@ func TestTupleSetAndGet(t *testing.T) {
 
 func TestTupleSetDelete(t *testing.T) {
     kv := mem.NewStore()
-    ts := NewRaccoonStore[*Appdata](kv, nil)
-    builder := TupleBuilder[*Appdata]{}
+    ts := NewRaccoonStore[*test_utils.Appdata](kv, nil)
+    builder := TupleBuilder[*test_utils.Appdata]{}
 
     tuple := builder.Grant("file", "abc", "owner", "bob")
     err := ts.SetTuple(tuple)
@@ -44,8 +46,8 @@ func TestTupleSetDelete(t *testing.T) {
 
 func TestGetAncestors(t *testing.T) {
     kv := mem.NewStore()
-    ts := NewRaccoonStore[*Appdata](kv, nil)
-    builder := TupleBuilder[*Appdata]{}
+    ts := NewRaccoonStore[*test_utils.Appdata](kv, nil)
+    builder := TupleBuilder[*test_utils.Appdata]{}
 
     t1 := builder.Grant("file", "abc", "owner", "bob")
     err := ts.SetTuple(t1)
@@ -67,8 +69,8 @@ func TestGetAncestors(t *testing.T) {
 
 func TestGetSucessors(t *testing.T) {
     kv := mem.NewStore()
-    ts := NewRaccoonStore[*Appdata](kv, nil)
-    builder := TupleBuilder[*Appdata]{}
+    ts := NewRaccoonStore[*test_utils.Appdata](kv, nil)
+    builder := TupleBuilder[*test_utils.Appdata]{}
 
     t1 := builder.Grant("file", "abc", "owner", "bob")
     err := ts.SetTuple(t1)

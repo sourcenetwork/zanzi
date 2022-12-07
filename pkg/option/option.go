@@ -1,4 +1,4 @@
-package types
+package option
 
 // Option type is a container for a value
 // Option may or may not contain value
