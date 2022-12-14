@@ -3,21 +3,23 @@ package relation_graph
 import (
     "fmt"
 
-        "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-        "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
+    mapset "github.com/deckarep/golang-set/v2"
+
+    "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
+    "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
 )
 
 var (
-	_ RewriteNode = (*RuleNode)(nil)
-	_ RewriteNode = (*OpNode)(nil)
-	_ Node           = (*OpNode)(nil)
-	_ Node           = (*RuleNode)(nil)
-	_ Node           = (*RelationNode)(nil)
+    _ RewriteNode = (*RuleNode)(nil)
+    _ RewriteNode = (*OpNode)(nil)
+    _ Node           = (*OpNode)(nil)
+    _ Node           = (*RuleNode)(nil)
+    _ Node           = (*RelationNode)(nil)
 )
 
 // Node type represents a node variant for the Walk Tree
 type Node interface {
-	GetChildren() []Node
+    GetChildren() []Node
 }
 
 
@@ -25,21 +27,21 @@ type Node interface {
 // Rewrite Node can either be a single Rewrite Rule
 // or a tree of Rewrite Rules
 type RewriteNode interface {
-	Node
-	isRewriteNode()
+    Node
+    isRewriteNode()
 }
 
 
 // OpNode is a RewriteNode which combines RuleNodes.
 // It is composed of two RuleNodes and a set operation.
 type OpNode struct {
-	Left   RewriteNode
-	Right  RewriteNode
-	JoinOp policy.Operation
+    Left   RewriteNode
+    Right  RewriteNode
+    JoinOp policy.Operation
 }
 
 func (n *OpNode) GetChildren() []Node {
-	return []Node{n.Left, n.Right}
+    return []Node{n.Left, n.Right}
 }
 
 func (n *OpNode) isRewriteNode() {}
@@ -48,8 +50,8 @@ func (n *OpNode) isRewriteNode() {}
 // RuleNode models an userset rule expansion operation.
 // Each userset rule produces a collection of Nodes (usersets).
 type RuleNode struct {
-	RuleData     RuleData
-	Children []*RelationNode
+    RuleData     RuleData
+    Children []*RelationNode
 }
 
 func (n *RuleNode) GetChildren() []Node {
@@ -66,12 +68,12 @@ func (n *RuleNode) isRewriteNode() {}
 // RelationNode models a RelationGraph AuthNode.
 // RelationNodes children are determined after evaluating its rewrite node.
 type RelationNode struct {
-	ObjRel tuple.TupleNode
-	Child   RewriteNode
+    ObjRel tuple.TupleNode
+    Child   RewriteNode
 }
 
 func (n *RelationNode) GetChildren() []Node {
-	return []Node{n.Child}
+    return []Node{n.Child}
 }
 
 
@@ -79,8 +81,8 @@ func (n *RelationNode) GetChildren() []Node {
 // Each Rule has a type (a fixed set of variantes)
 // and a map of arguments specified at namespace definition
 type RuleData struct {
-	Type RuleType
-	Args map[string]string
+    Type RuleType
+    Args map[string]string
 }
 
 // Return new RuleData from a policy RewriteRule
@@ -119,20 +121,56 @@ func NewRuleData(rule *policy.RewriteRule) RuleData {
 type RuleType uint8
 
 const (
-	RuleType_THIS RuleType = iota
-	RuleType_CU
-	RuleType_TTU
+    RuleType_THIS RuleType = iota
+    RuleType_CU
+    RuleType_TTU
 )
 
 func (n RuleType) String() string {
-	switch n {
-	case RuleType_THIS:
-		return "This"
-	case RuleType_CU:
-		return "ComputedUserset"
-	case RuleType_TTU:
-		return "TupleToUserset"
+    switch n {
+    case RuleType_THIS:
+        return "This"
+    case RuleType_CU:
+        return "ComputedUserset"
+    case RuleType_TTU:
+        return "TupleToUserset"
+    default:
+        return ""
+    }
+}
+
+func EvalTree(node Node) mapset.Set[tuple.TupleNode] {
+    switch n := node.(type) {
+    case *RuleNode:
+        set := mapset.NewSet[tuple.TupleNode]()
+        for _, child := range n.Children {
+            set = set.Union(EvalTree(child))
+        }
+    case *OpNode:
+        l := EvalTree(n.Left)
+        r := EvalTree(n.Right)
+        return applyOp(l, r, n.JoinOp)
+    case *RelationNode:
+        relations := EvalTree(n.Child)
+        relations.Add(n.ObjRel)
+        return relations
+    case nil:
+        return mapset.NewSet[tuple.TupleNode]()
+    default:
+        panic("invalid Node type")
+    }
+    return nil
+}
+
+func applyOp(left, right mapset.Set[tuple.TupleNode], op policy.Operation) mapset.Set[tuple.TupleNode] {
+	switch op {
+	case policy.Operation_UNION:
+		return left.Union(right)
+	case policy.Operation_INTERSECTION:
+		return left.Intersect(right)
+	case policy.Operation_DIFFERENCE:
+		return left.Difference(right)
 	default:
-		return ""
+		panic("invalid Operation")
 	}
 }

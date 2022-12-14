@@ -1,4 +1,5 @@
 package simple
+/*
 
 import (
 	"context"
@@ -36,3 +37,4 @@ func CheckerFromExpander(expander authorizer.Expander) authorizer.Checker {
 		expander: expander,
 	}
 }
+*/

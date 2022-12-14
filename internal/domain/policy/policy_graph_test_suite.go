@@ -3,15 +3,16 @@ package policy
 import (
     "testing"
     "fmt"
-    "reflect"
-    "strings"
 
     "github.com/stretchr/testify/assert"
 
     "github.com/sourcenetwork/source-zanzibar/pkg/tuple"
     "github.com/sourcenetwork/source-zanzibar/pkg/utils"
+    "github.com/sourcenetwork/source-zanzibar/internal/test_utils"
 )
 
+
+var _ test_utils.TestSuite = (*policyGraphTestSuite)(nil)
 
 // test represents a test function
 type test func(*testing.T) 
@@ -37,25 +38,7 @@ func buildTestSuite(builder policyGraphBuilder) policyGraphTestSuite {
 
 // Run test suite
 func (s *policyGraphTestSuite) Run(t *testing.T) {
-    selfVal := reflect.ValueOf(s)
-    typeT := reflect.TypeOf(s)
-
-    var tests []reflect.Method
-    for i := 0; i  < typeT.NumMethod(); i++ {
-        method := typeT.Method(i)
-        if strings.HasPrefix(method.Name, "Test") {
-            tests = append(tests, method)
-        }
-    }
-
-    for _, test := range tests {
-        f := test.Func
-        t.Run(test.Name, func(t *testing.T) {
-            tVal := reflect.ValueOf(t)
-            in := []reflect.Value {selfVal, tVal}
-            f.Call(in)
-        })
-    }
+    test_utils.RunSuite(s, t)
 }
 
 // Standardized policy fixture used to test policyGraph

@@ -3,12 +3,12 @@ package relation_graph
 import (
     "context"
 
-    "google.golang.org/protobuf/proto"
+    mapset "github.com/deckarep/golang-set/v2"
 
     "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
 )
 
-type RelationGraph[T proto.Message] interface {
+type RelationGraph interface {
     // Build a DFS Tree resulting from walking the RelationGraph,
     // starting from source.
     Walk(ctx context.Context, partition string, source tuple.TupleNode) (RelationNode, error)
@@ -17,8 +17,11 @@ type RelationGraph[T proto.Message] interface {
     GetPath(ctx context.Context, partition string, source tuple.TupleNode, dest tuple.TupleNode) ([]tuple.TupleNode, error)
 
     // expand quiet
-    GetSucessors(ctx context.Context, partition string, source tuple.TupleNode) ([]tuple.TupleNode, error)
+    GetSucessors(ctx context.Context, partition string, source tuple.TupleNode) (mapset.Set[tuple.TupleNode], error)
 
     // reverse lookup
     GetAncestors(ctx context.Context, partition string, source tuple.TupleNode) ([]tuple.TupleNode, error)
+
+    // Return true if dest can be reached from source
+    IsReachable(ctx context.Context, partition string, source tuple.TupleNode, dest tuple.TupleNode) (bool, error)
 }

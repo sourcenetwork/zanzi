@@ -23,9 +23,9 @@ type PolicyGraph interface {
 
 // PolicyStore abstract interfacing with namespace storage.
 type PolicyStore interface {
-	GetPolicy(policyId string) (opt.Option[Policy], error)
+	GetPolicy(policyId string) (opt.Option[*Policy], error)
 
-	SetPolicy(policy Policy) error
+	SetPolicy(policy *Policy) error
 
 	DeletePolicy(policyId string) error
 

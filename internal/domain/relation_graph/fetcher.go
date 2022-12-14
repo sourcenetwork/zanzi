@@ -71,7 +71,7 @@ func (f *RuleSucessorFetcher[T]) getThisSucessors(ctx context.Context, policyId 
 		return nil, err
 	}
 
-	nodes := utils.MapSlice(sucessors, getSourceNode[T])
+	nodes := utils.MapSlice(sucessors, getDestNode[T])
 
 	return nodes, nil
 }
@@ -79,6 +79,7 @@ func (f *RuleSucessorFetcher[T]) getThisSucessors(ctx context.Context, policyId 
 // Return logical descendent made by evaluating a Computed Userset rule
 func (f *RuleSucessorFetcher[T]) getCUSucessors(ctx context.Context, cu *policy.ComputedUserset, policyId string, node tuple.TupleNode) []tuple.TupleNode {
     node.Relation = cu.Relation
+    node.Type = tuple.NodeType_RELATION_SOURCE
     return []tuple.TupleNode{
         node,
     }
@@ -114,35 +115,36 @@ func (f *RuleSucessorFetcher[T]) getTTUSucessors(ctx context.Context, ttu *polic
 	nodes := utils.MapSlice(sucessors, getDestNode[T])
 	for i := range nodes {
 		nodes[i].Relation = ttu.CuRelation
+                nodes[i].Type = tuple.NodeType_RELATION_SOURCE
 	}
 
 	return nodes, nil
 }
 
-
 /*
 
-// Ancestor Fetcher is used to fetch a node's stored and logical ancestors
-type AncestorFetcher struct {
+// Ancestor Fetcher retrieves ancestor tuples from a node
+// Performs reverse rewrite rule evaluation
+type AncestorFetcher[T proto.Message] struct {
 	logicalAncestors []tuple.TupleNode
-        tStore tuple.TupleStore
+        tStore tuple.TupleStore[T]
 }
 
-func NewAncestorFetcher(tupleStore tuple.TupleStore) AncestorFetcher[T] {
+func NewAncestorFetcher[T proto.Message](tupleStore tuple.TupleStore[T]) AncestorFetcher[T] {
 	return AncestorFetcher[T]{
 		tStore: tupleRepo,
 	}
 }
 
-// Return all ancestors nodes of uset
+// Return all ancestors nodes
 // Includes direct ancestors and logical ones (obtained by reverting rewrite rules)
-func (f *AncestorFetcher[T]) FetchAll(ctx context.Context, policyId string, pg policy.PolicyGraph, node tuple.TupleNode) ([]tuple.TupleNode, error) {
-	directAncestors, err := f.FetchAncestors(ctx, uset)
+func (f *AncestorFetcher[T]) FetchAll(ctx context.Context, pg policy.PolicyGraph, root tuple.TupleNode) ([]tuple.TupleNode, error) {
+	directAncestors, err := f.FetchAncestors(ctx, pg, root)
 	if err != nil {
 		return nil, err
 	}
 
-	logicalAncestors, err := f.FetchLogicalAncestors(ctx, uset)
+	logicalAncestors, err := f.FetchLogicalAncestors(ctx, pg, root)
 	if err != nil {
 		return nil, err
 	}
@@ -150,21 +152,33 @@ func (f *AncestorFetcher[T]) FetchAll(ctx context.Context, policyId string, pg p
 	return append(directAncestors, logicalAncestors...), nil
 }
 
-// fetchLogicalAncestors return Relationships which are "logical ancestors" of uset.
-// Logical Ancestors are edges reachable through userset rewrite rules.
-func (f *AncestorFetcher[T]) FetchLogicalAncestors(ctx context.Context, uset tuple.TupleNode) ([]tuple.TupleNode, error) {
-	f.logicalAncestors = nil
-
-	referringRels, err := f.nsRepo.GetReferrers(uset.Namespace, uset.Relation)
+// Fetch all directly accessible Ancestors of uset
+func (f *AncestorFetcher[T]) FetchDirectAncestors(ctx context.Context, pg policy.PolicyGraph, root tuple.TupleNode) ([]tuple.TupleNode, error) {
+	ancestors, err := f.tStore.GetAncestors(pg.GetPolicyId(), root)
 	if err != nil {
-		err = fmt.Errorf("failed FetchLogicalAncestors for %v: %v", uset, err)
+		err = fmt.Errorf("fetch ancestors failed for %v: %v", root, err)
 		return nil, err
 	}
+	return utils.MapSlice(ancestors, getSourceNode), nil
+}
 
-	for _, relation := range referringRels {
-		err := f.buildAncestorsFromRel(ctx, uset, relation)
+// fetchLogicalAncestors return Relationships which are "logical ancestors" of uset.
+// Logical Ancestors are edges reachable through userset rewrite rules.
+func (f *AncestorFetcher[T]) FetchLogicalAncestors(ctx context.Context, pg policy.PolicyGraph, root tuple.TupleNode) ([]tuple.TupleNode, error) {
+	f.logicalAncestors = nil
+
+        id := pg.GetPolicyId()
+        opt := pg.GetAncestors(root.Namespace, root.Relation)
+        if opt.IsEmpty() {
+            err := fmt.Errorf("failed fetching ancestors for %v: policy %v does not have resource relation pair (%v, %v)", root, id, root.Namespace, root.Relation)
+            return nil, err
+        }
+
+        ancestorRels := opt.Value()
+	for _, relation := range ancestorRels {
+		err := f.buildAncestorsFromRel(ctx, pg, root, relation)
 		if err != nil {
-			err = fmt.Errorf("failed building ancestors for %v: %v", uset, err)
+			err = fmt.Errorf("failed building ancestors for %v: %v", root, err)
 			return nil, err
 		}
 	}
@@ -172,15 +186,6 @@ func (f *AncestorFetcher[T]) FetchLogicalAncestors(ctx context.Context, uset tup
 	return f.logicalAncestors, nil
 }
 
-// Fetch all directly accessible Ancestors of uset
-func (f *AncestorFetcher[T]) FetchDirectAncestors(ctx context.Context, policyId string, node tuple.TupleNode) ([]tuple.TupleNode, error) {
-	ancestors, err := f.tStore.GetAncestors(policyId, node)
-	if err != nil {
-		err = fmt.Errorf("fetch ancestors failed for %v: %v", node, err)
-		return nil, err
-	}
-	return utils.MapSlice(records, getSource), nil
-}
 
 // Extracts all rules from relation which reference uset.Relation
 // for each matching rule, build possible ancestors and
@@ -198,47 +203,11 @@ func (f *AncestorFetcher[T]) buildAncestorsFromRel(ctx context.Context, uset tup
 	return nil
 }
 
-// Extract all `Rule`s from a `Relation` userset expression tree
-// which references the relation specificied in uset
-// eg:
-// let uset.Relation = "Owner"
-// let relation exp tree contain a rule of type CU(Owner)
-// getReferrers would return only the Owner CU rule
-func (f *AncestorFetcher[T]) getReferrers(relation model.Relation, uset tuple.TupleNode) []model.Rule {
-	leaves := relation.Rewrite.ExpressionTree.GetLeaves()
-
-	referencedRel := uset.Relation
-
-	var rules = make([]model.Rule, 0, len(leaves))
-	for _, leaf := range leaves {
-		switch rule := leaf.Rule.Rule.(type) {
-		case *model.Rule_This:
-			// "This" rules never references any relation
-			continue
-		case *model.Rule_TupleToUserset:
-			// Tuple To AuthNode references a relation through the
-			// ComputedAuthNode property
-			ttu := rule.TupleToUserset
-			if ttu.ComputedAuthNodeRelation == referencedRel {
-				rules = append(rules, *leaf.Rule)
-			}
-		case *model.Rule_ComputedAuthNode:
-			// Computed AuthNode directly references a relation
-			cu := rule.ComputedAuthNode
-			if cu.Relation == referencedRel {
-				rules = append(rules, *leaf.Rule)
-			}
-		default:
-			panic("uknown rule type")
-		}
-	}
-	return rules
-}
 
 // Append potential logical ancestors of uset for a relation, rule pair
 // Assume rules were previously filtered to only contain TTU and CU rules
 // which applies to the given uset
-func (f *AncestorFetcher[T]) buildAncestorsFromRule(ctx context.Context, uset tuple.TupleNode, relation model.Relation, rule model.Rule) error {
+func (f *AncestorFetcher[T]) fetchAncestorsForAncestorRule(ctx context.Context, node tuple.TupleNode, ancestor PolicyNode) error {
 	switch rule := rule.Rule.(type) {
 	case *model.Rule_TupleToUserset:
 		ttu := rule.TupleToUserset
@@ -273,8 +242,8 @@ func (f *AncestorFetcher) revertCU(uset tuple.TupleNode, referer string) tuple.T
 
 // Apply a TTU rule backwards and return nodes that may reach uset
 // Returned nodes are not guaranteed to exist
-func (f *AncestorFetcher) ancestorsTTU(ctx context.Context, partition string, pg policy.PolicyGraph, ttu policy.TupleToUserset, node tuple.TupleNode) ([]tuple.TupleNode, error) {
-	tuples, err := f.tStore.GetGrantingTuples(partition, ttu.TuplesetRelation, node.Namespace, node.ObjectId)
+func (f *AncestorFetcher) ancestorsTTU(ctx context.Context, pg policy.PolicyGraph, ttu policy.TupleToUserset, node tuple.TupleNode) ([]tuple.TupleNode, error) {
+	tuples, err := f.tStore.GetGrantingTuples(pg.GetPolicyId(), ttu.TuplesetRelation, node.Namespace, node.ObjectId)
 	if err != nil {
 		err = fmt.Errorf("failed reverting TTU rule %v: %v", ttu, err)
 		return nil, err
@@ -290,6 +259,7 @@ func (f *AncestorFetcher) ancestorsTTU(ctx context.Context, partition string, pg
 }
 
 */
+
 func getSourceNode[T proto.Message](tuple tuple.Tuple[T]) tuple.TupleNode {
     return tuple.Source
 }

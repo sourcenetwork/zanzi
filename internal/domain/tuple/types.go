@@ -1,6 +1,8 @@
 package tuple
 
 import (
+    "time"
+
     "google.golang.org/protobuf/proto"
     "google.golang.org/protobuf/types/known/anypb"
 
@@ -40,6 +42,7 @@ func (o *TupleNodeRecord) ToNode() TupleNode {
 // The type parameter allows users to embed custom application data
 type Tuple[T proto.Message] struct {
     Partition string
+    CreatedAt time.Time
     Source TupleNode
     Dest TupleNode
     data T

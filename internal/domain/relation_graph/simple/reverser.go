@@ -1,4 +1,5 @@
 package simple
+/*
 
 import (
 	"context"
@@ -113,3 +114,4 @@ func ReverserFromChecker(nsRepo repository.NamespaceRepository, tupleRepo reposi
 		tupleRepo:    tupleRepo,
 	}
 }
+*/

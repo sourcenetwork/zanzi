@@ -88,8 +88,8 @@ type RCDBTupleStore[D proto.Message] struct {
 }
 
 // Return RCDBTupleStore from a cosmos KVStore and a global key prefix
-func NewRaccoonStore[D proto.Message](kv cosmos.KVStore, prefix []byte) RCDBTupleStore[D] {
-    return RCDBTupleStore[D] {
+func NewRaccoonStore[D proto.Message](kv cosmos.KVStore, prefix []byte) *RCDBTupleStore[D] {
+    return &RCDBTupleStore[D] {
         globalPrefix: prefix,
         stores: make(map[string]rcdb.RaccoonStore[*TupleRecord, *TupleNodeRecord]),
         kvStore: kv,

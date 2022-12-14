@@ -7,7 +7,7 @@ import (
 
         "google.golang.org/protobuf/proto"
 
-	rg "github.com/sourcenetwork/source-zanzibar/relation_graph"
+	rg "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph"
         "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
         "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
 )
@@ -22,12 +22,13 @@ func newWalker[T proto.Message](tStore tuple.TupleStore[T], pStore policy.Policy
 
 // walker performs a walk through the relation graph
 type walker[T proto.Message] struct {
-	trail     map[tuple.TupleNode]struct{}
 	tStore  tuple.TupleStore[T]
 	pStore  policy.PolicyStore
+        fetcher rg.RuleSucessorFetcher[T]
+
+	trail     map[tuple.TupleNode]struct{}
 	pg  policy.PolicyGraph
         policyId string
-        fetcher rg.RuleSucessorFetcher[T]
 }
 
 func (w *walker[T]) Walk(ctx context.Context, policyId string, source tuple.TupleNode) (rg.RelationNode, error) {

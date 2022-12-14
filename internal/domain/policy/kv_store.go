@@ -9,21 +9,32 @@ import (
 
 // PolicyStore abstract interfacing with namespace storage.
 type PolicyKVStore struct {
-    store raccoon.ObjectStore[Policy]
+    store raccoon.ObjectStore[*Policy]
 }
 
-func NewPolicyKVStore(prefix []byte, store cosmos.KVStore) PolicyStore {
-    return &PolicyKVStore {
+type polIder struct {}
+func (id *polIder) Id(policy *Policy) []byte {
+    return []byte(policy.Id)
+}
 
+var _ raccoon.Ider[*Policy] = (*polIder)(nil)
+
+func NewPolicyKVStore(prefix []byte, store cosmos.KVStore) PolicyStore {
+    factory := func() *Policy {return &Policy{}}
+    protoMarshaler := raccoon.ProtoMarshaler[*Policy](factory)
+    ider := &polIder{}
+    objStore := raccoon.NewObjStore[*Policy](store, prefix, protoMarshaler, ider)
+    return &PolicyKVStore {
+        store: objStore,
     }
 }
 
-func (s *PolicyKVStore) GetPolicy(policyId string) (opt.Option[Policy], error) {
+func (s *PolicyKVStore) GetPolicy(policyId string) (opt.Option[*Policy], error) {
     opt, err := s.store.GetObject([]byte(policyId))
     return toOpt(opt), err
 }
 
-func (s *PolicyKVStore) SetPolicy(policy Policy) error {
+func (s *PolicyKVStore) SetPolicy(policy *Policy) error {
     return s.store.SetObject(policy)
 }
 
@@ -39,7 +50,7 @@ func (s *PolicyKVStore) GetPolicyGraph(policyId string) (opt.Option[PolicyGraph]
     }
 
     policy := o.Value()
-    graph := NewMapPolicyGraph(policy)
+    graph := NewMapPolicyGraph(*policy)
     return opt.Some(graph), nil
 }
 

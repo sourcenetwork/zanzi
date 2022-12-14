@@ -9,16 +9,17 @@ option go_package = "github.com/sourcenetwork/source-zanzibar/internal/domain/po
 
 import "internal/domain/policy/tree.proto";
 
+import "google.protobuf";
 
 message Policy {
     string id = 1;
     string name = 2;
     string description = 3;
-    // creation date
-    // last modified
-    // creator
     repeated Resource resources = 4;
     repeated Actor actors = 5;
+    Timestamp creation_stamp = 6;
+    // last modified
+    // creator
     map<string, string> attributes = 10;
 }
 
