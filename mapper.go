@@ -1,17 +1,20 @@
 package source_zanzibar
 
 import (
+    "google.golang.org/protobuf/proto"
+
     "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
     "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
+    rg "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph"
     "github.com/sourcenetwork/source-zanzibar/types"
+    "github.com/sourcenetwork/source-zanzibar/pkg/utils"
 )
 
 type policyMapper struct {}
 
 func (m *policyMapper) ToInternal(p types.Policy) policy.Policy {
-    var resources []*policy.Resources
-    resMapper := func(res types.Resource) {return m.toInternalResource(res)}
-    actorMapper := func(a types.Actor) {return m.toInternalActor(a)}
+    resMapper := func(res types.Resource) *policy.Resource {return m.toInternalResource(res)}
+    actorMapper := func(a types.Actor) *policy.Actor {return m.toInternalActor(a)}
     return policy.Policy{
         Id: p.Id,
         Name: p.Name,
@@ -21,27 +24,31 @@ func (m *policyMapper) ToInternal(p types.Policy) policy.Policy {
     }
 }
 
-func (m *policyMapper) FromInternal(p policy.Policy) types.Policy {
-
+func (m *policyMapper) FromInternal(p *policy.Policy) types.Policy {
+    return types.Policy {
+        // TODO
+    }
 }
 
 
 func (m *policyMapper) mapInternalRule(rule *policy.Rule) any {
+    // TODO
+    return nil
 }
 
-func (m *policyMapper) relToRule(rel types.Relation) *policy.Rule {
+func (m *policyMapper) relationToRule(rel types.Relation) *policy.Rule {
     return &policy.Rule {
         Type: policy.RuleType_RELATION,
-        Name: perm.Name,
+        Name: rel.Name,
         // TODO map constraint
     }
 }
 
-func (m *policyMapper) permToRule(perm types.Permission) *policy.Rule {
+func (m *policyMapper) permissionToRule(perm types.Permission) *policy.Rule {
     return &policy.Rule {
         Type: policy.RuleType_PERMISSION,
         Name: perm.Name,
-        RewriteExpr: perm.RelationExpression,
+        RewriteExpr: perm.Expression,
         // TODO call parser in order to build tree
     }
 }
@@ -68,12 +75,12 @@ func (m *policyMapper) toInternalResource(res types.Resource) *policy.Resource {
     var rules []*policy.Rule
 
     for _, rel := range res.Relations {
-        rule := m.relToRule(rel)
+        rule := m.relationToRule(rel)
         rules = append(rules, rule)
     }
 
     for _, perm := range res.Permissions {
-        rule := m.permToRule(perm)
+        rule := m.permissionToRule(perm)
         rules = append(rules, rule)
     }
 
@@ -92,14 +99,14 @@ func (m *policyMapper) fromInternalResource(res *policy.Resource) types.Resource
 
 type tupleMapper[T proto.Message] struct { }
 
-func (m *tupleMapper[T]) RecordToTuple(rec types.Record[T]) tuple.Tuple[T] {
-    tuple := m.relToTuple(rec.Relationship)
+func (m *tupleMapper[T]) FromRecord(rec types.Record[T]) tuple.Tuple[T] {
+    tuple := m.FromRelationship(rec.Relationship)
     tuple.SetData(rec.Data)
     tuple.CreatedAt = rec.CreatedAt
     return tuple
 }
 
-func (m *tupleMapper[T]) relToTuple(rel types.Relationship) tuple.Tuple[T] {
+func (m *tupleMapper[T]) FromRelationship(rel types.Relationship) tuple.Tuple[T] {
     src := tuple.TupleNode {
         Namespace: rel.Object.Namespace,
         Id: rel.Object.Id,
@@ -114,15 +121,15 @@ func (m *tupleMapper[T]) relToTuple(rel types.Relationship) tuple.Tuple[T] {
     }
 
     switch rel.Type {
-    case RelationshipType_ATTRIBUTE:
+    case types.RelationshipType_ATTRIBUTE:
         dst.Type = tuple.NodeType_OBJECT
-    case RelationshipType_GRANT:
+    case types.RelationshipType_GRANT:
         dst.Type = tuple.NodeType_ACTOR
-    case RelationshipType_DELEGATE:
+    case types.RelationshipType_DELEGATE:
         dst.Type = tuple.NodeType_RELATION_SOURCE
     }
 
-    return tuple.Tuple{
+    return tuple.Tuple[T]{
         Partition: rel.PolicyId,
         Source: src,
         Dest: dst,
@@ -130,7 +137,7 @@ func (m *tupleMapper[T]) relToTuple(rel types.Relationship) tuple.Tuple[T] {
 }
 
 
-func (m *tupleMapper[T]) toRelationship(t tuple.Tuple) types.Relationship {
+func (m *tupleMapper[T]) toRelationship(t tuple.Tuple[T]) types.Relationship {
     var relType types.RelationshipType
     switch t.Dest.Type {
     case tuple.NodeType_ACTOR:
@@ -144,24 +151,92 @@ func (m *tupleMapper[T]) toRelationship(t tuple.Tuple) types.Relationship {
     return types.Relationship{
         PolicyId: t.Partition,
         Type: relType,
-        Object: Entity{
+        Object: types.Entity{
             Namespace: t.Source.Namespace,
             Id: t.Source.Id,
         },
         Relation: t.Source.Relation,
-        Subject: Entity{
+        Subject: types.Entity{
             Namespace: t.Dest.Namespace,
             Id: t.Dest.Id,
         },
-        SubjectRelation: t.Dest.Relation
+        SubjectRelation: t.Dest.Relation,
     }
 }
 
-func (m *tupleMapper[T]) ToRecord(t tuple.Tuple) types.Record[T] {
+func (m *tupleMapper[T]) ToRecord(t tuple.Tuple[T]) types.Record[T] {
     relationship := m.toRelationship(t)
-    return Record[T] {
+    return types.Record[T] {
         CreatedAt: t.CreatedAt,
         Relationship: relationship,
         Data: t.GetData(),
+    }
+}
+
+type treeMapper struct { }
+
+func (m *treeMapper) ToExpandTree(tree *rg.RelationNode) types.ExpandTree {
+    return types.ExpandTree {
+        Entity: types.Entity {
+            Namespace: tree.ObjRel.Namespace,
+            Id: tree.ObjRel.Id,
+        },
+        RelOrPerm: tree.ObjRel.Relation,
+        RelationExpression: m.toExpressionTree(tree.Child),
+    }
+}
+
+func (m *treeMapper) mapOp(op policy.Operation) types.Operator {
+    var operator types.Operator
+    switch op {
+    case policy.Operation_UNION:
+        operator = types.UNION
+    case policy.Operation_DIFFERENCE:
+        operator = types.DIFFERENCE
+    case policy.Operation_INTERSECTION:
+        operator = types.INTERSECTION
+    }
+    return operator
+}
+
+func (m *treeMapper) toFactor(node *rg.RuleNode) *types.Factor {
+    f := func(relNode *rg.RelationNode) types.ExpandTree {return m.ToExpandTree(relNode)}
+    return &types.Factor{
+        Operand: m.ruleToOperand(&node.RuleData),
+        Result: utils.MapSlice(node.Children, f),
+    }
+}
+
+func (m *treeMapper) toExpression(node *rg.OpNode) *types.Expression {
+    return &types.Expression {
+        Operator: m.mapOp(node.JoinOp),
+        Left: m.toExpressionTree(node.Left),
+        Right: m.toExpressionTree(node.Right),
+    }
+}
+
+func (m *treeMapper) toExpressionTree(node rg.RewriteNode) types.ExpressionTree {
+    switch n := node.(type) {
+    case *rg.OpNode:
+        return m.toExpression(n)
+    case *rg.RuleNode:
+        return m.toFactor(n)
+    default:
+        panic("unknown RewriteNode")
+    }
+}
+
+func (m *treeMapper) ruleToOperand(rule *rg.RuleData) string {
+    switch rule.Type {
+    case rg.RuleType_THIS:
+        return "this"
+    case rg.RuleType_CU:
+        operand := rule.Args["Relation"]
+        return operand
+    case rg.RuleType_TTU:
+        operand := rule.Args["TuplesetRelation"] + "->" + rule.Args["ComputedUsersetRelation"]
+        return operand
+    default:
+        panic("unknown rule type")
     }
 }

@@ -1,5 +1,6 @@
 package cli
 
+/*
 import (
 	"context"
 	"fmt"
@@ -64,3 +65,4 @@ func printNode(lvl int, node tree.Node) {
 		printNode(lvl+1, n.Right)
 	}
 }
+*/

@@ -49,6 +49,10 @@ func (b *TupleBuilder[T]) Actor(id string) TupleNode {
     return OR(b.ActorNamespace, id, "", NodeType_ACTOR)
 }
 
+func (b *TupleBuilder[T]) ActorWithNamespace(namespace, id string) TupleNode {
+    return OR(namespace, id, "", NodeType_ACTOR)
+}
+
 func (b *TupleBuilder[T]) RelSource(namespace, id, relation string) TupleNode {
     return OR(namespace, id, relation, NodeType_RELATION_SOURCE)
 }

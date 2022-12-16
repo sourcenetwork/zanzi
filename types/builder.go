@@ -1,5 +1,12 @@
 package types
 
+func NewEntity(namespace, id string) Entity {
+    return Entity {
+        Namespace: namespace,
+        Id: id,
+    }
+}
+
 type RelationshipBuilder struct {
     policyId string
 }
@@ -29,6 +36,10 @@ func (b *RelationshipBuilder) buildRel(source Entity, relation string, dest Enti
         Object: source,
         Relation: relation,
         Subject: dest,
-        SubjectRelation: destRel
+        SubjectRelation: destRel,
     }
+}
+
+type PolicyBuilder struct {
+
 }

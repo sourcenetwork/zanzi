@@ -4,6 +4,11 @@ import (
     "time"
 )
 
+type Validator int
+
+const (
+    Validator_STRING Validator = iota
+)
 
 type Policy struct {
     Id string
@@ -16,7 +21,7 @@ type Policy struct {
 
 type Actor struct {
     Name string
-    Kinds []string
+    Validators []Validator
 }
 
 type Resource struct {
@@ -32,5 +37,5 @@ type Relation struct {
 
 type Permission struct {
     Name string
-    RelationExpression string
+    Expression string
 }

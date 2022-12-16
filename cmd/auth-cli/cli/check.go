@@ -1,14 +1,12 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/source-zanzibar/authorizer/simple"
-	"github.com/sourcenetwork/source-zanzibar/model"
+	"github.com/sourcenetwork/source-zanzibar/types"
 )
 
 func init() {
@@ -16,33 +14,28 @@ func init() {
 }
 
 var checkCmd = &cobra.Command{
-	Use:   "check [namespace] [objId] [relation] [userNamespace] [userId]",
-	Short: "Return all nodes reachable from specified user",
+	Use:   "check [namespace] [srcId] [relation] [dstNamespace] [dstId]",
+	Short: "Return all entity, relation pairs reachable from specified actor",
 	Args:  cobra.ExactArgs(5),
 	Run: func(cmd *cobra.Command, args []string) {
 
-		objUset := model.AuthNode{
-			Namespace: args[0],
-			ObjectId:  args[1],
-			Relation:  args[2],
-		}
+            obj := types.Entity{
+                Namespace: args[0],
+                Id:  args[1],
+            }
 
-		user := model.AuthNode{
-			Namespace: args[3],
-			ObjectId:  args[4],
-			Relation:  model.EMPTY_REL,
-		}
+            actor := types.Entity {
+                Namespace: args[3],
+                Id:  args[4],
+            }
 
-		ctx := context.Background()
-		tr := buildSampleTupleRepo()
-		nr := buildSampleNamespaceRepo()
-		checker := simple.NewChecker(nr, tr)
+            auth := Service.GetAuthorizer()
+            ok, err := auth.Check(POL_ID, obj, args[2], actor)
 
-		result, err := checker.Check(ctx, objUset, user)
-		if err != nil {
-			log.Fatal(err)
-		}
+            if err != nil {
+                    log.Fatal(err)
+            }
 
-		fmt.Printf("%v\n", result)
+            fmt.Printf("%v\n", ok)
 	},
 }

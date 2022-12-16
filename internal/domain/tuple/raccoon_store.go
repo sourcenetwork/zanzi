@@ -5,7 +5,6 @@ import (
     "crypto/sha256"
 
     rcdb "github.com/sourcenetwork/raccoondb"
-    cosmos "github.com/cosmos/cosmos-sdk/store/types"
     "google.golang.org/protobuf/proto"
 
     "github.com/sourcenetwork/source-zanzibar/pkg/utils"
@@ -59,7 +58,7 @@ func relMapper(rec *TupleRecord) []byte {
 
 
 // Return schema for racooon's tuple store
-func buildSchema(kv cosmos.KVStore, prefix []byte) rcdb.RaccoonSchema[*TupleRecord, *TupleNodeRecord] {
+func buildSchema(kv rcdb.KVStore, prefix []byte) rcdb.RaccoonSchema[*TupleRecord, *TupleNodeRecord] {
     factory := func() *TupleRecord {
         return &TupleRecord{}
     }
@@ -83,12 +82,12 @@ func buildSchema(kv cosmos.KVStore, prefix []byte) rcdb.RaccoonSchema[*TupleReco
 // using RaccoonDB as the backend storage engine.
 type RCDBTupleStore[D proto.Message] struct {
     globalPrefix []byte
-    kvStore cosmos.KVStore
+    kvStore rcdb.KVStore
     stores map[string]rcdb.RaccoonStore[*TupleRecord, *TupleNodeRecord]
 }
 
-// Return RCDBTupleStore from a cosmos KVStore and a global key prefix
-func NewRaccoonStore[D proto.Message](kv cosmos.KVStore, prefix []byte) *RCDBTupleStore[D] {
+// Return RCDBTupleStore from a raccoon KVStore and a global key prefix
+func NewRaccoonStore[D proto.Message](kv rcdb.KVStore, prefix []byte) *RCDBTupleStore[D] {
     return &RCDBTupleStore[D] {
         globalPrefix: prefix,
         stores: make(map[string]rcdb.RaccoonStore[*TupleRecord, *TupleNodeRecord]),

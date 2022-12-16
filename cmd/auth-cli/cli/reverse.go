@@ -1,4 +1,5 @@
 package cli
+/*
 
 import (
 	"context"
@@ -44,3 +45,4 @@ var reverseCmd = &cobra.Command{
 		}
 	},
 }
+*/

@@ -4,15 +4,15 @@ import (
     "testing"
 
     "github.com/stretchr/testify/assert"
-    "github.com/cosmos/cosmos-sdk/store/mem"
     "google.golang.org/protobuf/proto"
 
     "github.com/sourcenetwork/source-zanzibar/internal/test_utils"
+    rcdb "github.com/sourcenetwork/raccoondb"
 )
 
 
 func TestTupleSetAndGet(t *testing.T) {
-    kv := mem.NewStore()
+    kv := rcdb.NewMemKV()
     ts := NewRaccoonStore[*test_utils.Appdata](kv, nil)
     builder := TupleBuilder[*test_utils.Appdata]{}
 
@@ -28,7 +28,7 @@ func TestTupleSetAndGet(t *testing.T) {
 }
 
 func TestTupleSetDelete(t *testing.T) {
-    kv := mem.NewStore()
+    kv := rcdb.NewMemKV()
     ts := NewRaccoonStore[*test_utils.Appdata](kv, nil)
     builder := TupleBuilder[*test_utils.Appdata]{}
 
@@ -45,7 +45,7 @@ func TestTupleSetDelete(t *testing.T) {
 }
 
 func TestGetAncestors(t *testing.T) {
-    kv := mem.NewStore()
+    kv := rcdb.NewMemKV()
     ts := NewRaccoonStore[*test_utils.Appdata](kv, nil)
     builder := TupleBuilder[*test_utils.Appdata]{}
 
@@ -68,7 +68,7 @@ func TestGetAncestors(t *testing.T) {
 }
 
 func TestGetSucessors(t *testing.T) {
-    kv := mem.NewStore()
+    kv := rcdb.NewMemKV()
     ts := NewRaccoonStore[*test_utils.Appdata](kv, nil)
     builder := TupleBuilder[*test_utils.Appdata]{}
 

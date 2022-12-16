@@ -1,6 +1,6 @@
 package types
 
-const (
+import (
     "time"
 
     "google.golang.org/protobuf/proto"

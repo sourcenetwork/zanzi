@@ -3,7 +3,7 @@ package simple
 import (
     "testing"
 
-    "github.com/cosmos/cosmos-sdk/store/mem"
+    rcdb "github.com/sourcenetwork/raccoondb"
 
     t "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
     p "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
@@ -12,8 +12,8 @@ import (
 )
 
 func TestSimpleRelationGraph(test *testing.T) {
-    tKv := mem.NewStore()
-    pKv := mem.NewStore()
+    tKv := rcdb.NewMemKV()
+    pKv := rcdb.NewMemKV()
 
     pStore := p.NewPolicyKVStore(nil, pKv)
     tStore := t.NewRaccoonStore[*test_utils.Appdata](tKv, nil)

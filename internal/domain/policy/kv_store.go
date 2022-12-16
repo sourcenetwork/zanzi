@@ -1,7 +1,6 @@
 package policy
 
 import (
-    cosmos "github.com/cosmos/cosmos-sdk/store/types"
     raccoon "github.com/sourcenetwork/raccoondb"
 
     opt "github.com/sourcenetwork/source-zanzibar/pkg/option"
@@ -19,7 +18,7 @@ func (id *polIder) Id(policy *Policy) []byte {
 
 var _ raccoon.Ider[*Policy] = (*polIder)(nil)
 
-func NewPolicyKVStore(prefix []byte, store cosmos.KVStore) PolicyStore {
+func NewPolicyKVStore(prefix []byte, store raccoon.KVStore) PolicyStore {
     factory := func() *Policy {return &Policy{}}
     protoMarshaler := raccoon.ProtoMarshaler[*Policy](factory)
     ider := &polIder{}
