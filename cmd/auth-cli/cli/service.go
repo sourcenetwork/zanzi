@@ -1,20 +1,27 @@
 package cli
 
 import (
-    "google.golang.org/protobuf/proto"
     rcdb "github.com/sourcenetwork/raccoondb"
 
     zanzi "github.com/sourcenetwork/source-zanzibar"
+    "github.com/sourcenetwork/source-zanzibar/types"
     tu "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
     pol "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
 )
 
-var Service zanzi.Service[proto.Message]
+var Client types.SimpleClient
 
 func init() {
-    tStore := tu.NewRaccoonStore[proto.Message](rcdb.NewMemKV(), nil)
-    pStore := pol.NewPolicyKVStore(nil, rcdb.NewMemKV())
+    store := rcdb.NewMemKV()
+    tuplePrefix := []byte("/tuples")
+    policyPrefix := []byte("/policy")
+    tStore := tu.NewRaccoonStore(store, tuplePrefix)
+    pStore := pol.NewPolicyKVStore(policyPrefix, store)
 
+    // FIXME this should ideally use the *public* types
+    // such relationship and the public policy.
+    // Since policy has no parser yet, we are using the
+    // internal types for now
     policy := buildPolicy()
     pStore.SetPolicy(&policy)
 
@@ -22,6 +29,7 @@ func init() {
     for _, tuple := range tuples {
         tStore.SetTuple(tuple)
     }
+    Client = zanzi.NewSimpleFromKVWithPrefixes(store, tuplePrefix, policyPrefix)
 }
 
 const POL_ID string = "1"
@@ -49,12 +57,12 @@ func buildPolicy() pol.Policy {
 }
 }
 
-func buildTuples() []tu.Tuple[proto.Message] {
-    tb := tu.TupleBuilder[proto.Message]{}
+func buildTuples() []tu.Tuple {
+    tb := tu.TupleBuilder{}
     tb.ActorNamespace = ACTOR_NAMESPACE
     tb.Partition = POL_ID
 
-    return []tu.Tuple[proto.Message] {
+    return []tu.Tuple {
         tb.Grant("group", "admin", "member", "alice"),
         tb.Grant("group", "staff", "member", "bob"),
 

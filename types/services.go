@@ -27,11 +27,25 @@ type Authorizer interface {
     // TODO additional useful methods like verbose reverse
 }
 
+type ProtoConstraint[T any] interface {
+    proto.Message
+    *T
+}
+
 // RelationshipService exposes operations to manipulate system Relationships
-type RelationshipService[T proto.Message] interface {
+type RelationshipService interface {
+    Set(rel Relationship) error
+    Delete(rel Relationship) error
+    Has(rel Relationship) (bool, error)
+    Get(rel Relationship) (o.Option[Relationship], error)
+}
+
+// RecordService exposes operations to manipulate records
+type RecordService[T any, PT ProtoConstraint[*T]] interface {
     Set(rel Relationship, data T) error
     Delete(rel Relationship) error
     Get(rel Relationship) (o.Option[Record[T]], error)
+    Has(rel Relationship) (bool, error)
 }
 
 // PolicyService exposes operations to manipulate system policies
@@ -39,4 +53,18 @@ type PolicyService interface {
     Set(policy Policy) error
     Get(id string) (o.Option[Policy], error)
     Delete(id string) error
+}
+
+// SimpleClient provides a public client that deals purely with relationships
+type SimpleClient interface {
+    GetAuthorizer() Authorizer
+    GetRelationshipService() RelationshipService
+    GetPolicyService() PolicyService
+}
+
+// RecordClient provides a public interface for records
+type RecordClient[T any, PT ProtoConstraint[*T]] interface {
+    GetAuthorizer() Authorizer
+    GetRecord() RecordService[T, PT]
+    GetPolicyService() PolicyService
 }

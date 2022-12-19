@@ -16,13 +16,13 @@ const partition = "1"
 
 
 
-func getFixutres() (t.TupleBuilder[*test_utils.Appdata], []t.Tuple[*test_utils.Appdata], p.Policy) {
-    tb := t.TupleBuilder[*test_utils.Appdata]{
+func getFixutres() (t.TupleBuilder, []t.Tuple, p.Policy) {
+    tb := t.TupleBuilder{
         ActorNamespace: "user",
         Partition: partition,
     }
 
-    tuples := []t.Tuple[*test_utils.Appdata] {
+    tuples := []t.Tuple {
         tb.Grant("group", "admin", "member", "alice"),
         tb.Grant("group", "staff", "member", "bob"),
 
@@ -31,8 +31,6 @@ func getFixutres() (t.TupleBuilder[*test_utils.Appdata], []t.Tuple[*test_utils.A
 
         tb.Attribute("file", "foo", "parent", "directory", "project"),
         tb.Attribute("file", "readme", "parent", "directory", "project"),
-
-
     }
 
     policy := p.Policy{
@@ -61,7 +59,7 @@ func getFixutres() (t.TupleBuilder[*test_utils.Appdata], []t.Tuple[*test_utils.A
     return tb, tuples, policy
 }
 
-func NewTestSuite(ts t.TupleStore[*test_utils.Appdata], ps p.PolicyStore, rg RelationGraph) RelationGraphTestSuite {
+func NewTestSuite(ts t.TupleStore, ps p.PolicyStore, rg RelationGraph) RelationGraphTestSuite {
     return RelationGraphTestSuite{
         ts: ts,
         ps: ps,
@@ -70,8 +68,8 @@ func NewTestSuite(ts t.TupleStore[*test_utils.Appdata], ps p.PolicyStore, rg Rel
 }
 
 type RelationGraphTestSuite struct {
-    tb t.TupleBuilder[*test_utils.Appdata]
-    ts t.TupleStore[*test_utils.Appdata]
+    tb t.TupleBuilder
+    ts t.TupleStore
     ps p.PolicyStore
     rg RelationGraph
 }

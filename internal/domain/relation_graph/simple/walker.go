@@ -5,15 +5,13 @@ import (
 	"fmt"
         "log"
 
-        "google.golang.org/protobuf/proto"
-
 	rg "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph"
         "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
         "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
 )
 
-func newWalker[T proto.Message](tStore tuple.TupleStore[T], pStore policy.PolicyStore) walker[T] {
-    return walker[T]{
+func newWalker(tStore tuple.TupleStore, pStore policy.PolicyStore) walker {
+    return walker{
         tStore: tStore,
         pStore: pStore,
         fetcher: rg.NewRuleSucessorFetcher(tStore),
@@ -21,17 +19,17 @@ func newWalker[T proto.Message](tStore tuple.TupleStore[T], pStore policy.Policy
 }
 
 // walker performs a walk through the relation graph
-type walker[T proto.Message] struct {
-	tStore  tuple.TupleStore[T]
+type walker struct {
+	tStore  tuple.TupleStore
 	pStore  policy.PolicyStore
-        fetcher rg.RuleSucessorFetcher[T]
+        fetcher rg.RuleSucessorFetcher
 
 	trail     map[tuple.TupleNode]struct{}
 	pg  policy.PolicyGraph
         policyId string
 }
 
-func (w *walker[T]) Walk(ctx context.Context, policyId string, source tuple.TupleNode) (rg.RelationNode, error) {
+func (w *walker) Walk(ctx context.Context, policyId string, source tuple.TupleNode) (rg.RelationNode, error) {
 	w.trail = make(map[tuple.TupleNode]struct{})
         w.policyId = policyId
 
@@ -68,7 +66,7 @@ func (w *walker[T]) Walk(ctx context.Context, policyId string, source tuple.Tupl
 // Walk through the relation graph starting at source.
 // 
 // keeps a trail through the depth search to avoid cyclic expands
-func (w *walker[T]) walk(ctx context.Context, source tuple.TupleNode) (*rg.RelationNode, error) {
+func (w *walker) walk(ctx context.Context, source tuple.TupleNode) (*rg.RelationNode, error) {
         // TODO maybe set max recursion depth
 
 	// expandTree is the recusion entrypoint for Expand subcalls
@@ -128,7 +126,7 @@ func (w *walker[T]) walk(ctx context.Context, source tuple.TupleNode) (*rg.Relat
         return node, nil
 }
 
-func (w *walker[T]) evalRewriteTree(ctx context.Context, rewriteTree *policy.Tree, node tuple.TupleNode) (rg.RewriteNode, error) {
+func (w *walker) evalRewriteTree(ctx context.Context, rewriteTree *policy.Tree, node tuple.TupleNode) (rg.RewriteNode, error) {
 	switch n := rewriteTree.Node.(type) {
 	case *policy.Tree_Opnode:
 		opnode := n.Opnode
@@ -143,7 +141,7 @@ func (w *walker[T]) evalRewriteTree(ctx context.Context, rewriteTree *policy.Tre
 }
 
 // Expand OpNode by expand its left and right children
-func (w *walker[T]) expandOpNode(ctx context.Context, root *policy.OpNode, node tuple.TupleNode) (*rg.OpNode, error) {
+func (w *walker) expandOpNode(ctx context.Context, root *policy.OpNode, node tuple.TupleNode) (*rg.OpNode, error) {
 	left, err := w.evalRewriteTree(ctx, root.Left, node)
 	if err != nil {
 		err = fmt.Errorf("failed expanding opnode %v: %v", node, err)
@@ -166,7 +164,7 @@ func (w *walker[T]) expandOpNode(ctx context.Context, root *policy.OpNode, node 
 
 // Recurses and builds an expand tree for node's logical neighbors
 // Return a RuleNode with the built trees as children.
-func (w *walker[T]) expandRuleNode(ctx context.Context, leaf *policy.Leaf, node tuple.TupleNode) (*rg.RuleNode, error) {
+func (w *walker) expandRuleNode(ctx context.Context, leaf *policy.Leaf, node tuple.TupleNode) (*rg.RuleNode, error) {
     rule := leaf.Rule
         sucessors, err := w.fetcher.Fetch(ctx, rule, w.policyId, node)
         if err != nil {

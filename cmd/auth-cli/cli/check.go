@@ -29,7 +29,7 @@ var checkCmd = &cobra.Command{
                 Id:  args[4],
             }
 
-            auth := Service.GetAuthorizer()
+            auth := Client.GetAuthorizer()
             ok, err := auth.Check(POL_ID, obj, args[2], actor)
 
             if err != nil {

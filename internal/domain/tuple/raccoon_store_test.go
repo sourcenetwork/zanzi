@@ -4,17 +4,15 @@ import (
     "testing"
 
     "github.com/stretchr/testify/assert"
-    "google.golang.org/protobuf/proto"
 
-    "github.com/sourcenetwork/source-zanzibar/internal/test_utils"
     rcdb "github.com/sourcenetwork/raccoondb"
 )
 
 
 func TestTupleSetAndGet(t *testing.T) {
     kv := rcdb.NewMemKV()
-    ts := NewRaccoonStore[*test_utils.Appdata](kv, nil)
-    builder := TupleBuilder[*test_utils.Appdata]{}
+    ts := NewRaccoonStore(kv, nil)
+    builder := TupleBuilder{}
 
     tuple := builder.Grant("file", "readme", "owner", "bob")
     err := ts.SetTuple(tuple)
@@ -29,8 +27,8 @@ func TestTupleSetAndGet(t *testing.T) {
 
 func TestTupleSetDelete(t *testing.T) {
     kv := rcdb.NewMemKV()
-    ts := NewRaccoonStore[*test_utils.Appdata](kv, nil)
-    builder := TupleBuilder[*test_utils.Appdata]{}
+    ts := NewRaccoonStore(kv, nil)
+    builder := TupleBuilder{}
 
     tuple := builder.Grant("file", "abc", "owner", "bob")
     err := ts.SetTuple(tuple)
@@ -46,8 +44,8 @@ func TestTupleSetDelete(t *testing.T) {
 
 func TestGetAncestors(t *testing.T) {
     kv := rcdb.NewMemKV()
-    ts := NewRaccoonStore[*test_utils.Appdata](kv, nil)
-    builder := TupleBuilder[*test_utils.Appdata]{}
+    ts := NewRaccoonStore(kv, nil)
+    builder := TupleBuilder{}
 
     t1 := builder.Grant("file", "abc", "owner", "bob")
     err := ts.SetTuple(t1)
@@ -69,8 +67,8 @@ func TestGetAncestors(t *testing.T) {
 
 func TestGetSucessors(t *testing.T) {
     kv := rcdb.NewMemKV()
-    ts := NewRaccoonStore[*test_utils.Appdata](kv, nil)
-    builder := TupleBuilder[*test_utils.Appdata]{}
+    ts := NewRaccoonStore(kv, nil)
+    builder := TupleBuilder{}
 
     t1 := builder.Grant("file", "abc", "owner", "bob")
     err := ts.SetTuple(t1)
@@ -90,7 +88,7 @@ func TestGetSucessors(t *testing.T) {
     assert.True(t, contains(sucessors, &t2))
 }
 
-func contains[T proto.Message](ts []Tuple[T], t *Tuple[T]) bool {
+func contains(ts []Tuple, t *Tuple) bool {
     for _, elem := range ts {
         if t.Equivalent(&elem) {
             return true

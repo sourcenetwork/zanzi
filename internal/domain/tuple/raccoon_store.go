@@ -5,7 +5,6 @@ import (
     "crypto/sha256"
 
     rcdb "github.com/sourcenetwork/raccoondb"
-    "google.golang.org/protobuf/proto"
 
     "github.com/sourcenetwork/source-zanzibar/pkg/utils"
     opt "github.com/sourcenetwork/source-zanzibar/pkg/option"
@@ -17,11 +16,11 @@ const (
 
 const relsIdx string = "relations" // raccoon index name for source node relation
 
-var _ TupleStore[proto.Message] = (*RCDBTupleStore[proto.Message])(nil)
+var _ TupleStore = (*RCDBTupleStore)(nil)
 var _ rcdb.NodeKeyer[*TupleNodeRecord] = (*tupleKeyer)(nil)
 var _ rcdb.Edge[*TupleNodeRecord] = (*TupleRecord)(nil)
 
-// tupleKeyer implements the Keyer interface as defined in raccoondb
+// tupleKeyer implements the NodeKeyer interface as defined in raccoondb
 // Map an TupleNodeRecord into []byte
 // Uses a sha256 to generete the keys
 type tupleKeyer struct {}
@@ -80,22 +79,22 @@ func buildSchema(kv rcdb.KVStore, prefix []byte) rcdb.RaccoonSchema[*TupleRecord
 
 // RCDBTupleStore implements the TupleStore interface
 // using RaccoonDB as the backend storage engine.
-type RCDBTupleStore[D proto.Message] struct {
+type RCDBTupleStore struct {
     globalPrefix []byte
     kvStore rcdb.KVStore
     stores map[string]rcdb.RaccoonStore[*TupleRecord, *TupleNodeRecord]
 }
 
 // Return RCDBTupleStore from a raccoon KVStore and a global key prefix
-func NewRaccoonStore[D proto.Message](kv rcdb.KVStore, prefix []byte) *RCDBTupleStore[D] {
-    return &RCDBTupleStore[D] {
+func NewRaccoonStore(kv rcdb.KVStore, prefix []byte) *RCDBTupleStore {
+    return &RCDBTupleStore {
         globalPrefix: prefix,
         stores: make(map[string]rcdb.RaccoonStore[*TupleRecord, *TupleNodeRecord]),
         kvStore: kv,
     }
 }
 
-func (s *RCDBTupleStore[D]) getStore(partition string) rcdb.RaccoonStore[*TupleRecord, *TupleNodeRecord] {
+func (s *RCDBTupleStore) getStore(partition string) rcdb.RaccoonStore[*TupleRecord, *TupleNodeRecord] {
     store, ok := s.stores[partition]
     if !ok {
         prefix := make([]byte, 0, len(partition) + len(s.globalPrefix) + 1)
@@ -110,27 +109,27 @@ func (s *RCDBTupleStore[D]) getStore(partition string) rcdb.RaccoonStore[*TupleR
 }
 
 
-func (s *RCDBTupleStore[D]) SetTuple(tuple Tuple[D]) error {
+func (s *RCDBTupleStore) SetTuple(tuple Tuple) error {
     store := s.getStore(tuple.Partition)
     rec := tuple.ToRec()
     return store.Set(&rec)
 }
 
-func (s *RCDBTupleStore[D]) GetTuple(partition string, source TupleNode, dest TupleNode) (opt.Option[Tuple[D]], error) {
+func (s *RCDBTupleStore) GetTuple(partition string, source TupleNode, dest TupleNode) (opt.Option[Tuple], error) {
     store := s.getStore(partition)
 
     sourceRec := source.ToRec()
     destRec := dest.ToRec()
     rcOpt, err := store.Get(&sourceRec, &destRec)
     if err != nil || rcOpt.IsEmpty() {
-        return opt.None[Tuple[D]](), err
+        return opt.None[Tuple](), err
     }
 
-    tuple := toTuple[D](rcOpt.Value())
-    return opt.Some[Tuple[D]](tuple), nil
+    tuple := toTuple(rcOpt.Value())
+    return opt.Some[Tuple](tuple), nil
 }
 
-func (s *RCDBTupleStore[D]) DeleteTuple(partition string, source TupleNode, dest TupleNode) error {
+func (s *RCDBTupleStore) DeleteTuple(partition string, source TupleNode, dest TupleNode) error {
     store := s.getStore(partition)
 
     src := source.ToRec()
@@ -142,7 +141,7 @@ func (s *RCDBTupleStore[D]) DeleteTuple(partition string, source TupleNode, dest
     return store.Delete(&rec)
 }
 
-func (s *RCDBTupleStore[D]) GetSucessors(partition string, source TupleNode) ([]Tuple[D], error) {
+func (s *RCDBTupleStore) GetSucessors(partition string, source TupleNode) ([]Tuple, error) {
     store := s.getStore(partition)
 
     src := source.ToRec()
@@ -150,7 +149,7 @@ func (s *RCDBTupleStore[D]) GetSucessors(partition string, source TupleNode) ([]
     return s.toTuples(records, err)
 }
 
-func (s *RCDBTupleStore[D]) GetAncestors(partition string, source TupleNode) ([]Tuple[D], error) {
+func (s *RCDBTupleStore) GetAncestors(partition string, source TupleNode) ([]Tuple, error) {
     store := s.getStore(partition)
 
     src := source.ToRec()
@@ -158,7 +157,7 @@ func (s *RCDBTupleStore[D]) GetAncestors(partition string, source TupleNode) ([]
     return s.toTuples(records, err)
 }
 
-func (s *RCDBTupleStore[D]) GetGrantingTuples(partition string, relation string, objNamespace string, objectId string) ([]Tuple[D], error) {
+func (s *RCDBTupleStore) GetGrantingTuples(partition string, relation string, objNamespace string, objectId string) ([]Tuple, error) {
     store := s.getStore(partition)
 
     filter := func(rec *TupleRecord) bool {
@@ -172,11 +171,11 @@ func (s *RCDBTupleStore[D]) GetGrantingTuples(partition string, relation string,
     return s.toTuples(records, err)
 }
 
-func (s *RCDBTupleStore[D]) toTuples(records []*TupleRecord, err error) ([]Tuple[D], error) {
+func (s *RCDBTupleStore) toTuples(records []*TupleRecord, err error) ([]Tuple, error) {
     if err != nil {
         return nil, err
     }
 
-    tuples := utils.MapSlice(records, func(r *TupleRecord) Tuple[D] {return toTuple[D](r)})
+    tuples := utils.MapSlice(records, func(r *TupleRecord) Tuple {return toTuple(r)})
     return tuples, nil
 }

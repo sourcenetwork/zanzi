@@ -7,7 +7,6 @@ import (
 
     t "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
     p "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-    "github.com/sourcenetwork/source-zanzibar/internal/test_utils"
     rg "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph"
 )
 
@@ -16,9 +15,9 @@ func TestSimpleRelationGraph(test *testing.T) {
     pKv := rcdb.NewMemKV()
 
     pStore := p.NewPolicyKVStore(nil, pKv)
-    tStore := t.NewRaccoonStore[*test_utils.Appdata](tKv, nil)
+    tStore := t.NewRaccoonStore(tKv, nil)
 
-    simple := NewSimple[*test_utils.Appdata](tStore, pStore)
+    simple := NewSimple(tStore, pStore)
 
     suite := rg.NewTestSuite(tStore, pStore, simple)
     suite.Run(test)

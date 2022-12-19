@@ -49,7 +49,4 @@ message TupleRecord {
 
     // partition_key is used to create logical partitions over tuples
     string partition_key = 3;
-
-    // Satellite data users can optionally embed within a tuple
-    optional google.protobuf.Any client_data = 4;
 }

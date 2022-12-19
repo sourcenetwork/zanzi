@@ -4,8 +4,6 @@ import (
     "context"
     "fmt"
 
-    "google.golang.org/protobuf/proto"
-
     "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
     "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
     "github.com/sourcenetwork/source-zanzibar/pkg/utils"
@@ -20,19 +18,19 @@ import (
 // Policies defines rules, which are relationships between tuple relations.
 // 
 // In order to fetch the sucessors of a node, it must combine the tuple storage with the rules in a policy.
-type RuleSucessorFetcher[T proto.Message] struct {
-    tStore tuple.TupleStore[T]
+type RuleSucessorFetcher struct {
+    tStore tuple.TupleStore
 }
 
-func NewRuleSucessorFetcher[T proto.Message](tStore tuple.TupleStore[T]) RuleSucessorFetcher[T] {
-    return RuleSucessorFetcher[T] {
+func NewRuleSucessorFetcher(tStore tuple.TupleStore) RuleSucessorFetcher {
+    return RuleSucessorFetcher {
         tStore: tStore,
     }
 }
 
 
 // Apply rewrite rule to node and return the resulting node sucessors
-func (f *RuleSucessorFetcher[T]) Fetch(ctx context.Context, rule *policy.RewriteRule, policyId string, node tuple.TupleNode) ([]tuple.TupleNode, error) {
+func (f *RuleSucessorFetcher) Fetch(ctx context.Context, rule *policy.RewriteRule, policyId string, node tuple.TupleNode) ([]tuple.TupleNode, error) {
     var sucessors []tuple.TupleNode
     var err error
 	switch r := rule.GetRule().(type) {
@@ -59,7 +57,7 @@ func (f *RuleSucessorFetcher[T]) Fetch(ctx context.Context, rule *policy.Rewrite
 }
 
 // Return direct descendents of uset
-func (f *RuleSucessorFetcher[T]) getThisSucessors(ctx context.Context, policyId string, node tuple.TupleNode) ([]tuple.TupleNode, error) {
+func (f *RuleSucessorFetcher) getThisSucessors(ctx context.Context, policyId string, node tuple.TupleNode) ([]tuple.TupleNode, error) {
 	sucessors, err := f.tStore.GetSucessors(policyId, node)
 
 	if len(sucessors) == 0 {
@@ -71,13 +69,13 @@ func (f *RuleSucessorFetcher[T]) getThisSucessors(ctx context.Context, policyId 
 		return nil, err
 	}
 
-	nodes := utils.MapSlice(sucessors, getDestNode[T])
+	nodes := utils.MapSlice(sucessors, getDestNode)
 
 	return nodes, nil
 }
 
 // Return logical descendent made by evaluating a Computed Userset rule
-func (f *RuleSucessorFetcher[T]) getCUSucessors(ctx context.Context, cu *policy.ComputedUserset, policyId string, node tuple.TupleNode) []tuple.TupleNode {
+func (f *RuleSucessorFetcher) getCUSucessors(ctx context.Context, cu *policy.ComputedUserset, policyId string, node tuple.TupleNode) []tuple.TupleNode {
     node.Relation = cu.Relation
     node.Type = tuple.NodeType_RELATION_SOURCE
     return []tuple.TupleNode{
@@ -86,7 +84,7 @@ func (f *RuleSucessorFetcher[T]) getCUSucessors(ctx context.Context, cu *policy.
 }
 
 // Return logical sucessors reachable from node by applying a Tuple To Userset rule.
-func (f *RuleSucessorFetcher[T]) getTTUSucessors(ctx context.Context, ttu *policy.TupleToUserset, policyId string, node tuple.TupleNode) ([]tuple.TupleNode, error) {
+func (f *RuleSucessorFetcher) getTTUSucessors(ctx context.Context, ttu *policy.TupleToUserset, policyId string, node tuple.TupleNode) ([]tuple.TupleNode, error) {
     // TTU is a complex rule to implement.
     // The steps are:
     // 1. Use node to build a new node with its relation replaced - call it filter
@@ -112,7 +110,7 @@ func (f *RuleSucessorFetcher[T]) getTTUSucessors(ctx context.Context, ttu *polic
 		return nil, err
 	}
 
-	nodes := utils.MapSlice(sucessors, getDestNode[T])
+	nodes := utils.MapSlice(sucessors, getDestNode)
 	for i := range nodes {
 		nodes[i].Relation = ttu.CuRelation
                 nodes[i].Type = tuple.NodeType_RELATION_SOURCE
@@ -127,18 +125,18 @@ func (f *RuleSucessorFetcher[T]) getTTUSucessors(ctx context.Context, ttu *polic
 // Performs reverse rewrite rule evaluation
 type AncestorFetcher[T proto.Message] struct {
 	logicalAncestors []tuple.TupleNode
-        tStore tuple.TupleStore[T]
+        tStore tuple.TupleStore
 }
 
-func NewAncestorFetcher[T proto.Message](tupleStore tuple.TupleStore[T]) AncestorFetcher[T] {
-	return AncestorFetcher[T]{
+func NewAncestorFetcher[T proto.Message](tupleStore tuple.TupleStore) AncestorFetcher {
+	return AncestorFetcher{
 		tStore: tupleRepo,
 	}
 }
 
 // Return all ancestors nodes
 // Includes direct ancestors and logical ones (obtained by reverting rewrite rules)
-func (f *AncestorFetcher[T]) FetchAll(ctx context.Context, pg policy.PolicyGraph, root tuple.TupleNode) ([]tuple.TupleNode, error) {
+func (f *AncestorFetcher) FetchAll(ctx context.Context, pg policy.PolicyGraph, root tuple.TupleNode) ([]tuple.TupleNode, error) {
 	directAncestors, err := f.FetchAncestors(ctx, pg, root)
 	if err != nil {
 		return nil, err
@@ -153,7 +151,7 @@ func (f *AncestorFetcher[T]) FetchAll(ctx context.Context, pg policy.PolicyGraph
 }
 
 // Fetch all directly accessible Ancestors of uset
-func (f *AncestorFetcher[T]) FetchDirectAncestors(ctx context.Context, pg policy.PolicyGraph, root tuple.TupleNode) ([]tuple.TupleNode, error) {
+func (f *AncestorFetcher) FetchDirectAncestors(ctx context.Context, pg policy.PolicyGraph, root tuple.TupleNode) ([]tuple.TupleNode, error) {
 	ancestors, err := f.tStore.GetAncestors(pg.GetPolicyId(), root)
 	if err != nil {
 		err = fmt.Errorf("fetch ancestors failed for %v: %v", root, err)
@@ -164,7 +162,7 @@ func (f *AncestorFetcher[T]) FetchDirectAncestors(ctx context.Context, pg policy
 
 // fetchLogicalAncestors return Relationships which are "logical ancestors" of uset.
 // Logical Ancestors are edges reachable through userset rewrite rules.
-func (f *AncestorFetcher[T]) FetchLogicalAncestors(ctx context.Context, pg policy.PolicyGraph, root tuple.TupleNode) ([]tuple.TupleNode, error) {
+func (f *AncestorFetcher) FetchLogicalAncestors(ctx context.Context, pg policy.PolicyGraph, root tuple.TupleNode) ([]tuple.TupleNode, error) {
 	f.logicalAncestors = nil
 
         id := pg.GetPolicyId()
@@ -190,7 +188,7 @@ func (f *AncestorFetcher[T]) FetchLogicalAncestors(ctx context.Context, pg polic
 // Extracts all rules from relation which reference uset.Relation
 // for each matching rule, build possible ancestors and
 // append results to f.logicalAncestors
-func (f *AncestorFetcher[T]) buildAncestorsFromRel(ctx context.Context, uset tuple.TupleNode, relation model.Relation) error {
+func (f *AncestorFetcher) buildAncestorsFromRel(ctx context.Context, uset tuple.TupleNode, relation model.Relation) error {
 	rules := f.getReferrers(relation, uset)
 
 	for _, rule := range rules {
@@ -207,7 +205,7 @@ func (f *AncestorFetcher[T]) buildAncestorsFromRel(ctx context.Context, uset tup
 // Append potential logical ancestors of uset for a relation, rule pair
 // Assume rules were previously filtered to only contain TTU and CU rules
 // which applies to the given uset
-func (f *AncestorFetcher[T]) fetchAncestorsForAncestorRule(ctx context.Context, node tuple.TupleNode, ancestor PolicyNode) error {
+func (f *AncestorFetcher) fetchAncestorsForAncestorRule(ctx context.Context, node tuple.TupleNode, ancestor PolicyNode) error {
 	switch rule := rule.Rule.(type) {
 	case *model.Rule_TupleToUserset:
 		ttu := rule.TupleToUserset
@@ -260,10 +258,10 @@ func (f *AncestorFetcher) ancestorsTTU(ctx context.Context, pg policy.PolicyGrap
 
 */
 
-func getSourceNode[T proto.Message](tuple tuple.Tuple[T]) tuple.TupleNode {
+func getSourceNode(tuple tuple.Tuple) tuple.TupleNode {
     return tuple.Source
 }
 
-func getDestNode[T proto.Message](tuple tuple.Tuple[T]) tuple.TupleNode {
+func getDestNode(tuple tuple.Tuple) tuple.TupleNode {
     return tuple.Dest
 }

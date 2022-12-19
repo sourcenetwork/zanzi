@@ -9,7 +9,6 @@ import (
     "fmt"
     "context"
 
-    "google.golang.org/protobuf/proto"
     mapset "github.com/deckarep/golang-set/v2"
 
     "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
@@ -17,31 +16,31 @@ import (
     rg "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph"
 )
 
-var _ rg.RelationGraph = (*RelationGraph[proto.Message])(nil)
+var _ rg.RelationGraph = (*RelationGraph)(nil)
 
-func NewSimple[T proto.Message](tStore tuple.TupleStore[T], pStore policy.PolicyStore) rg.RelationGraph {
-    return &RelationGraph[T]{
+func NewSimple(tStore tuple.TupleStore, pStore policy.PolicyStore) rg.RelationGraph {
+    return &RelationGraph{
         tupleStore: tStore,
         policyStore: pStore,
-        walker: newWalker[T](tStore, pStore),
+        walker: newWalker(tStore, pStore),
     }
 }
 
-type RelationGraph[T proto.Message] struct {
-    tupleStore tuple.TupleStore[T]
+type RelationGraph struct {
+    tupleStore tuple.TupleStore
     policyStore policy.PolicyStore
-    walker walker[T]
+    walker walker
 }
 
-func (g *RelationGraph[T]) Walk(ctx context.Context, policyId string, source tuple.TupleNode) (rg.RelationNode, error) {
+func (g *RelationGraph) Walk(ctx context.Context, policyId string, source tuple.TupleNode) (rg.RelationNode, error) {
     return g.walker.Walk(ctx, policyId, source)
 }
 
-func (g *RelationGraph[T]) GetPath(ctx context.Context, policyId string, source tuple.TupleNode, dest tuple.TupleNode) ([]tuple.TupleNode, error) {
+func (g *RelationGraph) GetPath(ctx context.Context, policyId string, source tuple.TupleNode, dest tuple.TupleNode) ([]tuple.TupleNode, error) {
     return nil, fmt.Errorf("Not impemented")
 }
 
-func (g *RelationGraph[T]) GetSucessors(ctx context.Context, policyId string, source tuple.TupleNode) (mapset.Set[tuple.TupleNode], error) {
+func (g *RelationGraph) GetSucessors(ctx context.Context, policyId string, source tuple.TupleNode) (mapset.Set[tuple.TupleNode], error) {
     tree, err := g.Walk(ctx, policyId, source)
     if err != nil {
         return nil, err
@@ -50,11 +49,11 @@ func (g *RelationGraph[T]) GetSucessors(ctx context.Context, policyId string, so
     return rg.EvalTree(&tree), nil
 }
 
-func (g *RelationGraph[T]) GetAncestors(ctx context.Context, policyId string, source tuple.TupleNode) ([]tuple.TupleNode, error) {
+func (g *RelationGraph) GetAncestors(ctx context.Context, policyId string, source tuple.TupleNode) ([]tuple.TupleNode, error) {
     return nil, fmt.Errorf("Not impemented")
 }
 
-func (g *RelationGraph[T]) IsReachable(ctx context.Context, policyId string, source, dest tuple.TupleNode) (bool, error) {
+func (g *RelationGraph) IsReachable(ctx context.Context, policyId string, source, dest tuple.TupleNode) (bool, error) {
     nodes, err := g.GetSucessors(ctx, policyId, source)
     if err != nil {
         return false, err

@@ -2,19 +2,35 @@ package types
 
 import (
     "time"
-
-    "google.golang.org/protobuf/proto"
 )
 
 // Relationship is a container type for any relation.
 // Embeds client application data.
 type Relationship struct {
+    createdAt time.Time
+    lastModified time.Time
     PolicyId string
     Type RelationshipType
     Object Entity
     Relation string
     Subject Entity
     SubjectRelation string // SubjectRelation may be empty depending on the relation type
+}
+
+func (r *Relationship) setCreationDate(timestamp time.Time) {
+    r.createdAt = timestamp
+}
+
+func (r *Relationship) setLastModified(timestamp time.Time) {
+    r.lastModified = timestamp
+}
+
+func (r *Relationship) GetCreationDate() time.Time {
+    return r.createdAt
+}
+
+func (r *Relationship) GetLastModified() time.Time {
+    return r.lastModified
 }
 
 // Identifies a system entity
@@ -49,8 +65,7 @@ const (
 )
 
 // Record represents a Relationship Record stored in the 
-type Record[T proto.Message] struct {
-    CreatedAt time.Time
+type Record[T any] struct {
     Relationship Relationship
     Data T
 }
