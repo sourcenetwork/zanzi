@@ -1,10 +1,10 @@
 package policy
 
 import (
-    "testing"
+	"testing"
 )
 
 func TestMapPolicyGraph(t *testing.T) {
-    s := buildTestSuite(NewMapPolicyGraph)
-    s.Run(t)
+	s := buildTestSuite(NewMapPolicyGraph)
+	s.Run(t)
 }

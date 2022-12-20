@@ -17,10 +17,10 @@ type lexerState int
 // identifier = alphanum*
 
 
-type tokenType int 
+type tokenType int
 const (
     eof tokenType = iota
-    identifier 
+    identifier
     union
     difference
     intersection
@@ -51,7 +51,7 @@ func (l *lexer) lexThis() { }
 func (l *lexer) skipWS() { }
 
 func (l *lexer) accept(pr predicate) { }
-func (l *lexer) stepIf(pr predicate) { 
+func (l *lexer) stepIf(pr predicate) {
 }
 func (l *lexer) peek() rune { }
 func (l *lexer) nextRune() {
@@ -61,7 +61,7 @@ func (l *lexer) backstep() { }
 func (l *lexer) ignore() { }
 
 // emit token in q channel
-func (l *lexer) emit(t tokenType) { 
+func (l *lexer) emit(t tokenType) {
     data := l.txt[l.start:l.pos]
     i := item {
         Type: t,
@@ -73,7 +73,7 @@ func (l *lexer) emit(t tokenType) {
 }
 
 
-// steps through window 
+// steps through window
 
 type item struct {
     Type tokenType

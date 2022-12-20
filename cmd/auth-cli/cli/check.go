@@ -19,23 +19,23 @@ var checkCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(5),
 	Run: func(cmd *cobra.Command, args []string) {
 
-            obj := types.Entity{
-                Namespace: args[0],
-                Id:  args[1],
-            }
+		obj := types.Entity{
+			Namespace: args[0],
+			Id:        args[1],
+		}
 
-            actor := types.Entity {
-                Namespace: args[3],
-                Id:  args[4],
-            }
+		actor := types.Entity{
+			Namespace: args[3],
+			Id:        args[4],
+		}
 
-            auth := Client.GetAuthorizer()
-            ok, err := auth.Check(POL_ID, obj, args[2], actor)
+		auth := Client.GetAuthorizer()
+		ok, err := auth.Check(POL_ID, obj, args[2], actor)
 
-            if err != nil {
-                    log.Fatal(err)
-            }
+		if err != nil {
+			log.Fatal(err)
+		}
 
-            fmt.Printf("%v\n", ok)
+		fmt.Printf("%v\n", ok)
 	},
 }

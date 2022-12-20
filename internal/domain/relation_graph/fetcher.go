@@ -1,59 +1,58 @@
 package relation_graph
 
 import (
-    "context"
-    "fmt"
+	"context"
+	"fmt"
 
-    "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
-    "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-    "github.com/sourcenetwork/source-zanzibar/pkg/utils"
+	"github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
+	"github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
+	"github.com/sourcenetwork/source-zanzibar/pkg/utils"
 )
 
 // Sucessor fetcher fetches the logical sucessors of a node in a relation graph.
-// 
+//
 // Relation Graph can be thought of as a "view" over the graph defined by relation tuples.
 // Each Tuple defines two nodes in the concrete Relation Graph.
 // Other nodes are added to the Relation Graph through a Policy definition.
 //
 // Policies defines rules, which are relationships between tuple relations.
-// 
+//
 // In order to fetch the sucessors of a node, it must combine the tuple storage with the rules in a policy.
 type RuleSucessorFetcher struct {
-    tStore tuple.TupleStore
+	tStore tuple.TupleStore
 }
 
 func NewRuleSucessorFetcher(tStore tuple.TupleStore) RuleSucessorFetcher {
-    return RuleSucessorFetcher {
-        tStore: tStore,
-    }
+	return RuleSucessorFetcher{
+		tStore: tStore,
+	}
 }
-
 
 // Apply rewrite rule to node and return the resulting node sucessors
 func (f *RuleSucessorFetcher) Fetch(ctx context.Context, rule *policy.RewriteRule, policyId string, node tuple.TupleNode) ([]tuple.TupleNode, error) {
-    var sucessors []tuple.TupleNode
-    var err error
+	var sucessors []tuple.TupleNode
+	var err error
 	switch r := rule.GetRule().(type) {
 
 	case *policy.RewriteRule_This:
-            sucessors, err = f.getThisSucessors(ctx, policyId, node)
+		sucessors, err = f.getThisSucessors(ctx, policyId, node)
 	case *policy.RewriteRule_TupleToUserset:
 		ttu := r.TupleToUserset
-                sucessors, err = f.getTTUSucessors(ctx, ttu, policyId, node)
+		sucessors, err = f.getTTUSucessors(ctx, ttu, policyId, node)
 	case *policy.RewriteRule_ComputedUserset:
 		cu := r.ComputedUserset
-                sucessors = f.getCUSucessors(ctx, cu, policyId, node)
+		sucessors = f.getCUSucessors(ctx, cu, policyId, node)
 	default:
-                // This should not happen unless library clients implement their own rule types
-                // which should not be possible as rules are part of the internal pkg.
+		// This should not happen unless library clients implement their own rule types
+		// which should not be possible as rules are part of the internal pkg.
 		err = fmt.Errorf("invalid rule type: %#v", r)
 		panic(err)
 	}
 
 	if err != nil {
-            err = fmt.Errorf("error fetching sucessors: rule %v, node %v: %v", rule.GetRule(), node, err)
+		err = fmt.Errorf("error fetching sucessors: rule %v, node %v: %v", rule.GetRule(), node, err)
 	}
-        return sucessors, err
+	return sucessors, err
 }
 
 // Return direct descendents of uset
@@ -65,7 +64,7 @@ func (f *RuleSucessorFetcher) getThisSucessors(ctx context.Context, policyId str
 	}
 
 	if err != nil {
-                err = fmt.Errorf("failed fetching This sucessors for: node=%v: %v", node, err)
+		err = fmt.Errorf("failed fetching This sucessors for: node=%v: %v", node, err)
 		return nil, err
 	}
 
@@ -76,25 +75,25 @@ func (f *RuleSucessorFetcher) getThisSucessors(ctx context.Context, policyId str
 
 // Return logical descendent made by evaluating a Computed Userset rule
 func (f *RuleSucessorFetcher) getCUSucessors(ctx context.Context, cu *policy.ComputedUserset, policyId string, node tuple.TupleNode) []tuple.TupleNode {
-    node.Relation = cu.Relation
-    node.Type = tuple.NodeType_RELATION_SOURCE
-    return []tuple.TupleNode{
-        node,
-    }
+	node.Relation = cu.Relation
+	node.Type = tuple.NodeType_RELATION_SOURCE
+	return []tuple.TupleNode{
+		node,
+	}
 }
 
 // Return logical sucessors reachable from node by applying a Tuple To Userset rule.
 func (f *RuleSucessorFetcher) getTTUSucessors(ctx context.Context, ttu *policy.TupleToUserset, policyId string, node tuple.TupleNode) ([]tuple.TupleNode, error) {
-    // TTU is a complex rule to implement.
-    // The steps are:
-    // 1. Use node to build a new node with its relation replaced - call it filter
-    // 2. Fetch filter's sucessors from tuple store
-    // 3. Map fetched sucessors into a new node by replacing its relation with the cu_relation given in
-    // the TupleToUserset rule
-    // The mapped sucessors are the resulting nodes from evaluating TTU
+	// TTU is a complex rule to implement.
+	// The steps are:
+	// 1. Use node to build a new node with its relation replaced - call it filter
+	// 2. Fetch filter's sucessors from tuple store
+	// 3. Map fetched sucessors into a new node by replacing its relation with the cu_relation given in
+	// the TupleToUserset rule
+	// The mapped sucessors are the resulting nodes from evaluating TTU
 	tuplesetFilter := tuple.TupleNode{
 		Namespace: node.Namespace,
-		Id:  node.Id,
+		Id:        node.Id,
 		Relation:  ttu.TuplesetRelation,
 	}
 
@@ -113,7 +112,7 @@ func (f *RuleSucessorFetcher) getTTUSucessors(ctx context.Context, ttu *policy.T
 	nodes := utils.MapSlice(sucessors, getDestNode)
 	for i := range nodes {
 		nodes[i].Relation = ttu.CuRelation
-                nodes[i].Type = tuple.NodeType_RELATION_SOURCE
+		nodes[i].Type = tuple.NodeType_RELATION_SOURCE
 	}
 
 	return nodes, nil
@@ -259,9 +258,9 @@ func (f *AncestorFetcher) ancestorsTTU(ctx context.Context, pg policy.PolicyGrap
 */
 
 func getSourceNode(tuple tuple.Tuple) tuple.TupleNode {
-    return tuple.Source
+	return tuple.Source
 }
 
 func getDestNode(tuple tuple.Tuple) tuple.TupleNode {
-    return tuple.Dest
+	return tuple.Dest
 }

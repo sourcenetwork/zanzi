@@ -1,38 +1,37 @@
 package policy
 
 func BuildActor(name string, types ...ActorIdType) *Actor {
-    return &Actor{
-        Name: name,
-    }
+	return &Actor{
+		Name: name,
+	}
 }
 
 func BuildResource(name string, rules ...*Rule) *Resource {
-    return &Resource{
-        Name: name,
-        Rules: rules,
-    }
+	return &Resource{
+		Name:  name,
+		Rules: rules,
+	}
 }
 
 func BuildRule(name string, t RuleType, tree *Tree) *Rule {
-    return &Rule{
-        Name: name,
-        Type: t,
-        ExpressionTree: tree,
-    }
+	return &Rule{
+		Name:           name,
+		Type:           t,
+		ExpressionTree: tree,
+	}
 }
 
 func BuildPerm(name string, tree *Tree) *Rule {
-    return BuildRule(name, RuleType_PERMISSION, tree)
+	return BuildRule(name, RuleType_PERMISSION, tree)
 }
 
 func BuildRelation(name string, tree *Tree) *Rule {
-    return BuildRule(name, RuleType_RELATION, tree)
+	return BuildRule(name, RuleType_RELATION, tree)
 }
 
 func ThisRelation(name string) *Rule {
 	return BuildRelation(name, _This())
 }
-
 
 func buildOpNode(op Operation, left, right *Tree) *Tree {
 	return &Tree{
@@ -92,12 +91,11 @@ func TTU(tuplesetRelation, cuRelNamespace, cuRel string) *Tree {
 	rule := &RewriteRule{
 		Rule: &RewriteRule_TupleToUserset{
 			TupleToUserset: &TupleToUserset{
-				TuplesetRelation: tuplesetRelation,
-                                CuRelationNamespace: cuRelNamespace,
-				CuRelation: cuRel,
+				TuplesetRelation:    tuplesetRelation,
+				CuRelationNamespace: cuRelNamespace,
+				CuRelation:          cuRel,
 			},
 		},
 	}
 	return buildLeaf(rule)
 }
-
