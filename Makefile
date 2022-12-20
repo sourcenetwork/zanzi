@@ -3,7 +3,7 @@ GO_MOD="github.com/sourcenetwork/source-zanzibar"
 
 .PHONY: build
 build:
-	go build -o build/auth-cli cmd/auth-cli/main.go
+	go build -gcflags="-e" -v -o build/auth-cli cmd/auth-cli/main.go
 
 .PHONY: proto
 proto:

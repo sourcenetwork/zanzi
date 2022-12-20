@@ -43,12 +43,15 @@ func buildPolicy() pol.Policy {
         pol.BuildResource("file",
             pol.ThisRelation("owner"),
             pol.ThisRelation("reader"),
+            pol.ThisRelation("parent"),
             pol.BuildPerm("read", pol.Union(pol.CU("write"), pol.CU("reader"))),
             pol.BuildPerm("write", pol.Union(pol.CU("owner"), pol.TTU("parent", "directory", "dir_owner"))),
         ),
         pol.BuildResource("directory",
             pol.ThisRelation("dir_owner"),
-            pol.ThisRelation("parent"),
+        ),
+        pol.BuildResource("group",
+            pol.ThisRelation("member"),
         ),
     },
     Actors: []*pol.Actor{
@@ -66,7 +69,7 @@ func buildTuples() []tu.Tuple {
         tb.Grant("group", "admin", "member", "alice"),
         tb.Grant("group", "staff", "member", "bob"),
 
-        tb.Delegate("directory", "project", "owner", "group", "admin", "member"),
+        tb.Delegate("directory", "project", "dir_owner", "group", "admin", "member"),
         tb.Delegate("file", "readme", "reader", "group", "staff", "member"),
 
         tb.Attribute("file", "foo", "parent", "directory", "project"),

@@ -1,17 +1,13 @@
 package source_zanzibar
 
 import (
-    "context"
-    "fmt"
-
     rcdb "github.com/sourcenetwork/raccoondb"
 
     "github.com/sourcenetwork/source-zanzibar/types"
-    rg "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph"
     "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph/simple"
     "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
     "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-    o "github.com/sourcenetwork/source-zanzibar/pkg/option"
+    "github.com/sourcenetwork/source-zanzibar/internal/services"
 )
 
 //var _ types.RecordService[any, proto.Message] = (*relService[any, proto.Message])(nil)
@@ -32,9 +28,9 @@ func NewSimpleFromKVWithPrefixes(store rcdb.KVStore, tuplesPrefix []byte, policy
     relGraph := simple.NewSimple(tStore, pStore)
 
     return &simpleClient {
-        relationshipService: newRelationshipService(tStore),
-        policyService: newPolicyService(pStore),
-        authorizer: newAuthorizer(relGraph),
+        relationshipService: services.RelationshipServiceFromTupleStore(tStore),
+        policyService: services.PolicyServiceFromPolicyStore(pStore),
+        authorizer: services.AuthorizerFromRelationGraph(relGraph),
     }
 }
 
@@ -57,7 +53,7 @@ func (s *simpleClient) GetRelationshipService() types.RelationshipService {
 }
 
 
-type recordClient[T any, PT types.ProtoConstraint[*T]] struct {
+type recordClient[T any, PT types.ProtoConstraint[T]] struct {
     recordService types.RecordService[T, PT]
     policyService types.PolicyService
     authorizer types.Authorizer
@@ -76,6 +72,14 @@ func (s *recordClient[T, PT]) GetRecordService() types.RecordService[T, PT] {
 }
 
 
-func NewRecordClient[T any, PT types.ProtoConstraint[*T]]() types.RecordClient[T, PT] {
-    return nil
+func NewRecordClient[T any, PT types.ProtoConstraint[T]](store rcdb.KVStore, recordPrefix []byte, relationshipPrefix []byte, policyPrefix []byte) types.RecordClient[T, PT] {
+    pStore := policy.NewPolicyKVStore(policyPrefix, store)
+    tStore := tuple.NewRaccoonStore(store, relationshipPrefix)
+    relGraph := simple.NewSimple(tStore, pStore)
+
+    return &recordClient[T, PT] {
+        recordService: services.RecordServiceFromStores[T, PT](store, recordPrefix, tStore),
+        policyService: services.PolicyServiceFromPolicyStore(pStore),
+        authorizer: services.AuthorizerFromRelationGraph(relGraph),
+    }
 }

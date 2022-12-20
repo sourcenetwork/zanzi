@@ -146,6 +146,7 @@ func EvalTree(node Node) mapset.Set[tuple.TupleNode] {
         for _, child := range n.Children {
             set = set.Union(EvalTree(child))
         }
+        return set
     case *OpNode:
         l := EvalTree(n.Left)
         r := EvalTree(n.Right)
@@ -159,7 +160,6 @@ func EvalTree(node Node) mapset.Set[tuple.TupleNode] {
     default:
         panic("invalid Node type")
     }
-    return nil
 }
 
 func applyOp(left, right mapset.Set[tuple.TupleNode], op policy.Operation) mapset.Set[tuple.TupleNode] {

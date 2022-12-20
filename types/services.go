@@ -41,10 +41,10 @@ type RelationshipService interface {
 }
 
 // RecordService exposes operations to manipulate records
-type RecordService[T any, PT ProtoConstraint[*T]] interface {
+type RecordService[T any, PT ProtoConstraint[T]] interface {
     Set(rel Relationship, data T) error
     Delete(rel Relationship) error
-    Get(rel Relationship) (o.Option[Record[T]], error)
+    Get(rel Relationship) (o.Option[Record[PT]], error)
     Has(rel Relationship) (bool, error)
 }
 
@@ -53,18 +53,4 @@ type PolicyService interface {
     Set(policy Policy) error
     Get(id string) (o.Option[Policy], error)
     Delete(id string) error
-}
-
-// SimpleClient provides a public client that deals purely with relationships
-type SimpleClient interface {
-    GetAuthorizer() Authorizer
-    GetRelationshipService() RelationshipService
-    GetPolicyService() PolicyService
-}
-
-// RecordClient provides a public interface for records
-type RecordClient[T any, PT ProtoConstraint[*T]] interface {
-    GetAuthorizer() Authorizer
-    GetRecord() RecordService[T, PT]
-    GetPolicyService() PolicyService
 }

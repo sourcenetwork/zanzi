@@ -1,11 +1,12 @@
 package services
 
 import (
-    _ "fmt"
+    "context"
+    "fmt"
 
     "github.com/sourcenetwork/source-zanzibar/types"
     rg "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph"
-    o "github.com/sourcenetwork/source-zanzibar/pkg/option"
+    tuple "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
 )
 
 
@@ -20,7 +21,7 @@ func AuthorizerFromRelationGraph(relGraph rg.RelationGraph) types.Authorizer {
 type authorizer struct {
     rg rg.RelationGraph
     builder tuple.TupleBuilder
-    mapper treeMapper
+    mapper TreeMapper
 }
 
 func (a *authorizer) Check(policyId string, obj types.Entity, relation string, actor types.Entity) (bool, error) {

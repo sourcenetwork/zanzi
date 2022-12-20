@@ -22,7 +22,7 @@ func RelationshipServiceFromTupleStore(tStore tuple.TupleStore) types.Relationsh
 // relationshipService implements the RelationService interface by wrapping a TupleStore
 type relationshipService struct {
     tStore tuple.TupleStore
-    mapper tupleMapper
+    mapper RelationshipMapper
 }
 
 func (s *relationshipService) Set(rel types.Relationship) error {

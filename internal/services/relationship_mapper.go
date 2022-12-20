@@ -4,10 +4,7 @@ import (
     _ "google.golang.org/protobuf/proto"
 
     "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
-    "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-    rg "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph"
     "github.com/sourcenetwork/source-zanzibar/types"
-    "github.com/sourcenetwork/source-zanzibar/pkg/utils"
 )
 
 type RelationshipMapper struct { }

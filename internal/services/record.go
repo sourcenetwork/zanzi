@@ -1,25 +1,29 @@
 package services
 
 import (
-    _ "google.golang.org/protobuf/proto"
     "crypto/sha256"
     "log"
+    "fmt"
+
+    _ "google.golang.org/protobuf/proto"
+    rcdb "github.com/sourcenetwork/raccoondb"
 
     "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
-    "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-    rg "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph"
     "github.com/sourcenetwork/source-zanzibar/types"
-    "github.com/sourcenetwork/source-zanzibar/pkg/utils"
+    o "github.com/sourcenetwork/source-zanzibar/pkg/option"
 )
 
-var _ types.RecordService = (*recordService)(nil)
+//var _ types.RecordService = (*recordService)(nil)
 
-func RecordServiceFromStores[T any, PT types.ProtoConstraint[*T]](kv rcdb.KVStore, recordDataPrefix []byte, tupleStore tuple.TupleStore) types.RecordService {
-    marshaler := rcdb.ProtoMarshaler[T](func() PT {return new(T)})
+func RecordServiceFromStores[T any, PT types.ProtoConstraint[T]](kv rcdb.KVStore, recordDataPrefix []byte, tupleStore tuple.TupleStore) types.RecordService[T, PT] {
+    marshaler := rcdb.ProtoMarshaler[PT](func() PT {
+        var value T
+        return &value
+    })
 
-    objKV := rcdb.NewObjKV[T](kv, recordDataPrefix, marshaler)
+    objKV := rcdb.NewObjKV[PT](kv, recordDataPrefix, marshaler)
 
-    return &recordService {
+    return &recordService[T, PT] {
         tuples: tupleStore,
         objKV: objKV,
     }
@@ -29,9 +33,9 @@ func RecordServiceFromStores[T any, PT types.ProtoConstraint[*T]](kv rcdb.KVStor
 // Records are broken up and the relationship is stored in a tuple storage
 // while the satellite data is stored in a raccoon ObjKV store instance
 // FIXME All of this *must* be made atomic
-type recordService[T any, PT types.ProtoConstraint[*T]] struct {
-    tuples: tuple.TupleStore
-    objKV: rcdb.ObjKV[T]
+type recordService[T any, PT types.ProtoConstraint[T]] struct {
+    tuples tuple.TupleStore
+    objKV rcdb.ObjKV[PT]
     ider rcdb.Ider[tuple.Tuple]
     mapper RelationshipMapper
 }
@@ -40,7 +44,7 @@ func (s *recordService[T, PT]) Set(rel types.Relationship, data T) error {
     tuple := s.mapper.FromRelationship(rel)
     key := s.ider.Id(tuple)
 
-    err := s.objKv.Set(key, data)
+    err := s.objKV.Set(key, &data)
     if err != nil {
         return fmt.Errorf("failed setting record data for rel %v: %w", rel, err)
     }
@@ -58,12 +62,12 @@ func (s *recordService[T, PT]) Delete(rel types.Relationship) error {
     tuple := s.mapper.FromRelationship(rel)
     key := s.ider.Id(tuple)
 
-    err := s.objKv.Delete(key)
+    err := s.objKV.Delete(key)
     if err != nil {
         return fmt.Errorf("failed deleting record data for rel %v: %w", rel, err)
     }
 
-    err = s.tuples.DeleteTuple(tuple)
+    err = s.tuples.DeleteTuple(tuple.Partition, tuple.Source, tuple.Dest)
     if err != nil {
         // FIXME this should have a rollback policy
         return fmt.Errorf("failed deleting relationship %v: %w", rel, err)
@@ -72,57 +76,64 @@ func (s *recordService[T, PT]) Delete(rel types.Relationship) error {
     return nil
 }
 
-func (s *recordService[T, PT]) Get(rel types.Relationship) (o.Option[Record[T]], error) {
+func (s *recordService[T, PT]) Get(rel types.Relationship) (o.Option[types.Record[PT]], error) {
     tuple := s.mapper.FromRelationship(rel)
     key := s.ider.Id(tuple)
 
     // FIXME this should have a lock or version check in order to
     // fetch the matching record data and tuple
 
-    dataOpt, err := s.objKv.Get(key)
+    dataOpt, err := s.objKV.Get(key)
     if err != nil {
-        return o.None[Record[T]](), fmt.Errorf("failed fetching record data for rel %v: %w", rel, err)
+        return o.None[types.Record[PT]](), fmt.Errorf("failed fetching record data for rel %v: %w", rel, err)
     }
 
-    tupleOpt, err = s.tuples.GetTuple(tuple)
+    tupleOpt, err := s.tuples.GetTuple(tuple.Partition, tuple.Source, tuple.Dest)
     if err != nil {
-        return o.None[Record[T]](), fmt.Errorf("failed deleting relationship %v: %w", rel, err)
+        return o.None[types.Record[PT]](), fmt.Errorf("failed deleting relationship %v: %w", rel, err)
     }
 
     if tupleOpt.IsEmpty() == dataOpt.IsEmpty() {
-        return o.None[Record[T]](), nil
+        return o.None[types.Record[PT]](), nil
     } 
     if tupleOpt.IsEmpty() && !dataOpt.IsEmpty() {
         // NOTE this is bad because it could be a sign of data corruption / failed transaction
         msg := fmt.Sprintf("failed to get record: inconsistency detected: relationship %v does not exist while associated data does", rel)
         log.Println(msg)
-        return o.None[Record[T]](), fmt.Errorf(msg)
+        return o.None[types.Record[PT]](), fmt.Errorf(msg)
     }
-    // TODO think over the else case
-    // is it ok for a record to have a relationship but no data?
+    var data PT = new(T)
+    if !dataOpt.IsEmpty() {
+        // TODO think this case over
+        // is it ok for a record to have a relationship but no data?
+        // I feel like one valid scenario would be for users to migrate from
+        // using relationships to records
+        data = dataOpt.Value()
+    }
 
-    record := types.Record {
+    record := types.Record[PT] {
         Relationship: s.mapper.ToRelationship(tuple),
         Data: data,
     }
-    return o.Some[Record[T]](record), nil
+    return o.Some[types.Record[PT]](record), nil
 }
 
-func (s *recordService[T, PT]) Has(rel Relationship) (bool, error) {
+func (s *recordService[T, PT]) Has(rel types.Relationship) (bool, error) {
     tuple := s.mapper.FromRelationship(rel)
-    opt, err = s.tuples.GetTuple(tuple)
+    opt, err := s.tuples.GetTuple(tuple.Partition, tuple.Source, tuple.Dest)
     if err != nil {
         return false, fmt.Errorf("failed fetching relationship %v: %w", rel, err)
     }
     return !opt.IsEmpty(), nil
 }
 
+const sha256bytes int = 256 / 8
 // tupleKeyer implements the NodeKeyer interface as defined in raccoondb
 // Map an TupleNodeRecord into []byte
 // Uses a sha256 to generete the keys
 type tupleKeyer struct {}
 
-func (t *tupleKeyer) Key(objRel *TupleNodeRecord) []byte {
+func (t *tupleKeyer) Key(objRel *tuple.TupleNodeRecord) []byte {
     h := sha256.New()
     h.Write([]byte(objRel.Namespace))
     h.Write([]byte(objRel.Id))

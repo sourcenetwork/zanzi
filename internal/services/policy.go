@@ -20,7 +20,7 @@ func PolicyServiceFromPolicyStore(store policy.PolicyStore) types.PolicyService 
 // policyService wraps a PolicyStore in order to implement PolicyService
 type policyService struct {
     pStore policy.PolicyStore
-    mapper policyMapper
+    mapper PolicyMapper
 }
 
 func (s *policyService) Set(p types.Policy) error {
