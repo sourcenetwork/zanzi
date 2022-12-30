@@ -57,7 +57,7 @@ const (
 	tokenError
 )
 
-type lexer struct {
+type Lexer struct {
 	input     string
 	startPos  int
 	currPos   int
@@ -235,17 +235,7 @@ func (l *lexer) emitError(msg string) {
 	l.ignore()
 }
 
-func (l *lexer) lex() {
+func (l *lexer) Lex() {
 	l.scan()
 	close(l.q)
 }
-
-// permissiongrammar
-// expr = term + many(op expr) - fold many result into one thing
-// op = try union, diff, intersection
-// term = try rule, subexpr
-// rule = try cu, ttu
-// cu = identifier
-// ttu = identifier + arrow + identifier
-// subexpr = groupBegin + expr + groupEnd
-// identifier = id token

@@ -9,7 +9,7 @@ import (
 func TestTokens(t *testing.T) {
 	l, q := newLexer("read + write - admin & (res->root)")
 
-	go l.lex()
+	go l.Lex()
 
 	tokens := consumeChan(q)
 	tokenEq(t, tokens[0], token{tokenIdentifier, "read", 0, 0})
