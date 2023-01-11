@@ -65,9 +65,9 @@ type Lexer struct {
 	q         chan token
 }
 
-func newLexer(input string) (lexer, <-chan token) {
+func NewLexer(input string) (Lexer, <-chan token) {
 	q := make(chan token, 10)
-	l := lexer{
+	l := Lexer{
 		input,
 		0,
 		0,
@@ -78,7 +78,7 @@ func newLexer(input string) (lexer, <-chan token) {
 }
 
 // return next rune as a string
-func (l *lexer) peek() (rune, int) {
+func (l *Lexer) peek() (rune, int) {
 	if l.currPos == len(l.input) {
 		return eof, 0
 	}
@@ -88,28 +88,28 @@ func (l *lexer) peek() (rune, int) {
 
 // return one item in the lexer
 // should prob panic if it steps past startPos
-func (l *lexer) backtrack() {
+func (l *Lexer) backtrack() {
 	l.currPos -= l.lastWidth
 }
 
 // proceeds lexer to the next rune in the input string
-func (l *lexer) step() rune {
+func (l *Lexer) step() rune {
 	char, width := l.peek()
 	l.currPos += width
 	l.lastWidth = width
 	return char
 }
 
-func (l *lexer) reset() {
+func (l *Lexer) reset() {
 	l.currPos = l.startPos
 }
 
-func (l *lexer) ignore() {
+func (l *Lexer) ignore() {
 	l.startPos = l.currPos
 }
 
 // step one position in parser if predicate is true
-func (l *lexer) stepIf(f predicate) bool {
+func (l *Lexer) stepIf(f predicate) bool {
 	r, _ := l.peek()
 	if f(r) {
 		l.step()
@@ -119,7 +119,7 @@ func (l *lexer) stepIf(f predicate) bool {
 }
 
 // step one position in parser if predicate is true
-func (l *lexer) stepIfRune(r rune) bool {
+func (l *Lexer) stepIfRune(r rune) bool {
 	nextRune, _ := l.peek()
 	if nextRune == r {
 		l.step()
@@ -129,7 +129,7 @@ func (l *lexer) stepIfRune(r rune) bool {
 }
 
 // move lexer while predicate is true
-func (l *lexer) stepWhile(f predicate) int {
+func (l *Lexer) stepWhile(f predicate) int {
 	i := 0
 	for ; l.stepIf(f); i++ {
 	}
@@ -139,7 +139,7 @@ func (l *lexer) stepWhile(f predicate) int {
 // attempts to consume string from input buffer
 // if it finds string, steps lexer and returns true
 // otherwise, keeps original window and return false
-func (l *lexer) consumeString(str string) bool {
+func (l *Lexer) consumeString(str string) bool {
 	oldStart := l.currPos
 	ok := true
 	for _, r := range str {
@@ -157,12 +157,12 @@ func (l *lexer) consumeString(str string) bool {
 }
 
 // move lexer's starPos to the first non-whitespace character
-func (l *lexer) skipSpaces() {
+func (l *Lexer) skipSpaces() {
 	l.stepWhile(unicode.IsSpace)
 	l.ignore()
 }
 
-func (l *lexer) lexTerminal(typ tokenType, str string) bool {
+func (l *Lexer) lexTerminal(typ tokenType, str string) bool {
 	ok := l.consumeString(str)
 	if ok {
 		l.emit(typ)
@@ -171,12 +171,12 @@ func (l *lexer) lexTerminal(typ tokenType, str string) bool {
 	return ok
 }
 
-func (l *lexer) lexEOF() bool {
+func (l *Lexer) lexEOF() bool {
 	char, _ := l.peek()
 	return char == eof
 }
 
-func (l *lexer) lexIdentifier() bool {
+func (l *Lexer) lexIdentifier() bool {
 	count := l.stepWhile(isIdentifierRune)
 	ok := count > 0
 	if ok {
@@ -186,7 +186,7 @@ func (l *lexer) lexIdentifier() bool {
 	return ok
 }
 
-func (l *lexer) scan() {
+func (l *Lexer) scan() {
 	// consume as many operators, expressions or parenthesis
 	// as it can
 	for {
@@ -210,7 +210,7 @@ func (l *lexer) scan() {
 	}
 }
 
-func (l *lexer) emit(tt tokenType) {
+func (l *Lexer) emit(tt tokenType) {
 	lexeme := l.input[l.startPos:l.currPos]
 	t := token{
 		Type:     tt,
@@ -222,7 +222,7 @@ func (l *lexer) emit(tt tokenType) {
 	l.ignore()
 }
 
-func (l *lexer) emitError(msg string) {
+func (l *Lexer) emitError(msg string) {
 	msg = msg + ": context: " + l.input[l.startPos:l.currPos+10]
 	t := token{
 		Type:     tokenError,
@@ -235,7 +235,7 @@ func (l *lexer) emitError(msg string) {
 	l.ignore()
 }
 
-func (l *lexer) Lex() {
+func (l *Lexer) Lex() {
 	l.scan()
 	close(l.q)
 }

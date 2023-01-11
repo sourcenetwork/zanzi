@@ -1,195 +1,98 @@
 package permission_parser
 
-
-// Parser recognizes permission expression language.
-// The accept language is:
-// expr = term | term (op, term)+
-// op = union | diff | intersection
-// term = rule | subexpr
-// rule = cu | ttu
-// cu = identifier
-// ttu = identifier + arrow + identifier
-// subexpr = groupBegin + expr + groupEnd
-type Parser struct { }
-
-// Consume token slice and return parsed result
-func (p *parser) Parse(tokens []token) (Term, error) {
-    return expression(tokens)
-}
+import (
+	"fmt"
+)
 
 // parser function type
-// receives slice of tokens, return some type and another token slice
-type parserFn[T any] func([]token) (T, []token)
+// receives slice of tokens, return some type, error and another token slice
+type parserFn[T any] func([]token) (T, error, []token)
 
+// unit parser
+// consumes any item from token slice, fails if slice is empty
+func unit(tokens []token) (token, error, []token) {
+	if len(tokens) == 0 {
+		return token{}, fmt.Errorf("failed parsing: no tokens left"), tokens
+	}
 
-// primitive parsers
-
-// try all parsers until it receives a result
-func tryParsers(tokens []token, parsers ...parserFn) (T, []token) {
-    var result T
-    for _, fn := range parsers {
-        result, newTokens := fns(tokens)
-        if result != nil {
-            return result, newTokens
-        }
-    }
-    return nil, tokens
+	return tokens[0], nil, tokens[1:]
 }
 
-// return next token if it is of given type
-func nextIfType(tokens []token, ttype tokenType) (*token, []token) {
-    if len(tokens) == 0 || tokens[0].Type != ttype {
-        return nil, tokens
-    } 
-
-    return &tokens[0], tokens[1:]
+func buildErr(tokens []token, msg string, args ...any) error {
+	msg = fmt.Sprintf(msg, args...)
+	return fmt.Errorf("error parsing: %v: have: %v", msg, tokens)
 }
 
-// return next token if its type is in the given type list
-func nextIfAnyType(tokens []token, types ...tokenType) (*token, []token) {
-    if len(tokens) == 0 || {
-        return nil, tokens
-    } 
+// combinators
 
-    for _, tokenType := range types {
-        if token[0].Type == tokenType {
-            return &tokens[0], tokens[1:]
-        }
-    }
-    return nil, tokens
+// many generates a new parser that executes as many times as possible
+// many never fails, even if it does not produce anythign
+func many[T any](parser parserFn[T]) parserFn[[]T] {
+	return func(tokens []token) ([]T, error, []token) {
+		if len(tokens) == 0 {
+			return nil, nil, tokens
+		}
+
+		var tail []token = tokens
+		var ts []T
+		for {
+			t, err, newTail := parser(tail)
+			if err != nil {
+				return ts, nil, tail
+			}
+			tail = newTail
+			ts = append(ts, t)
+		}
+	}
 }
 
-func many[T](tokens []token, parseT parserFn[T]) ([]T, []token) {
-    var sliced []token = tokens
-    var ts []T
-    for {
-        t, sliced := parseT(sliced)
-        if t == nil {
-            break
-        }
-        ts = append(ts, t)
-    }
-    return ts, sliced
+// first returns a parser that tries parsers until the first sucessful parsing
+func first[T any](errMsg string, parsers ...parserFn[T]) parserFn[T] {
+	return func(tokens []token) (T, error, []token) {
+		var zero T
+		if len(tokens) == 0 {
+			return zero, buildErr(tokens, errMsg), tokens
+		}
+
+		for _, parser := range parsers {
+			t, err, sliced := parser(tokens)
+			if err == nil {
+				return t, nil, sliced
+			}
+		}
+
+		return zero, buildErr(tokens, errMsg), tokens
+	}
 }
 
-func anyNil(elems ...any) bool {
-    for _, elem := range elems {
-        if elem == nil {
-            return true
-        }
-    }
-    return false
+func parseIf[T any](predicate func(token) bool, errFmt string, args ...any) parserFn[token] {
+	return func(tokens []token) (token, error, []token) {
+		t, err, sliced := unit(tokens)
+		if err != nil {
+			return token{}, err, sliced
+		}
+		if predicate(t) {
+			return t, nil, sliced
+		}
+		return token{}, buildErr(tokens, errFmt, args), tokens
+	}
 }
 
-
-// combined parsers
-
-// parses: identifier
-func  computedUserset(tokens []token) (*CUNode, []token) {
-    id, tokens := nextIfType(tokens, tokenIdentifier)
-    if id == nil {
-        return nil, tokens
-    }
-
-    return &RelationName{ id.Lexeme }, tokens
+// parseIfType return next token if it is of given type
+func parseIfType(ttype tokenType) parserFn[token] {
+	predicate := func(t token) bool { return t.Type == ttype }
+	return parseIf[token](predicate, "want token of type %v", ttype)
 }
 
-// parses: this
-func  this(tokens []token) (*ThisNode, []tokens) {
-    this, tokens := nextIfType(tokens, tokenThis)
-    if this == nil {
-        return nil, tokens
-    }
-    return &ThisNode{}, tokens
-}
-
-// parses: identifier + arrow + identifier
-func  tupleToUserset(tokens []token) (*TTUNode, []tokens) {
-    var sliced []token = tokens
-    first, sliced := nextIfType(tokens, tokenIdentifier)
-    arrow, sliced := nextIfType(tokens, tokenArrow)
-    second, sliced := nextIfType(tokens, tokenIdentifier)
-
-    if anyNil(first, arrow, second) {
-        return nil, tokens
-    }
-
-    return &TraverseNode{ first, second }, sliced
-}
-
-// parses: this | cu | ttu
-func  rule(tokens []token) (Rule, []tokens) {
-    return tryParsers[Rule](tokens, this, computedUserset, tupleToUserset)
-}
-
-// parses: tokenUnion | tokenIntersection | tokenDifference
-func  setOp(tokens []token) (*SetOperation, []tokens) {
-    token, tokens := nextIfAnyType(tokens, tokenUnion, tokenDifference, tokenIntersection)
-    if token == nil {
-        return nil, tokens
-    }
-
-    var op *Operation
-    switch token.Type {
-    case tokenUnion:
-        op = &Union
-    case tokenIntersection:
-        op = &Intersection
-    case tokenDifference:
-        op = &Difference
-    }
-    return op, tokens
-}
-
-// parses: setOperation + term
-func opTerm(tokens []token) (*Pair[*SetOperation, Term], []token) {
-    op, sliced := setOp(tokens)
-    term, sliced := term(sliced)
-    if anyNil(op, factor) {
-        return nil, tokens
-    }
-
-    return NewPair(op, factor), sliced
-}
-
-// parses: term + many(op, term)
-func  expression(tokens []token) (PermExpr, []tokens, error) {
-    head, sliced := term(tokens)
-    if head == nil {
-        return nil, sliced
-    }
-
-    pairs, sliced := many(opTerm, sliced)
-    if pairs == nil {
-        return factor, sliced
-    }
-
-    var acc Term = head
-    for _, pair := range pairs {
-        op := pair.First()
-        term := pair.Second()
-        acc = &Expression {
-            Left: acc,
-            Op: op,
-            Right: term,
-        }
-    }
-    return acc, sliced
-}
-
-// parses: rule | subexpr
-func term(tokens []token) (Term, []tokens) {
-    return tryParsers(tokens, rule, subexpr)
-}
-
-// parses: groupBegin + expr + groupEnd
-func subexpr(tokens []token) (PermExpr, []tokens) {
-    var sliced []token = tokens
-    begin, sliced := nextIfType(sliced, tokenGroupBegin)
-    expr, sliced := expression(sliced)
-    end, sliced := nextIfType(sliced, tokenGroupEnd)
-    if anyNil(begin, end, expr) {
-        return nil, tokens
-    }
-    return expr, sliced
+// parseIfAnyType return next token if it is of given type
+func parseIfAnyType(types ...tokenType) parserFn[token] {
+	predicate := func(t token) bool {
+		for _, wantedType := range types {
+			if t.Type == wantedType {
+				return true
+			}
+		}
+		return false
+	}
+	return parseIf[token](predicate, "possible accepted tokens %v", types)
 }
