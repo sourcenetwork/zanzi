@@ -8,11 +8,13 @@ type Validator int
 
 const (
 	Validator_STRING Validator = iota
+	Validator_NUMBER Validator = iota
 )
 
 type Policy struct {
 	Id         string
 	Name       string
+        Description string
 	Created    time.Time
 	Resources  []Resource
 	Actors     []Actor
@@ -32,7 +34,7 @@ type Resource struct {
 
 type Relation struct {
 	Name  string
-	Kinds []string
+	//Kinds []string
 }
 
 type Permission struct {

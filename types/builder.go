@@ -109,6 +109,7 @@ type policyBuilder struct {
     resources []Resource
     actors []Actor
     attrs map[string]string
+    description string
 }
 
 func PolicyBuilder() policyBuilder {
@@ -117,9 +118,10 @@ func PolicyBuilder() policyBuilder {
     }
 }
 
-func (b *policyBuilder) IdName(id string, name string) {
+func (b *policyBuilder) IdNameDescription(id string, name string, description string) {
     b.name = name
     b.id = id
+    b.description = description
 }
 
 func (b *policyBuilder) Actors(actors ...Actor) {
@@ -149,10 +151,12 @@ func (b *policyBuilder) Build() Policy {
         Resources: b.resources,
         Actors: b.actors,
         Attributes: b.attrs,
+        Description: b.description,
     }
     b.name = ""
     b.id = ""
     b.resources = nil
+    b.description = ""
     b.actors = nil
     b.attrs = make(map[string]string)
     return policy
