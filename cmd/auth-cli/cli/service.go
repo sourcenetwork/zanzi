@@ -4,75 +4,74 @@ import (
 	rcdb "github.com/sourcenetwork/raccoondb"
 
 	zanzi "github.com/sourcenetwork/source-zanzibar"
-	pol "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-	tu "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
 	"github.com/sourcenetwork/source-zanzibar/types"
 )
 
-var Client types.SimpleClient
+var client types.SimpleClient
 
 func init() {
 	store := rcdb.NewMemKV()
 	tuplePrefix := []byte("/tuples")
 	policyPrefix := []byte("/policy")
-	tStore := tu.NewRaccoonStore(store, tuplePrefix)
-	pStore := pol.NewPolicyKVStore(policyPrefix, store)
 
-	// FIXME this should ideally use the *public* types
-	// such relationship and the public policy.
-	// Since policy has no parser yet, we are using the
-	// internal types for now
-	policy := buildPolicy()
-	pStore.SetPolicy(&policy)
+	client = zanzi.NewSimpleFromKVWithPrefixes(store, tuplePrefix, policyPrefix)
 
-	tuples := buildTuples()
-	for _, tuple := range tuples {
-		tStore.SetTuple(tuple)
+        policyService := client.GetPolicyService()
+        err := policyService.Set(buildPolicy())
+        if err != nil {
+            panic(err)
+        }
+
+        relationshipService := client.GetRelationshipService()
+
+	for _, relationship := range buildRelationships() {
+		err = relationshipService.Set(relationship)
+                if err != nil {
+                    panic(err)
+                }
 	}
-	Client = zanzi.NewSimpleFromKVWithPrefixes(store, tuplePrefix, policyPrefix)
 }
 
-const POL_ID string = "1"
+const POLICY_ID string = "1"
 const ACTOR_NAMESPACE = "user"
 
-func buildPolicy() pol.Policy {
-	return pol.Policy{
-		Id:   "1",
-		Name: "Test policy",
-		Resources: []*pol.Resource{
-			pol.BuildResource("file",
-				pol.ThisRelation("owner"),
-				pol.ThisRelation("reader"),
-				pol.ThisRelation("parent"),
-				pol.BuildPerm("read", pol.Union(pol.CU("write"), pol.CU("reader"))),
-				pol.BuildPerm("write", pol.Union(pol.CU("owner"), pol.TTU("parent", "directory", "dir_owner"))),
-			),
-			pol.BuildResource("directory",
-				pol.ThisRelation("dir_owner"),
-			),
-			pol.BuildResource("group",
-				pol.ThisRelation("member"),
-			),
-		},
-		Actors: []*pol.Actor{
-			pol.BuildActor(ACTOR_NAMESPACE),
-		},
-	}
+func buildPolicy() types.Policy {
+    rb := types.ResourceBuilder{}
+    rb.Name("file")
+    rb.Relations("owner", "reader", "parent")
+    rb.Perm("read", "write+reader")
+    rb.Perm("write", "owner + parent->dir_owner")
+    file := rb.Build()
+
+    rb.Name("group")
+    rb.Relations("member")
+    group := rb.Build()
+
+    rb.Name("directory")
+    rb.Relations("dir_owner")
+    directory := rb.Build()
+
+    pb := types.PolicyBuilder()
+    pb.IdNameDescription(POLICY_ID,  "Policy", "Description")
+    pb.Actors(types.NewActor(ACTOR_NAMESPACE))
+    pb.Resources(file, group, directory)
+    pb.Attr("author", "source")
+    pol := pb.Build()
+
+    return pol
 }
 
-func buildTuples() []tu.Tuple {
-	tb := tu.TupleBuilder{}
-	tb.ActorNamespace = ACTOR_NAMESPACE
-	tb.Partition = POL_ID
+func buildRelationships() []types.Relationship {
+	b := types.RelationshipBuilder(POLICY_ID)
 
-	return []tu.Tuple{
-		tb.Grant("group", "admin", "member", "alice"),
-		tb.Grant("group", "staff", "member", "bob"),
+	return []types.Relationship{
+            b.Grant(b.En("group", "admin"), "member", b.En(ACTOR_NAMESPACE, "alice")),
+            b.Grant(b.En("group", "staff"), "member", b.En(ACTOR_NAMESPACE, "bob")),
 
-		tb.Delegate("directory", "project", "dir_owner", "group", "admin", "member"),
-		tb.Delegate("file", "readme", "reader", "group", "staff", "member"),
+            b.Delegate(b.En("directory", "project"), "dir_owner", b.En("group", "admin"), "member"),
+            b.Delegate(b.En("file", "readme"), "reader", b.En("group", "staff"), "member"),
 
-		tb.Attribute("file", "foo", "parent", "directory", "project"),
-		tb.Attribute("file", "readme", "parent", "directory", "project"),
+            b.Attribute(b.En("file", "foo"), "parent", b.En("directory", "project")),
+            b.Attribute(b.En("file", "readme"), "parent", b.En("directory", "project")),
 	}
 }
