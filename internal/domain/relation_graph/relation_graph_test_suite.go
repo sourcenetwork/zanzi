@@ -39,8 +39,8 @@ func getFixutres() (t.TupleBuilder, []t.Tuple, p.Policy) {
 				p.ThisRelation("reader"),
 				p.ThisRelation("writer"),
 				p.ThisRelation("parent"),
-				p.BuildPerm("read", p.Union(p.CU("write"), p.CU("reader"))),
-				p.BuildPerm("write", p.Union(p.CU("writer"), p.TTU("parent", "directory", "owner"))),
+				p.BuildPerm("read", p.Union(p.CU("write"), p.CU("reader")), ""),
+				p.BuildPerm("write", p.Union(p.CU("writer"), p.TTU("parent", "directory", "owner")), ""),
 			),
 			p.BuildResource("directory",
 				p.ThisRelation("owner"),
@@ -50,7 +50,7 @@ func getFixutres() (t.TupleBuilder, []t.Tuple, p.Policy) {
 			),
 		},
 		Actors: []*p.Actor{
-			p.BuildActor("user"),
+			p.NewActor("user"),
 		},
 	}
 

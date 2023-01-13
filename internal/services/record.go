@@ -11,6 +11,7 @@ import (
 	"github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
 	o "github.com/sourcenetwork/source-zanzibar/pkg/option"
 	"github.com/sourcenetwork/source-zanzibar/types"
+	"github.com/sourcenetwork/source-zanzibar/internal/mappers"
 )
 
 //var _ types.RecordService = (*recordService)(nil)
@@ -37,11 +38,11 @@ type recordService[T any, PT types.ProtoConstraint[T]] struct {
 	tuples tuple.TupleStore
 	objKV  rcdb.ObjKV[PT]
 	ider   rcdb.Ider[tuple.Tuple]
-	mapper RelationshipMapper
+	relMapper mappers.RelationshipMapper
 }
 
 func (s *recordService[T, PT]) Set(rel types.Relationship, data T) error {
-	tuple := s.mapper.FromRelationship(rel)
+	tuple := s.relMapper.FromRelationship(rel)
 	key := s.ider.Id(tuple)
 
 	err := s.objKV.Set(key, &data)
@@ -59,7 +60,7 @@ func (s *recordService[T, PT]) Set(rel types.Relationship, data T) error {
 }
 
 func (s *recordService[T, PT]) Delete(rel types.Relationship) error {
-	tuple := s.mapper.FromRelationship(rel)
+	tuple := s.relMapper.FromRelationship(rel)
 	key := s.ider.Id(tuple)
 
 	err := s.objKV.Delete(key)
@@ -77,7 +78,7 @@ func (s *recordService[T, PT]) Delete(rel types.Relationship) error {
 }
 
 func (s *recordService[T, PT]) Get(rel types.Relationship) (o.Option[types.Record[PT]], error) {
-	tuple := s.mapper.FromRelationship(rel)
+	tuple := s.relMapper.FromRelationship(rel)
 	key := s.ider.Id(tuple)
 
 	// FIXME this should have a lock or version check in order to
@@ -112,14 +113,14 @@ func (s *recordService[T, PT]) Get(rel types.Relationship) (o.Option[types.Recor
 	}
 
 	record := types.Record[PT]{
-		Relationship: s.mapper.ToRelationship(tuple),
+		Relationship: s.relMapper.ToRelationship(tuple),
 		Data:         data,
 	}
 	return o.Some[types.Record[PT]](record), nil
 }
 
 func (s *recordService[T, PT]) Has(rel types.Relationship) (bool, error) {
-	tuple := s.mapper.FromRelationship(rel)
+	tuple := s.relMapper.FromRelationship(rel)
 	opt, err := s.tuples.GetTuple(tuple.Partition, tuple.Source, tuple.Dest)
 	if err != nil {
 		return false, fmt.Errorf("failed fetching relationship %v: %w", rel, err)

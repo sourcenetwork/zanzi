@@ -18,8 +18,6 @@ message Policy {
     repeated Resource resources = 4;
     repeated Actor actors = 5;
     Timestamp creation_stamp = 6;
-    // last modified
-    // creator
     map<string, string> attributes = 10;
 }
 

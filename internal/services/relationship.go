@@ -6,6 +6,7 @@ import (
 	"github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
 	o "github.com/sourcenetwork/source-zanzibar/pkg/option"
 	"github.com/sourcenetwork/source-zanzibar/types"
+	"github.com/sourcenetwork/source-zanzibar/internal/mappers"
 )
 
 var _ types.RelationshipService = (*relationshipService)(nil)
@@ -20,7 +21,7 @@ func RelationshipServiceFromTupleStore(tStore tuple.TupleStore) types.Relationsh
 // relationshipService implements the RelationService interface by wrapping a TupleStore
 type relationshipService struct {
 	tStore tuple.TupleStore
-	mapper RelationshipMapper
+	mapper mappers.RelationshipMapper
 }
 
 func (s *relationshipService) Set(rel types.Relationship) error {

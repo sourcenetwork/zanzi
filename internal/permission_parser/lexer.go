@@ -39,7 +39,7 @@ type predicate func(rune) bool
 
 func isIdentifierRune(elem rune) bool {
 	// TODO read this https://www.unicode.org/reports/tr31/#Introduction
-	return unicode.IsLetter(elem)
+	return unicode.IsLetter(elem) || elem == '_'
 }
 
 type tokenType int
@@ -223,7 +223,7 @@ func (l *Lexer) emit(tt tokenType) {
 }
 
 func (l *Lexer) emitError(msg string) {
-	msg = msg + ": context: " + l.input[l.startPos:l.currPos+10]
+	msg = msg + ": context: " + l.input[l.startPos:]
 	t := token{
 		Type:     tokenError,
 		Lexeme:   msg,

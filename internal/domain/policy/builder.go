@@ -1,39 +1,41 @@
 package policy
 
-func BuildActor(name string, types ...ActorIdType) *Actor {
+func NewActor(name string, types ...ActorIdType) *Actor {
 	return &Actor{
 		Name: name,
+                Constraints: types,
 	}
 }
 
-func BuildResource(name string, rules ...*Rule) *Resource {
+func BuildResource(name string,  rules ...*Rule) *Resource {
 	return &Resource{
 		Name:  name,
 		Rules: rules,
 	}
 }
 
-func BuildRule(name string, t RuleType, tree *Tree) *Rule {
+func BuildRule(name string, t RuleType, tree *Tree, expr string) *Rule {
 	return &Rule{
 		Name:           name,
 		Type:           t,
 		ExpressionTree: tree,
+                RewriteExpr: expr,
 	}
 }
 
-func BuildPerm(name string, tree *Tree) *Rule {
-	return BuildRule(name, RuleType_PERMISSION, tree)
+func BuildPerm(name string, tree *Tree, expr string) *Rule {
+	return BuildRule(name, RuleType_PERMISSION, tree, expr)
 }
 
 func BuildRelation(name string, tree *Tree) *Rule {
-	return BuildRule(name, RuleType_RELATION, tree)
+	return BuildRule(name, RuleType_RELATION, tree, "_this")
 }
 
 func ThisRelation(name string) *Rule {
-	return BuildRelation(name, _This())
+	return BuildRelation(name, ThisTree())
 }
 
-func buildOpNode(op Operation, left, right *Tree) *Tree {
+func BuildOpNode(op Operation, left, right *Tree) *Tree {
 	return &Tree{
 		Node: &Tree_Opnode{
 			Opnode: &OpNode{
@@ -46,15 +48,15 @@ func buildOpNode(op Operation, left, right *Tree) *Tree {
 }
 
 func Union(left, right *Tree) *Tree {
-	return buildOpNode(Operation_UNION, left, right)
+	return BuildOpNode(Operation_UNION, left, right)
 }
 
-func Interesection(left, right *Tree) *Tree {
-	return buildOpNode(Operation_INTERSECTION, left, right)
+func Intersection(left, right *Tree) *Tree {
+	return BuildOpNode(Operation_INTERSECTION, left, right)
 }
 
 func Diff(left, right *Tree) *Tree {
-	return buildOpNode(Operation_DIFFERENCE, left, right)
+	return BuildOpNode(Operation_DIFFERENCE, left, right)
 }
 
 func buildLeaf(rule *RewriteRule) *Tree {
@@ -67,7 +69,7 @@ func buildLeaf(rule *RewriteRule) *Tree {
 	}
 }
 
-func _This() *Tree {
+func ThisTree() *Tree {
 	rule := &RewriteRule{
 		Rule: &RewriteRule_This{
 			This: &This{},

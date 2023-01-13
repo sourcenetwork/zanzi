@@ -48,8 +48,8 @@ var policyFixture Policy = Policy{
 		BuildResource("file",
 			ThisRelation("owner"),
 			ThisRelation("reader"),
-			BuildPerm("read", Union(CU("write"), CU("reader"))),
-			BuildPerm("write", Union(CU("owner"), TTU("parent", "directory", "dir_owner"))),
+			BuildPerm("read", Union(CU("write"), CU("reader")), ""),
+			BuildPerm("write", Union(CU("owner"), TTU("parent", "directory", "dir_owner")), ""),
 		),
 		BuildResource("directory",
 			ThisRelation("dir_owner"),
@@ -57,7 +57,7 @@ var policyFixture Policy = Policy{
 		),
 	},
 	Actors: []*Actor{
-		BuildActor("user"),
+		NewActor("user"),
 	},
 }
 
