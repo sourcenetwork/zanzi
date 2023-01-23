@@ -4,9 +4,9 @@ import (
 	_ "fmt"
 
 	"github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
+	"github.com/sourcenetwork/source-zanzibar/internal/mappers"
 	o "github.com/sourcenetwork/source-zanzibar/pkg/option"
 	"github.com/sourcenetwork/source-zanzibar/types"
-	"github.com/sourcenetwork/source-zanzibar/internal/mappers"
 )
 
 var _ types.RelationshipService = (*relationshipService)(nil)

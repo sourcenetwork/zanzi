@@ -6,8 +6,8 @@ import (
 
 	rg "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph"
 	tuple "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
-	"github.com/sourcenetwork/source-zanzibar/types"
 	"github.com/sourcenetwork/source-zanzibar/internal/mappers"
+	"github.com/sourcenetwork/source-zanzibar/types"
 )
 
 // Return an Authorizer implementation from a relation graph
@@ -21,7 +21,7 @@ func AuthorizerFromRelationGraph(relGraph rg.RelationGraph) types.Authorizer {
 type authorizer struct {
 	rg      rg.RelationGraph
 	builder tuple.TupleBuilder
-        mapper mappers.ExpandTreeMapper
+	mapper  mappers.ExpandTreeMapper
 }
 
 func (a *authorizer) Check(policyId string, obj types.Entity, relation string, actor types.Entity) (bool, error) {

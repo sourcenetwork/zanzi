@@ -1,63 +1,63 @@
 package mappers
 
 import (
-    "testing"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-    "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-    parser "github.com/sourcenetwork/source-zanzibar/internal/permission_parser"
+	"github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
+	parser "github.com/sourcenetwork/source-zanzibar/internal/permission_parser"
 )
 
 func TestParseTreeCuNode(t *testing.T) {
-    expr := "relation"
-    parseTree, _ := parser.Parse(expr)
+	expr := "relation"
+	parseTree, _ := parser.Parse(expr)
 
-    got := ToRewriteTree(parseTree)
+	got := ToRewriteTree(parseTree)
 
-    want := policy.CU("relation")
+	want := policy.CU("relation")
 
-    assert.Equal(t, got, want)
+	assert.Equal(t, got, want)
 }
 
 func TestParseTreeTTUNode(t *testing.T) {
-    expr := "relation->subrelation"
-    parseTree, _ := parser.Parse(expr)
+	expr := "relation->subrelation"
+	parseTree, _ := parser.Parse(expr)
 
-    got := ToRewriteTree(parseTree)
+	got := ToRewriteTree(parseTree)
 
-    want := policy.TTU("relation", "", "subrelation")
+	want := policy.TTU("relation", "", "subrelation")
 
-    assert.Equal(t, got, want)
+	assert.Equal(t, got, want)
 }
 
 func TestParseTreeThisNode(t *testing.T) {
-    expr := "_this"
-    parseTree, _ := parser.Parse(expr)
+	expr := "_this"
+	parseTree, _ := parser.Parse(expr)
 
-    got := ToRewriteTree(parseTree)
+	got := ToRewriteTree(parseTree)
 
-    want := policy.ThisTree()
+	want := policy.ThisTree()
 
-    assert.Equal(t, got, want)
+	assert.Equal(t, got, want)
 }
 
 func TestParseTreeNestedExprssion(t *testing.T) {
-    expr := "_this + (relation - from->to) & all"
-    parseTree, _ := parser.Parse(expr)
+	expr := "_this + (relation - from->to) & all"
+	parseTree, _ := parser.Parse(expr)
 
-    got := ToRewriteTree(parseTree)
+	got := ToRewriteTree(parseTree)
 
-    want := policy.Intersection(
-        policy.Union(
-            policy.ThisTree(),
-            policy.Diff(
-                policy.CU("relation"),
-                policy.TTU("from", "", "to"),
-            ),
-        ),
-        policy.CU("all"),
-    )
+	want := policy.Intersection(
+		policy.Union(
+			policy.ThisTree(),
+			policy.Diff(
+				policy.CU("relation"),
+				policy.TTU("from", "", "to"),
+			),
+		),
+		policy.CU("all"),
+	)
 
-    assert.Equal(t, got, want)
+	assert.Equal(t, got, want)
 }

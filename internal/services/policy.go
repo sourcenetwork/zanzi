@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
+	"github.com/sourcenetwork/source-zanzibar/internal/mappers"
 	o "github.com/sourcenetwork/source-zanzibar/pkg/option"
 	"github.com/sourcenetwork/source-zanzibar/types"
-	"github.com/sourcenetwork/source-zanzibar/internal/mappers"
 )
 
 var _ types.PolicyService = (*policyService)(nil)
@@ -21,14 +21,14 @@ func PolicyServiceFromPolicyStore(store policy.PolicyStore) types.PolicyService 
 // policyService wraps a PolicyStore in order to implement PolicyService
 type policyService struct {
 	pStore policy.PolicyStore
-        m mappers.PolicyMapper
+	m      mappers.PolicyMapper
 }
 
 func (s *policyService) Set(p types.Policy) error {
 	mapped, err := s.m.ToInternal(p)
-        if err != nil {
-            return fmt.Errorf("error storing policy %v: %w", p.Name, err)
-        }
+	if err != nil {
+		return fmt.Errorf("error storing policy %v: %w", p.Name, err)
+	}
 
 	return s.pStore.SetPolicy(&mapped)
 }

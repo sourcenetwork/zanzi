@@ -12,13 +12,13 @@ const (
 )
 
 type Policy struct {
-	Id         string
-	Name       string
-        Description string
-	Created    time.Time
-	Resources  []Resource
-	Actors     []Actor
-	Attributes map[string]string
+	Id          string
+	Name        string
+	Description string
+	Created     time.Time
+	Resources   []Resource
+	Actors      []Actor
+	Attributes  map[string]string
 }
 
 type Actor struct {
@@ -33,7 +33,7 @@ type Resource struct {
 }
 
 type Relation struct {
-	Name  string
+	Name string
 	//Kinds []string
 }
 

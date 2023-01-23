@@ -2,12 +2,12 @@ package policy
 
 func NewActor(name string, types ...ActorIdType) *Actor {
 	return &Actor{
-		Name: name,
-                Constraints: types,
+		Name:        name,
+		Constraints: types,
 	}
 }
 
-func BuildResource(name string,  rules ...*Rule) *Resource {
+func BuildResource(name string, rules ...*Rule) *Resource {
 	return &Resource{
 		Name:  name,
 		Rules: rules,
@@ -19,7 +19,7 @@ func BuildRule(name string, t RuleType, tree *Tree, expr string) *Rule {
 		Name:           name,
 		Type:           t,
 		ExpressionTree: tree,
-                RewriteExpr: expr,
+		RewriteExpr:    expr,
 	}
 }
 

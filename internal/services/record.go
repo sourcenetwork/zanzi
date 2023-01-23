@@ -9,9 +9,9 @@ import (
 	_ "google.golang.org/protobuf/proto"
 
 	"github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
+	"github.com/sourcenetwork/source-zanzibar/internal/mappers"
 	o "github.com/sourcenetwork/source-zanzibar/pkg/option"
 	"github.com/sourcenetwork/source-zanzibar/types"
-	"github.com/sourcenetwork/source-zanzibar/internal/mappers"
 )
 
 //var _ types.RecordService = (*recordService)(nil)
@@ -35,9 +35,9 @@ func RecordServiceFromStores[T any, PT types.ProtoConstraint[T]](kv rcdb.KVStore
 // while the satellite data is stored in a raccoon ObjKV store instance
 // FIXME All of this *must* be made atomic
 type recordService[T any, PT types.ProtoConstraint[T]] struct {
-	tuples tuple.TupleStore
-	objKV  rcdb.ObjKV[PT]
-	ider   rcdb.Ider[tuple.Tuple]
+	tuples    tuple.TupleStore
+	objKV     rcdb.ObjKV[PT]
+	ider      rcdb.Ider[tuple.Tuple]
 	relMapper mappers.RelationshipMapper
 }
 
