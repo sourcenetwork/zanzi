@@ -19,7 +19,9 @@ func RelationshipBuilder(policyId string) relationshipBuilder {
 
 // Grant builds a Relationship which relates an object to an actor.
 // Effectively grants actor access to obj.
-func (b relationshipBuilder) Grant(obj Entity, relation string, actor Entity) Relationship {
+func (b relationshipBuilder) Grant(objNamespace, objId, relation, actorNamespace, actorId string) Relationship {
+        obj := NewEntity(objNamespace, objId)
+        actor := NewEntity(actorNamespace, actorId)
 	return b.buildRel(obj, relation, actor, "", RelationshipType_GRANT)
 }
 
@@ -27,14 +29,18 @@ func (b relationshipBuilder) Grant(obj Entity, relation string, actor Entity) Re
 // between a node and its actor set to another node.
 // Ie. all actors related to the node subject, subjectRelation
 // will also be related to obj, relation.
-func (b relationshipBuilder) Delegate(obj Entity, relation string, subject Entity, subjectRelation string) Relationship {
+func (b relationshipBuilder) Delegate(objNamespace, objId, relation, subjectNamespace, subjectId, subjectRelation string) Relationship {
+        obj := NewEntity(objNamespace, objId)
+        subject := NewEntity(subjectNamespace, subjectId)
 	return b.buildRel(obj, relation, subject, subjectRelation, RelationshipType_DELEGATE)
 }
 
 // Atribute builds a Relationship between two objects.
 // Attribute is often used to store metadata, such as the parent
 // directory of a file.
-func (b relationshipBuilder) Attribute(obj Entity, relation string, subject Entity) Relationship {
+func (b relationshipBuilder) Attribute(objNamespace, objId, relation, subjectNamespace, subjectId string) Relationship {
+        obj := NewEntity(objNamespace, objId)
+        subject := NewEntity(subjectNamespace, subjectId)
 	return b.buildRel(obj, relation, subject, "", RelationshipType_ATTRIBUTE)
 }
 
@@ -49,7 +55,7 @@ func (b relationshipBuilder) buildRel(source Entity, relation string, dest Entit
 	}
 }
 
-func (b relationshipBuilder) En(namespace string, id string) Entity {
+func (b relationshipBuilder) Entity(namespace string, id string) Entity {
     return Entity{
         Namespace: namespace,
         Id: id,

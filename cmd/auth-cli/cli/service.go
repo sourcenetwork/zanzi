@@ -37,9 +37,10 @@ const ACTOR_NAMESPACE = "user"
 
 func buildPolicy() types.Policy {
     rb := types.ResourceBuilder{}
+
     rb.Name("file")
     rb.Relations("owner", "reader", "parent")
-    rb.Perm("read", "write+reader")
+    rb.Perm("read", "write - reader")
     rb.Perm("write", "owner + parent->dir_owner")
     file := rb.Build()
 
@@ -52,10 +53,10 @@ func buildPolicy() types.Policy {
     directory := rb.Build()
 
     pb := types.PolicyBuilder()
-    pb.IdNameDescription(POLICY_ID,  "Policy", "Description")
+    pb.IdNameDescription(POLICY_ID,  "Filesystem Policy", "Auth CLI example filesystem policy")
     pb.Actors(types.NewActor(ACTOR_NAMESPACE))
     pb.Resources(file, group, directory)
-    pb.Attr("author", "source")
+    pb.Attr("author", "Source Network")
     pol := pb.Build()
 
     return pol
@@ -65,13 +66,13 @@ func buildRelationships() []types.Relationship {
 	b := types.RelationshipBuilder(POLICY_ID)
 
 	return []types.Relationship{
-            b.Grant(b.En("group", "admin"), "member", b.En(ACTOR_NAMESPACE, "alice")),
-            b.Grant(b.En("group", "staff"), "member", b.En(ACTOR_NAMESPACE, "bob")),
+            b.Grant("group", "admin", "member", ACTOR_NAMESPACE, "alice"),
+            b.Grant("group", "staff", "member", ACTOR_NAMESPACE, "bob"),
 
-            b.Delegate(b.En("directory", "project"), "dir_owner", b.En("group", "admin"), "member"),
-            b.Delegate(b.En("file", "readme"), "reader", b.En("group", "staff"), "member"),
+            b.Delegate("directory", "project", "dir_owner", "group", "admin", "member"),
+            b.Delegate("file", "readme", "reader", "group", "staff", "member"),
 
-            b.Attribute(b.En("file", "foo"), "parent", b.En("directory", "project")),
-            b.Attribute(b.En("file", "readme"), "parent", b.En("directory", "project")),
+            b.Attribute("file", "foo", "parent", "directory", "project"),
+            b.Attribute("file", "readme", "parent", "directory", "project"),
 	}
 }
