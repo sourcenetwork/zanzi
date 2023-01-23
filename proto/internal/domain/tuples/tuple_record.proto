@@ -7,8 +7,6 @@ package internal.domain.tuple;
 
 option go_package = "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple";
 
-import "google/protobuf/any.proto";
-
 
 // NodeType indicates the type of information stored by the node
 enum NodeType {

@@ -7,7 +7,7 @@ option go_package = "github.com/sourcenetwork/source-zanzibar/internal/domain/po
 
 // RewriteRule specifies the logical model between relations
 message RewriteRule {
-    oneof rule {
+    oneof rewrite_rule {
         This this = 1;
         ComputedUserset computed_userset = 2;
         TupleToUserset tuple_to_userset = 3;

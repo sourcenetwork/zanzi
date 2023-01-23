@@ -9,7 +9,7 @@ option go_package = "github.com/sourcenetwork/source-zanzibar/internal/domain/po
 
 import "internal/domain/policy/tree.proto";
 
-import "google.protobuf";
+import "google/protobuf/timestamp.proto";
 
 message Policy {
     string id = 1;
@@ -17,13 +17,8 @@ message Policy {
     string description = 3;
     repeated Resource resources = 4;
     repeated Actor actors = 5;
-    Timestamp creation_stamp = 6;
+    google.protobuf.Timestamp created_at = 6;
     map<string, string> attributes = 10;
-}
-
-message TypeConstraint {
-    string rule = 1;
-    // TODO this could also include objectId / actor contraints
 }
 
 // ActorIdType specify an identifier type for an actor object.
@@ -44,21 +39,12 @@ message Actor {
 // Example resources: files, directories, repositories, groups
 message Resource {
     string name = 1;
-    repeated Rule rules = 2;
+    repeated Relation relations = 2;
 }
 
-// Specifies the type of a rule.
-// Rule Types have no runtime difference, they are a public interface aid.
-enum RuleType {
-    RELATION = 0;
-    PERMISSION = 1;
-}
-
-// A Rule defines a Relation Type in the relation graph.
-message Rule {
-    RuleType type = 1;
-    string name = 2;
+// A Relation defines a Relation Type in the relation graph.
+message Relation {
+    string name = 1;
+    string rewrite_expr = 2;
     Tree expression_tree = 3;
-    string rewrite_expr = 4;
-    repeated TypeConstraint constraints = 5;
 }
