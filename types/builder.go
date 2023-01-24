@@ -102,6 +102,9 @@ func (b *ResourceBuilder) Build() Resource {
 }
 
 func NewActor(actor string, validators ...Validator) Actor {
+	if validators == nil {
+		validators = make([]Validator, 0, 0)
+	}
 	return Actor{
 		Name:       actor,
 		Validators: validators,

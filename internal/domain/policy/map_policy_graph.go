@@ -39,18 +39,18 @@ func NewMapPolicyGraph(policy Policy) PolicyGraph {
 
 func (g *MapPolicyGraph) buildNodes(policy Policy) {
 	for _, resource := range policy.Resources {
-		for _, rule := range resource.Rules {
-			key := buildRuleKey(resource.Name, rule.Name)
+		for _, rule := range resource.Relations {
+			key := buildRelationKey(resource.Name, rule.Name)
 			node := PolicyNode{
 				Resource: resource.Name,
-				Rule:     *rule,
+				Relation: *rule,
 			}
 			g.graph.SetNode(key, node)
 		}
 	}
 }
 
-func buildRuleKey(resource string, rule string) string {
+func buildRelationKey(resource string, rule string) string {
 	var builder strings.Builder
 	builder.WriteString(resource)
 	builder.WriteString("/")
@@ -60,22 +60,22 @@ func buildRuleKey(resource string, rule string) string {
 
 func (g *MapPolicyGraph) buildEdges(policy Policy) {
 	for _, resource := range policy.Resources {
-		for _, rule := range resource.Rules {
-			source := buildRuleKey(resource.Name, rule.Name)
-			leaves := rule.ExpressionTree.GetLeaves()
+		for _, relation := range resource.Relations {
+			source := buildRelationKey(resource.Name, relation.Name)
+			leaves := relation.ExpressionTree.GetLeaves()
 			for _, leaf := range leaves {
-				switch rule := leaf.Rule.Rule.(type) {
+				switch relation := leaf.Rule.RewriteRule.(type) {
 				case *RewriteRule_This:
 				case *RewriteRule_ComputedUserset:
-					cu := rule.ComputedUserset
-					dest := buildRuleKey(resource.Name, cu.Relation)
+					cu := relation.ComputedUserset
+					dest := buildRelationKey(resource.Name, cu.Relation)
 					g.graph.SetEdge(source, dest)
 				case *RewriteRule_TupleToUserset:
-					ttu := rule.TupleToUserset
-					dest := buildRuleKey(ttu.CuRelationNamespace, ttu.CuRelation)
+					ttu := relation.TupleToUserset
+					dest := buildRelationKey(ttu.CuRelationNamespace, ttu.CuRelation)
 					g.graph.SetEdge(source, dest)
 				default:
-					panic("invalid rule type")
+					panic("invalid relation type")
 				}
 			}
 		}
@@ -90,17 +90,17 @@ func (g *MapPolicyGraph) GetActors() []Actor {
 	return g.actors
 }
 
-func (g *MapPolicyGraph) GetRule(resource, name string) opt.Option[Rule] {
-	key := buildRuleKey(resource, name)
+func (g *MapPolicyGraph) GetRelation(resource, name string) opt.Option[Relation] {
+	key := buildRelationKey(resource, name)
 	o := g.graph.GetNode(key)
 	if o.IsEmpty() {
-		return opt.None[Rule]()
+		return opt.None[Relation]()
 	}
-	rule := o.Value().Rule
-	return opt.Some[Rule](rule)
+	relation := o.Value().Relation
+	return opt.Some[Relation](relation)
 }
 
 func (g *MapPolicyGraph) GetAncestors(resource, name string) []PolicyNode {
-	key := buildRuleKey(resource, name)
+	key := buildRelationKey(resource, name)
 	return g.graph.GetAncestors(key)
 }

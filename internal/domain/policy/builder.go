@@ -7,32 +7,23 @@ func NewActor(name string, types ...ActorIdType) *Actor {
 	}
 }
 
-func BuildResource(name string, rules ...*Rule) *Resource {
+func NewResource(name string, relations ...*Relation) *Resource {
 	return &Resource{
-		Name:  name,
-		Rules: rules,
+		Name:      name,
+		Relations: relations,
 	}
 }
 
-func BuildRule(name string, t RuleType, tree *Tree, expr string) *Rule {
-	return &Rule{
+func NewRelation(name string, tree *Tree, expr string) *Relation {
+	return &Relation{
 		Name:           name,
-		Type:           t,
 		ExpressionTree: tree,
 		RewriteExpr:    expr,
 	}
 }
 
-func BuildPerm(name string, tree *Tree, expr string) *Rule {
-	return BuildRule(name, RuleType_PERMISSION, tree, expr)
-}
-
-func BuildRelation(name string, tree *Tree) *Rule {
-	return BuildRule(name, RuleType_RELATION, tree, "_this")
-}
-
-func ThisRelation(name string) *Rule {
-	return BuildRelation(name, ThisTree())
+func ThisRelation(name string) *Relation {
+	return NewRelation(name, ThisTree(), "_this")
 }
 
 func BuildOpNode(op Operation, left, right *Tree) *Tree {
@@ -71,7 +62,7 @@ func buildLeaf(rule *RewriteRule) *Tree {
 
 func ThisTree() *Tree {
 	rule := &RewriteRule{
-		Rule: &RewriteRule_This{
+		RewriteRule: &RewriteRule_This{
 			This: &This{},
 		},
 	}
@@ -80,7 +71,7 @@ func ThisTree() *Tree {
 
 func CU(relation string) *Tree {
 	rule := &RewriteRule{
-		Rule: &RewriteRule_ComputedUserset{
+		RewriteRule: &RewriteRule_ComputedUserset{
 			ComputedUserset: &ComputedUserset{
 				Relation: relation,
 			},
@@ -91,7 +82,7 @@ func CU(relation string) *Tree {
 
 func TTU(tuplesetRelation, cuRelNamespace, cuRel string) *Tree {
 	rule := &RewriteRule{
-		Rule: &RewriteRule_TupleToUserset{
+		RewriteRule: &RewriteRule_TupleToUserset{
 			TupleToUserset: &TupleToUserset{
 				TuplesetRelation:    tuplesetRelation,
 				CuRelationNamespace: cuRelNamespace,

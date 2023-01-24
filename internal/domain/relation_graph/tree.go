@@ -82,7 +82,7 @@ type RuleData struct {
 
 // Return new RuleData from a policy RewriteRule
 func NewRuleData(rule *policy.RewriteRule) RuleData {
-	switch r := rule.GetRule().(type) {
+	switch r := rule.RewriteRule.(type) {
 	case *policy.RewriteRule_This:
 		return RuleData{
 			Type: RuleType_THIS,

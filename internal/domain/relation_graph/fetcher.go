@@ -32,7 +32,7 @@ func NewRuleSucessorFetcher(tStore tuple.TupleStore) RuleSucessorFetcher {
 func (f *RuleSucessorFetcher) Fetch(ctx context.Context, rule *policy.RewriteRule, policyId string, node tuple.TupleNode) ([]tuple.TupleNode, error) {
 	var sucessors []tuple.TupleNode
 	var err error
-	switch r := rule.GetRule().(type) {
+	switch r := rule.RewriteRule.(type) {
 
 	case *policy.RewriteRule_This:
 		sucessors, err = f.getThisSucessors(ctx, policyId, node)
@@ -50,7 +50,7 @@ func (f *RuleSucessorFetcher) Fetch(ctx context.Context, rule *policy.RewriteRul
 	}
 
 	if err != nil {
-		err = fmt.Errorf("error fetching sucessors: rule %v, node %v: %v", rule.GetRule(), node, err)
+		err = fmt.Errorf("error fetching sucessors: rule %v, node %v: %v", rule.RewriteRule, node, err)
 	}
 	return sucessors, err
 }

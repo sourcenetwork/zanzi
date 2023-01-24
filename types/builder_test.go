@@ -19,7 +19,7 @@ func TestPolicyBuilder(t *testing.T) {
 	group := rb.Build()
 
 	pb := PolicyBuilder()
-	pb.IdName("1", "test policy")
+	pb.IdNameDescription("1", "test policy", "")
 	pb.Actors(NewActor("staff"), NewActor("guest"))
 	pb.Resources(file, group)
 	pb.Attr("description", "test policy using builder")

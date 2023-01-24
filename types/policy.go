@@ -15,7 +15,7 @@ type Policy struct {
 	Id          string
 	Name        string
 	Description string
-	Created     time.Time
+	CreatedAt   time.Time
 	Resources   []Resource
 	Actors      []Actor
 	Attributes  map[string]string
@@ -34,7 +34,6 @@ type Resource struct {
 
 type Relation struct {
 	Name string
-	//Kinds []string
 }
 
 type Permission struct {

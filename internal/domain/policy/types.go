@@ -6,7 +6,7 @@ import (
 
 type PolicyNode struct {
 	Resource string
-	Rule     Rule
+	Relation Relation
 }
 
 // PolicyGraph models the definitinos in a policy as a graph
@@ -17,7 +17,7 @@ type PolicyGraph interface {
 	// there should be a single internal type for a relation permission as they are equivalent
 	GetResources() []Resource
 	GetActors() []Actor
-	GetRule(resource, name string) opt.Option[Rule]
+	GetRelation(resource, name string) opt.Option[Relation]
 	GetAncestors(resource, name string) []PolicyNode
 }
 

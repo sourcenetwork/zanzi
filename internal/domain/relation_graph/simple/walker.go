@@ -45,7 +45,7 @@ func (w *walker) Walk(ctx context.Context, policyId string, source tuple.TupleNo
 
 	w.pg = opt.Value()
 
-	ruleOpt := w.pg.GetRule(source.Namespace, source.Relation)
+	ruleOpt := w.pg.GetRelation(source.Namespace, source.Relation)
 	if ruleOpt.IsEmpty() {
 		// checking that policy contains the given relation is an important invariant.
 		// during the entry point it can simply mean an invalid input.
@@ -92,7 +92,7 @@ func (w *walker) walk(ctx context.Context, source tuple.TupleNode) (*rg.Relation
 	w.trail[source] = struct{}{}
 	defer delete(w.trail, source)
 
-	ruleOpt := w.pg.GetRule(source.Namespace, source.Relation)
+	ruleOpt := w.pg.GetRelation(source.Namespace, source.Relation)
 	if ruleOpt.IsEmpty() {
 		// This is bad:
 		// As an invariant the Walk method checks whether the relaion exists within the policy.

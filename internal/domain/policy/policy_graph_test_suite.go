@@ -45,13 +45,13 @@ var policyFixture Policy = Policy{
 	Id:   "1",
 	Name: "Test policy",
 	Resources: []*Resource{
-		BuildResource("file",
+		NewResource("file",
 			ThisRelation("owner"),
 			ThisRelation("reader"),
-			BuildPerm("read", Union(CU("write"), CU("reader")), ""),
-			BuildPerm("write", Union(CU("owner"), TTU("parent", "directory", "dir_owner")), ""),
+			NewRelation("read", Union(CU("write"), CU("reader")), ""),
+			NewRelation("write", Union(CU("owner"), TTU("parent", "directory", "dir_owner")), ""),
 		),
-		BuildResource("directory",
+		NewResource("directory",
 			ThisRelation("dir_owner"),
 			ThisRelation("parent"),
 		),
@@ -81,7 +81,7 @@ func (s *policyGraphTestSuite) TestGetActorReturnAllActors(t *testing.T) {
 	}
 }
 
-func (s *policyGraphTestSuite) TestRulesAreFetchable(t *testing.T) {
+func (s *policyGraphTestSuite) TestRelationsAreFetchable(t *testing.T) {
 
 	rules := []tuple.Pair[string, string]{
 		tuple.NewPair("directory", "parent"),
@@ -96,7 +96,7 @@ func (s *policyGraphTestSuite) TestRulesAreFetchable(t *testing.T) {
 		resource, ruleName := pair.Fst(), pair.Snd()
 		testName := fmt.Sprintf("res=%s,rule=%s", resource, ruleName)
 		t.Run(testName, func(t *testing.T) {
-			opt := s.g.GetRule(resource, ruleName)
+			opt := s.g.GetRelation(resource, ruleName)
 			assert.False(t, opt.IsEmpty())
 			rule := opt.Value()
 			assert.Equal(t, ruleName, rule.Name)
@@ -128,7 +128,7 @@ func (s *policyGraphTestSuite) TestAncestorAcrossResourceIsReachable(t *testing.
 
 	found := false
 	for _, node := range ancestors {
-		if node.Resource == "file" && node.Rule.Name == "write" {
+		if node.Resource == "file" && node.Relation.Name == "write" {
 			found = true
 		}
 	}
@@ -137,6 +137,6 @@ func (s *policyGraphTestSuite) TestAncestorAcrossResourceIsReachable(t *testing.
 
 func getNamePair(nodes []PolicyNode) []tuple.Pair[string, string] {
 	return utils.MapSlice(nodes, func(node PolicyNode) tuple.Pair[string, string] {
-		return tuple.NewPair[string, string](node.Resource, node.Rule.Name)
+		return tuple.NewPair[string, string](node.Resource, node.Relation.Name)
 	})
 }
