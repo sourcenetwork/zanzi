@@ -9,28 +9,25 @@ import (
 	"github.com/sourcenetwork/source-zanzibar/types"
 )
 
-func init() {
-	rootCmd.AddCommand(checkCmd)
-}
-
 var checkCmd = &cobra.Command{
-	Use:   "check [namespace] [srcId] [relation] [dstNamespace] [dstId]",
+	Use:   "check [policyId] [namespace] [srcId] [relation] [dstNamespace] [dstId]",
 	Short: "Return all entity, relation pairs reachable from specified actor",
-	Args:  cobra.ExactArgs(5),
+	Args:  cobra.ExactArgs(6),
 	Run: func(cmd *cobra.Command, args []string) {
+		policyId := args[0]
 
 		obj := types.Entity{
-			Namespace: args[0],
-			Id:        args[1],
+			Namespace: args[1],
+			Id:        args[2],
 		}
 
 		actor := types.Entity{
-			Namespace: args[3],
-			Id:        args[4],
+			Namespace: args[4],
+			Id:        args[5],
 		}
 
 		auth := client.GetAuthorizer()
-		ok, err := auth.Check(POLICY_ID, obj, args[2], actor)
+		ok, err := auth.Check(policyId, obj, args[3], actor)
 
 		if err != nil {
 			log.Fatal(err)

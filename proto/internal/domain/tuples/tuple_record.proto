@@ -7,6 +7,7 @@ package internal.domain.tuple;
 
 option go_package = "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple";
 
+import "google/protobuf/timestamp.proto";
 
 // NodeType indicates the type of information stored by the node
 enum NodeType {
@@ -47,4 +48,6 @@ message TupleRecord {
 
     // partition_key is used to create logical partitions over tuples
     string partition_key = 3;
+
+    google.protobuf.Timestamp created_at = 4;
 }
