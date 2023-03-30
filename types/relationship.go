@@ -7,30 +7,13 @@ import (
 // Relationship is a container type for any relation.
 // Embeds client application data.
 type Relationship struct {
-	createdAt       time.Time
-	lastModified    time.Time
-	PolicyId        string
-	Type            RelationshipType
-	Object          Entity
-	Relation        string
-	Subject         Entity
-	SubjectRelation string // SubjectRelation may be empty depending on the relation type
-}
-
-func (r *Relationship) setCreationDate(timestamp time.Time) {
-	r.createdAt = timestamp
-}
-
-func (r *Relationship) setLastModified(timestamp time.Time) {
-	r.lastModified = timestamp
-}
-
-func (r *Relationship) GetCreationDate() time.Time {
-	return r.createdAt
-}
-
-func (r *Relationship) GetLastModified() time.Time {
-	return r.lastModified
+	CreatedAt       time.Time        `json:"createdAt"`
+	PolicyId        string           `json:"policyId"`
+	Type            RelationshipType `json:"type"`
+	Object          Entity           `json:"object"`
+	Relation        string           `json:"relation"`
+	Subject         Entity           `json:"subject"`
+	SubjectRelation string           `json:"subjectRelation"` // SubjectRelation may be empty depending on the relation type
 }
 
 // Identifies a system entity

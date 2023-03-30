@@ -1,8 +1,6 @@
 package mappers
 
 import (
-	_ "google.golang.org/protobuf/proto"
-
 	"github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
 	"github.com/sourcenetwork/source-zanzibar/types"
 )
@@ -33,6 +31,7 @@ func (m *RelationshipMapper) FromRelationship(rel types.Relationship) tuple.Tupl
 	}
 
 	return tuple.Tuple{
+		CreatedAt: rel.CreatedAt,
 		Partition: rel.PolicyId,
 		Source:    src,
 		Dest:      dst,
@@ -63,5 +62,6 @@ func (m *RelationshipMapper) ToRelationship(t tuple.Tuple) types.Relationship {
 			Id:        t.Dest.Id,
 		},
 		SubjectRelation: t.Dest.Relation,
+		CreatedAt:       t.CreatedAt,
 	}
 }

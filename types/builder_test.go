@@ -62,10 +62,12 @@ func TestPolicyBuilder(t *testing.T) {
 		},
 		Actors: []Actor{
 			Actor{
-				Name: "staff",
+				Name:       "staff",
+				Validators: make([]Validator, 0),
 			},
 			Actor{
-				Name: "guest",
+				Name:       "guest",
+				Validators: make([]Validator, 0),
 			},
 		},
 		Attributes: map[string]string{
