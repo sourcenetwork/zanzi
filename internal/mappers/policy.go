@@ -38,6 +38,7 @@ func (m *PolicyMapper) ToInternal(p types.Policy) (policy.Policy, error) {
 func relationToInternal(rel types.Relation) *policy.Relation {
 	return &policy.Relation{
 		Name:           rel.Name,
+                Description: rel.Description,
 		RewriteExpr:    "_this",
 		ExpressionTree: policy.ThisTree(),
 	}
@@ -74,6 +75,7 @@ func permissionToRelation(perm types.Permission) (*policy.Relation, error) {
 
 	return &policy.Relation{
 		Name:           perm.Name,
+                Description: perm.Description,
 		RewriteExpr:    perm.Expression,
 		ExpressionTree: tree,
 	}, nil
@@ -82,6 +84,7 @@ func permissionToRelation(perm types.Permission) (*policy.Relation, error) {
 func toInternalActor(actor types.Actor) *policy.Actor {
 	return &policy.Actor{
 		Name:        actor.Name,
+                Description: actor.Description,
 		Constraints: utils.MapSlice(actor.Validators, fromValidator),
 	}
 }
@@ -89,6 +92,7 @@ func toInternalActor(actor types.Actor) *policy.Actor {
 func fromInternalActor(actor *policy.Actor) types.Actor {
 	return types.Actor{
 		Name:       actor.Name,
+                Description: actor.Description,
 		Validators: utils.MapSlice(actor.Constraints, toValidator),
 	}
 }
@@ -131,6 +135,7 @@ func fromInternalResource(res *policy.Resource) types.Resource {
 	permissions, relations := fromInternalRelations(res.Relations)
 	return types.Resource{
 		Name:        res.Name,
+                Description: res.Description,
 		Relations:   relations,
 		Permissions: permissions,
 	}
@@ -143,11 +148,13 @@ func fromInternalRelations(relations []*policy.Relation) ([]types.Permission, []
 		if isThisTree(rel.ExpressionTree) {
 			rel := types.Relation{
 				Name: rel.Name,
+                                Description: rel.Description,
 			}
 			rels = append(rels, rel)
 		} else {
 			permission := types.Permission{
 				Name:       rel.Name,
+                                Description: rel.Description,
 				Expression: rel.RewriteExpr,
 			}
 			permissions = append(permissions, permission)

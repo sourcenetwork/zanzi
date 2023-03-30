@@ -23,20 +23,24 @@ type Policy struct {
 
 type Actor struct {
 	Name       string `json:"name"`
+        Description string `json:"description"`
 	Validators []Validator
 }
 
 type Resource struct {
 	Name        string       `json:"name"`
+        Description string `json:"description"`
 	Relations   []Relation   `json:"relations"`
 	Permissions []Permission `json:"permissions"`
 }
 
 type Relation struct {
 	Name string `json:"name"`
+        Description string `json:"description"`
 }
 
 type Permission struct {
 	Name       string `json:"name"`
+        Description string `json:"description"`
 	Expression string `json:"expression"`
 }
