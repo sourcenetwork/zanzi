@@ -1,8 +1,5 @@
 version: v1
 
-deps:
-  - buf.build/cosmos/gogo-proto
-
 breaking:
   use:
     - FILE
