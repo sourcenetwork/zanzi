@@ -1,5 +1,7 @@
 version: v1
 
+name: buf.build/sourcenetwork/zanzi
+
 breaking:
   use:
     - FILE
