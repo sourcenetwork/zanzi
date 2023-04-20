@@ -7,7 +7,10 @@ build:
 
 .PHONY: proto
 proto:
-	docker run --rm -it --workdir /app/proto -v ${PWD}:/app ghcr.io/cosmos/proto-builder buf generate
+	docker image build --file proto/Dockerfile --tag zanzi-proto-builder:latest proto/
+	docker run --rm -it --workdir /app/proto -v $(PWD):/app zanzi-proto-builder:latest buf generate --verbose
+	go mod tidy
+
 
 
 .PHONY: test

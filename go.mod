@@ -10,6 +10,7 @@ require (
 	github.com/cosmos/gogoproto v1.4.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/deckarep/golang-set/v2 v2.1.0
+	github.com/gogo/protobuf v1.3.2
 	github.com/sourcenetwork/raccoondb v0.0.0
 	github.com/spf13/cobra v1.6.0
 	github.com/stretchr/testify v1.8.1
@@ -30,7 +31,6 @@ require (
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
