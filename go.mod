@@ -7,6 +7,7 @@ replace github.com/sourcenetwork/raccoondb v0.0.0 => ../raccoondb
 go 1.18
 
 require (
+	github.com/cosmos/gogoproto v1.4.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/deckarep/golang-set/v2 v2.1.0
 	github.com/sourcenetwork/raccoondb v0.0.0

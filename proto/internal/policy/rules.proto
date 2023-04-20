@@ -2,7 +2,7 @@
 
 syntax = "proto3";
 
-package internal.domain.policy;
+package policy;
 option go_package = "github.com/sourcenetwork/source-zanzibar/internal/domain/policy";
 
 // RewriteRule specifies the logical model between relations

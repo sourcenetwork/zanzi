@@ -1,15 +1,11 @@
 // Policy definition
-//
-// Policy defines a client's application relation model.
-
 syntax = "proto3";
 
-package internal.domain.policy;
-option go_package = "github.com/sourcenetwork/source-zanzibar/internal/domain/policy";
-
-import "internal/domain/policy/tree.proto";
+package types;
 
 import "google/protobuf/timestamp.proto";
+
+option go_package = "./types";
 
 message Policy {
     string id = 1;
@@ -21,19 +17,10 @@ message Policy {
     map<string, string> attributes = 10;
 }
 
-// ActorIdType specify an identifier type for an actor object.
-// Actor ids are enforced as system constants.
-enum ActorIdType {
-    STRING = 0;
-    NUMBER = 1;
-    DID = 2;
-}
-
 // Actor represents a class of system users
 message Actor {
     string name = 1;
     string description = 2;
-    repeated ActorIdType constraints = 3;
 }
 
 // Resources represents a class of objects in the relation graph
@@ -42,12 +29,22 @@ message Resource {
     string name = 1;
     string description = 2;
     repeated Relation relations = 3;
+    repeated Permission permissions = 4;
 }
 
-// A Relation defines a Relation Type in the relation graph.
+// Relation defines a logical relation for objects in a Resource.
 message Relation {
     string name = 1;
     string description = 2;
-    string rewrite_expr = 3;
-    Tree expression_tree = 4;
+}
+
+// Permission defines an operation permision which an Actor can request
+// for a Resource.
+// Each Permision is expressed in terms of relations, through the permission expression language.
+// The permission expression language uses set theory operators to combine relations.
+// TODO add example and expand on expression language documentation.
+message Permission {
+    string name = 1;
+    string description = 2;
+    string permission_expr = 3;
 }

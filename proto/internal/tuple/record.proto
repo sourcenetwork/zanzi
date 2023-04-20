@@ -3,7 +3,7 @@
 
 syntax = "proto3";
 
-package internal.domain.tuple;
+package tuple;
 
 option go_package = "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple";
 

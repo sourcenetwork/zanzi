@@ -63,8 +63,8 @@ func (b relationshipBuilder) Entity(namespace string, id string) Entity {
 }
 
 type ResourceBuilder struct {
-	perms []Permission
-	rels  []Relation
+	perms []*Permission
+	rels  []*Relation
 	name  string
 }
 
@@ -73,16 +73,16 @@ func (b *ResourceBuilder) Name(name string) {
 }
 
 func (b *ResourceBuilder) Perm(name string, expression string) {
-	perm := Permission{
+	perm := &Permission{
 		Name:       name,
-		Expression: expression,
+		PermissionExpr: expression,
 	}
 	b.perms = append(b.perms, perm)
 }
 
 func (b *ResourceBuilder) Relations(relations ...string) {
 	for _, name := range relations {
-		rel := Relation{
+		rel := &Relation{
 			Name: name,
 		}
 		b.rels = append(b.rels, rel)
@@ -101,21 +101,17 @@ func (b *ResourceBuilder) Build() Resource {
 	return resource
 }
 
-func NewActor(actor string, validators ...Validator) Actor {
-	if validators == nil {
-		validators = make([]Validator, 0, 0)
-	}
+func NewActor(actor string) Actor {
 	return Actor{
 		Name:       actor,
-		Validators: validators,
 	}
 }
 
 type policyBuilder struct {
 	name        string
 	id          string
-	resources   []Resource
-	actors      []Actor
+	resources   []*Resource
+	actors      []*Actor
 	attrs       map[string]string
 	description string
 }
@@ -134,13 +130,13 @@ func (b *policyBuilder) IdNameDescription(id string, name string, description st
 
 func (b *policyBuilder) Actors(actors ...Actor) {
 	for _, actor := range actors {
-		b.actors = append(b.actors, actor)
+		b.actors = append(b.actors, &actor)
 	}
 }
 
 func (b *policyBuilder) Resources(resources ...Resource) {
 	for _, resource := range resources {
-		b.resources = append(b.resources, resource)
+		b.resources = append(b.resources, &resource)
 	}
 }
 

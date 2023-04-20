@@ -2,10 +2,10 @@
 
 syntax = "proto3";
 
-package internal.domain.policy;
+package policy;
 option go_package = "github.com/sourcenetwork/source-zanzibar/internal/domain/policy";
 
-import "internal/domain/policy/rules.proto";
+import "policy/rules.proto";
 
 
 enum Operation {

@@ -7,7 +7,8 @@ build:
 
 .PHONY: proto
 proto:
-	protoc --go_out=. -Iproto --go_opt=module=${GO_MOD} $$(find . -iname '*.proto' | sort)
+	docker run --rm -it --workdir /app/proto -v ${PWD}:/app ghcr.io/cosmos/proto-builder buf generate
+
 
 .PHONY: test
 test:

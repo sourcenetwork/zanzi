@@ -3,8 +3,6 @@ package mappers
 import (
 	"fmt"
 
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
 	parser "github.com/sourcenetwork/source-zanzibar/internal/permission_parser"
 	"github.com/sourcenetwork/source-zanzibar/pkg/utils"
@@ -31,11 +29,11 @@ func (m *PolicyMapper) ToInternal(p types.Policy) (policy.Policy, error) {
 		Resources:   resources,
 		Actors:      utils.MapSlice(p.Actors, toInternalActor),
 		Attributes:  p.Attributes,
-		CreatedAt:   timestamppb.New(p.CreatedAt),
+                //FIXME CreatedAt:   p.CreatedAt,
 	}, nil
 }
 
-func relationToInternal(rel types.Relation) *policy.Relation {
+func relationToInternal(rel *types.Relation) *policy.Relation {
 	return &policy.Relation{
 		Name:           rel.Name,
                 Description: rel.Description,
@@ -44,30 +42,10 @@ func relationToInternal(rel types.Relation) *policy.Relation {
 	}
 }
 
-func toValidator(t policy.ActorIdType) types.Validator {
-	switch t {
-	case policy.ActorIdType_STRING:
-		return types.Validator_STRING
-	case policy.ActorIdType_NUMBER:
-		return types.Validator_NUMBER
-	default:
-		panic("invalid ActorIdType")
-	}
-}
 
-func fromValidator(validator types.Validator) policy.ActorIdType {
-	switch validator {
-	case types.Validator_STRING:
-		return policy.ActorIdType_STRING
-	case types.Validator_NUMBER:
-		return policy.ActorIdType_NUMBER
-	default:
-		panic("invalid Validator")
-	}
-}
 
-func permissionToRelation(perm types.Permission) (*policy.Relation, error) {
-	parseTree, err := parser.Parse(perm.Expression)
+func permissionToRelation(perm *types.Permission) (*policy.Relation, error) {
+	parseTree, err := parser.Parse(perm.PermissionExpr)
 	if err != nil {
 		return nil, fmt.Errorf("failed mapping permission %v: %w", perm.Name, err)
 	}
@@ -76,28 +54,26 @@ func permissionToRelation(perm types.Permission) (*policy.Relation, error) {
 	return &policy.Relation{
 		Name:           perm.Name,
                 Description: perm.Description,
-		RewriteExpr:    perm.Expression,
+		RewriteExpr:    perm.PermissionExpr,
 		ExpressionTree: tree,
 	}, nil
 }
 
-func toInternalActor(actor types.Actor) *policy.Actor {
+func toInternalActor(actor *types.Actor) *policy.Actor {
 	return &policy.Actor{
 		Name:        actor.Name,
                 Description: actor.Description,
-		Constraints: utils.MapSlice(actor.Validators, fromValidator),
 	}
 }
 
-func fromInternalActor(actor *policy.Actor) types.Actor {
-	return types.Actor{
+func fromInternalActor(actor *policy.Actor) *types.Actor {
+	return &types.Actor{
 		Name:       actor.Name,
                 Description: actor.Description,
-		Validators: utils.MapSlice(actor.Constraints, toValidator),
 	}
 }
 
-func toInternalResource(res types.Resource) (*policy.Resource, error) {
+func toInternalResource(res *types.Resource) (*policy.Resource, error) {
 	var relations []*policy.Relation
 
 	for _, rel := range res.Relations {
@@ -124,16 +100,16 @@ func (m *PolicyMapper) FromInternal(p *policy.Policy) types.Policy {
 		Id:          p.Id,
 		Name:        p.Name,
 		Description: p.Description,
-		CreatedAt:   p.CreatedAt.AsTime(),
+		// FIXME CreatedAt:   p.CreatedAt,
 		Resources:   utils.MapSlice(p.Resources, fromInternalResource),
 		Actors:      utils.MapSlice(p.Actors, fromInternalActor),
 		Attributes:  p.Attributes,
 	}
 }
 
-func fromInternalResource(res *policy.Resource) types.Resource {
+func fromInternalResource(res *policy.Resource) *types.Resource {
 	permissions, relations := fromInternalRelations(res.Relations)
-	return types.Resource{
+	return &types.Resource{
 		Name:        res.Name,
                 Description: res.Description,
 		Relations:   relations,
@@ -141,21 +117,21 @@ func fromInternalResource(res *policy.Resource) types.Resource {
 	}
 }
 
-func fromInternalRelations(relations []*policy.Relation) ([]types.Permission, []types.Relation) {
-	var rels []types.Relation
-	var permissions []types.Permission
+func fromInternalRelations(relations []*policy.Relation) ([]*types.Permission, []*types.Relation) {
+	var rels []*types.Relation
+	var permissions []*types.Permission
 	for _, rel := range relations {
 		if isThisTree(rel.ExpressionTree) {
-			rel := types.Relation{
+			rel := &types.Relation{
 				Name: rel.Name,
                                 Description: rel.Description,
 			}
 			rels = append(rels, rel)
 		} else {
-			permission := types.Permission{
+			permission := &types.Permission{
 				Name:       rel.Name,
                                 Description: rel.Description,
-				Expression: rel.RewriteExpr,
+				PermissionExpr: rel.RewriteExpr,
 			}
 			permissions = append(permissions, permission)
 		}
