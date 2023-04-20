@@ -1,11 +1,13 @@
 // Policy definition
 syntax = "proto3";
 
-package types;
+package zanzi;
 
 import "google/protobuf/timestamp.proto";
 
 option go_package = "./types";
+
+
 
 message Policy {
     string id = 1;
