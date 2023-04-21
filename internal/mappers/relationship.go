@@ -16,9 +16,9 @@ func (m *RelationshipMapper) FromRelationship(rel types.Relationship) tuple.Tupl
 	}
 
 	dst := tuple.TupleNode{
-		Namespace: rel.Subject.Namespace,
-		Id:        rel.Subject.Id,
-		Relation:  rel.SubjectRelation,
+		Namespace: rel.Actor.Namespace,
+		Id:        rel.Actor.Id,
+		Relation:  rel.ActorRelation,
 	}
 
 	switch rel.Type {
@@ -31,7 +31,7 @@ func (m *RelationshipMapper) FromRelationship(rel types.Relationship) tuple.Tupl
 	}
 
 	return tuple.Tuple{
-		CreatedAt: rel.CreatedAt,
+		//CreatedAt: rel.CreatedAt, FIXME
 		Partition: rel.PolicyId,
 		Source:    src,
 		Dest:      dst,
@@ -52,16 +52,16 @@ func (m *RelationshipMapper) ToRelationship(t tuple.Tuple) types.Relationship {
 	return types.Relationship{
 		PolicyId: t.Partition,
 		Type:     relType,
-		Object: types.Entity{
+		Object: &types.Entity{
 			Namespace: t.Source.Namespace,
 			Id:        t.Source.Id,
 		},
 		Relation: t.Source.Relation,
-		Subject: types.Entity{
+		Actor: &types.Entity{
 			Namespace: t.Dest.Namespace,
 			Id:        t.Dest.Id,
 		},
-		SubjectRelation: t.Dest.Relation,
-		CreatedAt:       t.CreatedAt,
+		ActorRelation: t.Dest.Relation,
+		//CreatedAt:       t.CreatedAt, FIXME
 	}
 }

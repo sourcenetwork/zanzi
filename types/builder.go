@@ -48,10 +48,10 @@ func (b relationshipBuilder) buildRel(source Entity, relation string, dest Entit
 	return Relationship{
 		PolicyId:        b.policyId,
 		Type:            t,
-		Object:          source,
+		Object:          &source,
 		Relation:        relation,
-		Subject:         dest,
-		SubjectRelation: destRel,
+		Actor:         &dest,
+		ActorRelation: destRel,
 	}
 }
 
