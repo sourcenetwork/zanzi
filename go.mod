@@ -13,8 +13,10 @@ require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/sourcenetwork/raccoondb v0.0.0
 	github.com/spf13/cobra v1.6.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
+	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -48,13 +50,12 @@ require (
 	github.com/tendermint/tendermint v0.34.23 // indirect
 	github.com/tendermint/tm-db v0.6.7 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
-	golang.org/x/crypto v0.1.0 // indirect
-	golang.org/x/net v0.1.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 	google.golang.org/genproto v0.0.0-20221014213838-99cd37c6964a // indirect
 	google.golang.org/grpc v1.50.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
