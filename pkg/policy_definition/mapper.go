@@ -24,13 +24,13 @@ func PolicyFromYaml(definition string) (*types.Policy, error) {
 // maps a PolicyDefinition to zanzi's Policy type.
 // Does not perform any validation or input verification over the given PolicyDefinition.
 func MapPolicyDefinition(def *PolicyDefinition) *types.Policy {
-	resourceDefs := mapItemsToSlice[string, *ResourceDefinition, string](
+	resourceDefs := mapItemsToSlice(
 		def.Resources,
 		func(r *ResourceDefinition) string {
 			return r.Name
 		})
 
-	actorDefs := mapItemsToSlice[string, *ActorDefinition, string](
+	actorDefs := mapItemsToSlice(
 		def.Actors,
 		func(a *ActorDefinition) string {
 			return a.Name
