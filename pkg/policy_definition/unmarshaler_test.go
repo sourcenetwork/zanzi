@@ -1,14 +1,13 @@
 package policy_definition
 
 import (
-    "testing"
+	"testing"
 
-    "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
-
 func TestUnmarshalPolicyDefinitionReturnsPolicyDefinition(t *testing.T) {
-    const policyYaml = `
+	const policyYaml = `
     version: '0.1'
 
     name: Pastebin Policy
@@ -49,76 +48,76 @@ func TestUnmarshalPolicyDefinitionReturnsPolicyDefinition(t *testing.T) {
       test: attr
     `
 
-    got, err := UnmarshalPolicyDefinition(policyYaml)
+	got, err := UnmarshalPolicyDefinition(policyYaml)
 
-    want := PolicyDefinition {
-        Version: "0.1",
-        Name: "Pastebin Policy",
-        Doc: "Policy Description",
+	want := PolicyDefinition{
+		Version: "0.1",
+		Name:    "Pastebin Policy",
+		Doc:     "Policy Description",
 
-        Resources: map[string]*ResourceDefinition {
-            "snippet": &ResourceDefinition{
-                Name: "snippet",
-                Doc: "A text snippet",
-                Relations: map[string]*RelationDefinition {
-                    "author": &RelationDefinition {
-                        Name: "author",
-                        Doc: "",
-                    },
-                    "reader": &RelationDefinition {
-                        Name: "reader",
-                        Doc: "Reader",
-                    },
-                },
-                Permissions: map[string]*PermissionDefinition {
-                    "read": &PermissionDefinition {
-                        Name: "read",
-                        Doc: "Reads a snippet",
-                        Expr: "(reader + author)",
-                    },
-                    "can_comment": &PermissionDefinition {
-                        Name: "can_comment",
-                        Doc: "",
-                        Expr: "(read)",
-                    },
-                },
-            },
-            "comment": &ResourceDefinition{
-                Name: "comment",
-                Doc: "A comment in a snippet",
-                Relations: map[string]*RelationDefinition {
-                    "author": &RelationDefinition {
-                        Name: "author",
-                        Doc: "",
-                    },
-                },
-                Permissions: map[string]*PermissionDefinition {
-                    "delete": &PermissionDefinition {
-                        Name: "delete",
-                        Doc: "",
-                        Expr: "(author)",
-                    },
-                },
-            },
-        },
+		Resources: map[string]*ResourceDefinition{
+			"snippet": &ResourceDefinition{
+				Name: "snippet",
+				Doc:  "A text snippet",
+				Relations: map[string]*RelationDefinition{
+					"author": &RelationDefinition{
+						Name: "author",
+						Doc:  "",
+					},
+					"reader": &RelationDefinition{
+						Name: "reader",
+						Doc:  "Reader",
+					},
+				},
+				Permissions: map[string]*PermissionDefinition{
+					"read": &PermissionDefinition{
+						Name: "read",
+						Doc:  "Reads a snippet",
+						Expr: "(reader + author)",
+					},
+					"can_comment": &PermissionDefinition{
+						Name: "can_comment",
+						Doc:  "",
+						Expr: "(read)",
+					},
+				},
+			},
+			"comment": &ResourceDefinition{
+				Name: "comment",
+				Doc:  "A comment in a snippet",
+				Relations: map[string]*RelationDefinition{
+					"author": &RelationDefinition{
+						Name: "author",
+						Doc:  "",
+					},
+				},
+				Permissions: map[string]*PermissionDefinition{
+					"delete": &PermissionDefinition{
+						Name: "delete",
+						Doc:  "",
+						Expr: "(author)",
+					},
+				},
+			},
+		},
 
-        Actors: map[string]*ActorDefinition {
-            "user": &ActorDefinition {
-                Name: "user",
-                Doc: "App user",
-            },
-        },
-        Attributes: map[string]string {
-            "test": "attr",
-        },
-    }
+		Actors: map[string]*ActorDefinition{
+			"user": &ActorDefinition{
+				Name: "user",
+				Doc:  "App user",
+			},
+		},
+		Attributes: map[string]string{
+			"test": "attr",
+		},
+	}
 
-    assert.Nil(t, err)
-    assert.Equal(t, &want, got)
+	assert.Nil(t, err)
+	assert.Equal(t, &want, got)
 }
 
 func TestUnmarshalPolicyDefinitionWithInvalidVersionIdReturnsError(t *testing.T) {
-    const policyYaml = `
+	const policyYaml = `
     version: '0.2'
 
     name: Pastebin Policy
@@ -132,14 +131,14 @@ func TestUnmarshalPolicyDefinitionWithInvalidVersionIdReturnsError(t *testing.T)
       user:
     `
 
-    got, err := UnmarshalPolicyDefinition(policyYaml)
+	got, err := UnmarshalPolicyDefinition(policyYaml)
 
-    assert.Nil(t, got)
-    assert.NotNil(t, err)
+	assert.Nil(t, got)
+	assert.NotNil(t, err)
 }
 
 func TestUnmarshalPolicyDefinitionFailsIfDefinitionHasExtraFields(t *testing.T) {
-    const policyYaml = `
+	const policyYaml = `
     version: '0.1'
 
     extra_field: askfjaskdfj
@@ -155,9 +154,8 @@ func TestUnmarshalPolicyDefinitionFailsIfDefinitionHasExtraFields(t *testing.T) 
       user:
     `
 
-    got, err := UnmarshalPolicyDefinition(policyYaml)
+	got, err := UnmarshalPolicyDefinition(policyYaml)
 
-    assert.Nil(t, got)
-    assert.NotNil(t, err)
+	assert.Nil(t, got)
+	assert.NotNil(t, err)
 }
-

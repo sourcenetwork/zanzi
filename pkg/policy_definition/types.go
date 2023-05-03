@@ -4,34 +4,34 @@
 package policy_definition
 
 type PolicyDefinition struct {
-    Version string `yaml:"version"`
-    Name string `yaml:"name"`
-    Doc string `yaml:"doc"`
-    Resources map[string]*ResourceDefinition `yaml:"resources"`
-    Actors map[string]*ActorDefinition `yaml:"actors"`
-    Attributes map[string]string `yaml:"attributes"`
+	Version    string                         `yaml:"version"`
+	Name       string                         `yaml:"name"`
+	Doc        string                         `yaml:"doc"`
+	Resources  map[string]*ResourceDefinition `yaml:"resources"`
+	Actors     map[string]*ActorDefinition    `yaml:"actors"`
+	Attributes map[string]string              `yaml:"attributes"`
 }
 
 type ResourceDefinition struct {
-    Name string
-    Doc string `yaml:"doc"`
-    Permissions map[string]*PermissionDefinition `yaml:"permissions"`
-    Relations map[string]*RelationDefinition `yaml:"relations"`
+	Name        string
+	Doc         string                           `yaml:"doc"`
+	Permissions map[string]*PermissionDefinition `yaml:"permissions"`
+	Relations   map[string]*RelationDefinition   `yaml:"relations"`
 }
 
 type PermissionDefinition struct {
-    Name string
-    Doc string `yaml:"doc"`
-    Expr string `yaml:"expr"`
+	Name string
+	Doc  string `yaml:"doc"`
+	Expr string `yaml:"expr"`
 }
 
 type RelationDefinition struct {
-    Name string
-    Doc string `yaml:"doc"`
-    //Types []string `yaml:""`
+	Name string
+	Doc  string `yaml:"doc"`
+	//Types []string `yaml:""`
 }
 
 type ActorDefinition struct {
-    Name string
-    Doc string `yaml:"doc"`
+	Name string
+	Doc  string `yaml:"doc"`
 }
