@@ -29,20 +29,18 @@ func (m *PolicyMapper) ToInternal(p types.Policy) (policy.Policy, error) {
 		Resources:   resources,
 		Actors:      utils.MapSlice(p.Actors, toInternalActor),
 		Attributes:  p.Attributes,
-                //FIXME CreatedAt:   p.CreatedAt,
+		//FIXME CreatedAt:   p.CreatedAt,
 	}, nil
 }
 
 func relationToInternal(rel *types.Relation) *policy.Relation {
 	return &policy.Relation{
 		Name:           rel.Name,
-                Description: rel.Description,
+		Description:    rel.Description,
 		RewriteExpr:    "_this",
 		ExpressionTree: policy.ThisTree(),
 	}
 }
-
-
 
 func permissionToRelation(perm *types.Permission) (*policy.Relation, error) {
 	parseTree, err := parser.Parse(perm.PermissionExpr)
@@ -53,7 +51,7 @@ func permissionToRelation(perm *types.Permission) (*policy.Relation, error) {
 
 	return &policy.Relation{
 		Name:           perm.Name,
-                Description: perm.Description,
+		Description:    perm.Description,
 		RewriteExpr:    perm.PermissionExpr,
 		ExpressionTree: tree,
 	}, nil
@@ -62,14 +60,14 @@ func permissionToRelation(perm *types.Permission) (*policy.Relation, error) {
 func toInternalActor(actor *types.Actor) *policy.Actor {
 	return &policy.Actor{
 		Name:        actor.Name,
-                Description: actor.Description,
+		Description: actor.Description,
 	}
 }
 
 func fromInternalActor(actor *policy.Actor) *types.Actor {
 	return &types.Actor{
-		Name:       actor.Name,
-                Description: actor.Description,
+		Name:        actor.Name,
+		Description: actor.Description,
 	}
 }
 
@@ -101,9 +99,9 @@ func (m *PolicyMapper) FromInternal(p *policy.Policy) types.Policy {
 		Name:        p.Name,
 		Description: p.Description,
 		// FIXME CreatedAt:   p.CreatedAt,
-		Resources:   utils.MapSlice(p.Resources, fromInternalResource),
-		Actors:      utils.MapSlice(p.Actors, fromInternalActor),
-		Attributes:  p.Attributes,
+		Resources:  utils.MapSlice(p.Resources, fromInternalResource),
+		Actors:     utils.MapSlice(p.Actors, fromInternalActor),
+		Attributes: p.Attributes,
 	}
 }
 
@@ -111,7 +109,7 @@ func fromInternalResource(res *policy.Resource) *types.Resource {
 	permissions, relations := fromInternalRelations(res.Relations)
 	return &types.Resource{
 		Name:        res.Name,
-                Description: res.Description,
+		Description: res.Description,
 		Relations:   relations,
 		Permissions: permissions,
 	}
@@ -123,14 +121,14 @@ func fromInternalRelations(relations []*policy.Relation) ([]*types.Permission, [
 	for _, rel := range relations {
 		if isThisTree(rel.ExpressionTree) {
 			rel := &types.Relation{
-				Name: rel.Name,
-                                Description: rel.Description,
+				Name:        rel.Name,
+				Description: rel.Description,
 			}
 			rels = append(rels, rel)
 		} else {
 			permission := &types.Permission{
-				Name:       rel.Name,
-                                Description: rel.Description,
+				Name:           rel.Name,
+				Description:    rel.Description,
 				PermissionExpr: rel.RewriteExpr,
 			}
 			permissions = append(permissions, permission)

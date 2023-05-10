@@ -46,10 +46,10 @@ func (b relationshipBuilder) Attribute(objNamespace, objId, relation, subjectNam
 
 func (b relationshipBuilder) buildRel(source Entity, relation string, dest Entity, destRel string, t RelationshipType) Relationship {
 	return Relationship{
-		PolicyId:        b.policyId,
-		Type:            t,
-		Object:          &source,
-		Relation:        relation,
+		PolicyId:      b.policyId,
+		Type:          t,
+		Object:        &source,
+		Relation:      relation,
 		Actor:         &dest,
 		ActorRelation: destRel,
 	}
@@ -74,7 +74,7 @@ func (b *ResourceBuilder) Name(name string) {
 
 func (b *ResourceBuilder) Perm(name string, expression string) {
 	perm := &Permission{
-		Name:       name,
+		Name:           name,
 		PermissionExpr: expression,
 	}
 	b.perms = append(b.perms, perm)
@@ -103,7 +103,7 @@ func (b *ResourceBuilder) Build() Resource {
 
 func NewActor(actor string) Actor {
 	return Actor{
-		Name:       actor,
+		Name: actor,
 	}
 }
 
