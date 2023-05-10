@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-	"github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
-	"github.com/sourcenetwork/source-zanzibar/pkg/utils"
+	"github.com/sourcenetwork/zanzi/internal/domain/policy"
+	"github.com/sourcenetwork/zanzi/internal/domain/tuple"
+	"github.com/sourcenetwork/zanzi/pkg/utils"
 )
 
 // Sucessor fetcher fetches the logical sucessors of a node in a relation graph.

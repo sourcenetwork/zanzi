@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/sourcenetwork/source-zanzibar/types"
+	"github.com/sourcenetwork/zanzi/types"
 )
 
 const defaultPolicyId string = "1"

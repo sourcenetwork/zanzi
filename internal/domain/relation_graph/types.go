@@ -5,7 +5,7 @@ import (
 
 	mapset "github.com/deckarep/golang-set/v2"
 
-	"github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
+	"github.com/sourcenetwork/zanzi/internal/domain/tuple"
 )
 
 type RelationGraph interface {

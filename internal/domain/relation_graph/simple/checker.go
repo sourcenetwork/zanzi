@@ -5,9 +5,9 @@ package simple
 import (
 	"context"
 
-	"github.com/sourcenetwork/source-zanzibar/authorizer"
-	"github.com/sourcenetwork/source-zanzibar/model"
-	"github.com/sourcenetwork/source-zanzibar/tree"
+	"github.com/sourcenetwork/zanzi/authorizer"
+	"github.com/sourcenetwork/zanzi/model"
+	"github.com/sourcenetwork/zanzi/tree"
 )
 
 var _ authorizer.Checker = (*checker)(nil)

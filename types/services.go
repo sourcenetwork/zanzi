@@ -3,7 +3,7 @@ package types
 import (
 	"google.golang.org/protobuf/proto"
 
-	o "github.com/sourcenetwork/source-zanzibar/pkg/option"
+	o "github.com/sourcenetwork/zanzi/pkg/option"
 )
 
 // Authorizer models Zanzibar's authorization verification calls

@@ -3,10 +3,10 @@ package services
 import (
 	_ "fmt"
 
-	"github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
-	"github.com/sourcenetwork/source-zanzibar/internal/mappers"
-	o "github.com/sourcenetwork/source-zanzibar/pkg/option"
-	"github.com/sourcenetwork/source-zanzibar/types"
+	"github.com/sourcenetwork/zanzi/internal/domain/tuple"
+	"github.com/sourcenetwork/zanzi/internal/mappers"
+	o "github.com/sourcenetwork/zanzi/pkg/option"
+	"github.com/sourcenetwork/zanzi/types"
 )
 
 var _ types.RelationshipService = (*relationshipService)(nil)

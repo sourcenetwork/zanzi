@@ -6,10 +6,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sourcenetwork/source-zanzibar/authorizer"
-	"github.com/sourcenetwork/source-zanzibar/graph"
-	"github.com/sourcenetwork/source-zanzibar/model"
-	"github.com/sourcenetwork/source-zanzibar/repository"
+	"github.com/sourcenetwork/zanzi/authorizer"
+	"github.com/sourcenetwork/zanzi/graph"
+	"github.com/sourcenetwork/zanzi/model"
+	"github.com/sourcenetwork/zanzi/repository"
 )
 
 var _ authorizer.Reverser = (*reverser)(nil)

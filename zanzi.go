@@ -3,11 +3,11 @@ package source_zanzibar
 import (
 	rcdb "github.com/sourcenetwork/raccoondb"
 
-	"github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-	"github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph/simple"
-	"github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
-	"github.com/sourcenetwork/source-zanzibar/internal/services"
-	"github.com/sourcenetwork/source-zanzibar/types"
+	"github.com/sourcenetwork/zanzi/internal/domain/policy"
+	"github.com/sourcenetwork/zanzi/internal/domain/relation_graph/simple"
+	"github.com/sourcenetwork/zanzi/internal/domain/tuple"
+	"github.com/sourcenetwork/zanzi/internal/services"
+	"github.com/sourcenetwork/zanzi/types"
 )
 
 // var _ types.RecordService[any, proto.Message] = (*relService[any, proto.Message])(nil)

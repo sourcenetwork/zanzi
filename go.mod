@@ -1,4 +1,4 @@
-module github.com/sourcenetwork/source-zanzibar
+module github.com/sourcenetwork/zanzi
 
 replace github.com/gogo/protobuf/grpc v1.3.2 => google.golang.org/grpc v1.51.0
 

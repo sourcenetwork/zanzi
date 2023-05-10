@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-	rg "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph"
-	"github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
+	"github.com/sourcenetwork/zanzi/internal/domain/policy"
+	rg "github.com/sourcenetwork/zanzi/internal/domain/relation_graph"
+	"github.com/sourcenetwork/zanzi/internal/domain/tuple"
 )
 
 func newWalker(tStore tuple.TupleStore, pStore policy.PolicyStore) walker {

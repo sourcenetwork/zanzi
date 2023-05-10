@@ -7,9 +7,9 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 
-	p "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-	t "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
-	"github.com/sourcenetwork/source-zanzibar/internal/test_utils"
+	p "github.com/sourcenetwork/zanzi/internal/domain/policy"
+	t "github.com/sourcenetwork/zanzi/internal/domain/tuple"
+	"github.com/sourcenetwork/zanzi/internal/test_utils"
 )
 
 const partition = "1"

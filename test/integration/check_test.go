@@ -7,9 +7,9 @@ import (
 	rcdb "github.com/sourcenetwork/raccoondb"
 	"github.com/stretchr/testify/assert"
 
-	zanzi "github.com/sourcenetwork/source-zanzibar"
-	"github.com/sourcenetwork/source-zanzibar/test"
-	"github.com/sourcenetwork/source-zanzibar/types"
+	zanzi "github.com/sourcenetwork/zanzi"
+	"github.com/sourcenetwork/zanzi/test"
+	"github.com/sourcenetwork/zanzi/types"
 )
 
 func setup() types.SimpleClient {

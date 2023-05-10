@@ -4,8 +4,8 @@ package internal
 import (
     raccoon "github.com/sourcenetwork/raccoondb"
 
-    "github.com/sourcenetwork/source-zanzibar/types"
-    "github.com/sourcenetwork/source-zanzibar/pkg/option"
+    "github.com/sourcenetwork/zanzi/types"
+    "github.com/sourcenetwork/zanzi/pkg/option"
 )
 
 type RecordStore[T any, PT types.ProtoConstraint[T, *T]] interface {

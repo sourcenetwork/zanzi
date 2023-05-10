@@ -3,10 +3,10 @@ package services
 import (
 	"fmt"
 
-	"github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-	"github.com/sourcenetwork/source-zanzibar/internal/mappers"
-	o "github.com/sourcenetwork/source-zanzibar/pkg/option"
-	"github.com/sourcenetwork/source-zanzibar/types"
+	"github.com/sourcenetwork/zanzi/internal/domain/policy"
+	"github.com/sourcenetwork/zanzi/internal/mappers"
+	o "github.com/sourcenetwork/zanzi/pkg/option"
+	"github.com/sourcenetwork/zanzi/types"
 )
 
 var _ types.PolicyService = (*policyService)(nil)

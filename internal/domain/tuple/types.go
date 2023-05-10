@@ -3,7 +3,7 @@ package tuple
 import (
 	"time"
 
-	opt "github.com/sourcenetwork/source-zanzibar/pkg/option"
+	opt "github.com/sourcenetwork/zanzi/pkg/option"
 )
 
 // TupleNode represents a Zanzibar userset.

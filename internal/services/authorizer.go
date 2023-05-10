@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	rg "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph"
-	tuple "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
-	"github.com/sourcenetwork/source-zanzibar/internal/mappers"
-	"github.com/sourcenetwork/source-zanzibar/types"
+	rg "github.com/sourcenetwork/zanzi/internal/domain/relation_graph"
+	tuple "github.com/sourcenetwork/zanzi/internal/domain/tuple"
+	"github.com/sourcenetwork/zanzi/internal/mappers"
+	"github.com/sourcenetwork/zanzi/types"
 )
 
 // Return an Authorizer implementation from a relation graph

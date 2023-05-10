@@ -3,10 +3,10 @@ package mappers
 import (
 	"fmt"
 
-	"github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-	parser "github.com/sourcenetwork/source-zanzibar/internal/permission_parser"
-	"github.com/sourcenetwork/source-zanzibar/pkg/utils"
-	"github.com/sourcenetwork/source-zanzibar/types"
+	"github.com/sourcenetwork/zanzi/internal/domain/policy"
+	parser "github.com/sourcenetwork/zanzi/internal/permission_parser"
+	"github.com/sourcenetwork/zanzi/pkg/utils"
+	"github.com/sourcenetwork/zanzi/types"
 )
 
 type PolicyMapper struct{}

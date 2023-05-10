@@ -3,7 +3,7 @@ package policy
 import (
 	raccoon "github.com/sourcenetwork/raccoondb"
 
-	opt "github.com/sourcenetwork/source-zanzibar/pkg/option"
+	opt "github.com/sourcenetwork/zanzi/pkg/option"
 )
 
 // PolicyStore abstract interfacing with namespace storage.

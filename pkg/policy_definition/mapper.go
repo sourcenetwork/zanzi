@@ -5,8 +5,8 @@ import (
 
 	"golang.org/x/exp/constraints"
 
-	"github.com/sourcenetwork/source-zanzibar/pkg/utils"
-	"github.com/sourcenetwork/source-zanzibar/types"
+	"github.com/sourcenetwork/zanzi/pkg/utils"
+	"github.com/sourcenetwork/zanzi/types"
 )
 
 // PolicyFromYaml attempts to unmarshal a PolicyDefinition from definition,

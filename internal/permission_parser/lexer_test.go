@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sourcenetwork/source-zanzibar/pkg/utils"
+	"github.com/sourcenetwork/zanzi/pkg/utils"
 )
 
 func TestTokens(t *testing.T) {

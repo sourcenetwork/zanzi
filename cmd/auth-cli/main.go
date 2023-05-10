@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/sourcenetwork/source-zanzibar/cmd/auth-cli/cli"
+	"github.com/sourcenetwork/zanzi/cmd/auth-cli/cli"
 )
 
 func main() {

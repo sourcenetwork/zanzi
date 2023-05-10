@@ -4,7 +4,7 @@ package mapgraph
 import (
 	"fmt"
 
-	opt "github.com/sourcenetwork/source-zanzibar/pkg/option"
+	opt "github.com/sourcenetwork/zanzi/pkg/option"
 )
 
 // MapGraph implements a Graph data structure using Go maps.

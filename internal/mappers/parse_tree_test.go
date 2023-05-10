@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-	parser "github.com/sourcenetwork/source-zanzibar/internal/permission_parser"
+	"github.com/sourcenetwork/zanzi/internal/domain/policy"
+	parser "github.com/sourcenetwork/zanzi/internal/permission_parser"
 )
 
 func TestParseTreeCuNode(t *testing.T) {

@@ -1,5 +1,5 @@
 
-GO_MOD="github.com/sourcenetwork/source-zanzibar"
+GO_MOD="github.com/sourcenetwork/zanzi"
 
 .PHONY: build
 build:

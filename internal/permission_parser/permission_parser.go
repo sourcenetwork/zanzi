@@ -12,8 +12,8 @@ package permission_parser
 import (
 	"fmt"
 
-	"github.com/sourcenetwork/source-zanzibar/pkg/tuple"
-	"github.com/sourcenetwork/source-zanzibar/pkg/utils"
+	"github.com/sourcenetwork/zanzi/pkg/tuple"
+	"github.com/sourcenetwork/zanzi/pkg/utils"
 )
 
 func Parse(expression string) (Term, error) {

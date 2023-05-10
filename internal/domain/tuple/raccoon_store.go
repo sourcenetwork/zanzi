@@ -6,8 +6,8 @@ import (
 
 	rcdb "github.com/sourcenetwork/raccoondb"
 
-	opt "github.com/sourcenetwork/source-zanzibar/pkg/option"
-	"github.com/sourcenetwork/source-zanzibar/pkg/utils"
+	opt "github.com/sourcenetwork/zanzi/pkg/option"
+	"github.com/sourcenetwork/zanzi/pkg/utils"
 )
 
 const (

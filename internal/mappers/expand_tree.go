@@ -3,10 +3,10 @@ package mappers
 import (
 	_ "google.golang.org/protobuf/proto"
 
-	"github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-	rg "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph"
-	"github.com/sourcenetwork/source-zanzibar/pkg/utils"
-	"github.com/sourcenetwork/source-zanzibar/types"
+	"github.com/sourcenetwork/zanzi/internal/domain/policy"
+	rg "github.com/sourcenetwork/zanzi/internal/domain/relation_graph"
+	"github.com/sourcenetwork/zanzi/pkg/utils"
+	"github.com/sourcenetwork/zanzi/types"
 )
 
 type ExpandTreeMapper struct{}

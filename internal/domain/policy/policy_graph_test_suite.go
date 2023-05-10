@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sourcenetwork/source-zanzibar/internal/test_utils"
-	"github.com/sourcenetwork/source-zanzibar/pkg/tuple"
-	"github.com/sourcenetwork/source-zanzibar/pkg/utils"
+	"github.com/sourcenetwork/zanzi/internal/test_utils"
+	"github.com/sourcenetwork/zanzi/pkg/tuple"
+	"github.com/sourcenetwork/zanzi/pkg/utils"
 )
 
 var _ test_utils.TestSuite = (*policyGraphTestSuite)(nil)

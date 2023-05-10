@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sourcenetwork/source-zanzibar/types"
+	"github.com/sourcenetwork/zanzi/types"
 )
 
 func TestPolicyFromYamlReturnsCompleteMappedPolicy(t *testing.T) {

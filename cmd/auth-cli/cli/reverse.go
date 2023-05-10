@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/source-zanzibar/authorizer/simple"
-	"github.com/sourcenetwork/source-zanzibar/model"
+	"github.com/sourcenetwork/zanzi/authorizer/simple"
+	"github.com/sourcenetwork/zanzi/model"
 )
 
 func init() {

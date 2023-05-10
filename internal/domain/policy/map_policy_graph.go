@@ -3,8 +3,8 @@ package policy
 import (
 	"strings"
 
-	"github.com/sourcenetwork/source-zanzibar/pkg/mapgraph"
-	opt "github.com/sourcenetwork/source-zanzibar/pkg/option"
+	"github.com/sourcenetwork/zanzi/pkg/mapgraph"
+	opt "github.com/sourcenetwork/zanzi/pkg/option"
 )
 
 var _ PolicyGraph = (*MapPolicyGraph)(nil)

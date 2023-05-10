@@ -5,9 +5,9 @@ import (
 
 	rcdb "github.com/sourcenetwork/raccoondb"
 
-	p "github.com/sourcenetwork/source-zanzibar/internal/domain/policy"
-	rg "github.com/sourcenetwork/source-zanzibar/internal/domain/relation_graph"
-	t "github.com/sourcenetwork/source-zanzibar/internal/domain/tuple"
+	p "github.com/sourcenetwork/zanzi/internal/domain/policy"
+	rg "github.com/sourcenetwork/zanzi/internal/domain/relation_graph"
+	t "github.com/sourcenetwork/zanzi/internal/domain/tuple"
 )
 
 func TestSimpleRelationGraph(test *testing.T) {
