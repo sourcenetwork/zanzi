@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package sourcenetwork.zanzi.internal.kv_store;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/sourcenetwork/zanzi/internal/store/kv_store";
+
+message RelationshipData {
+    bytes relationship_id = 1;
+    // timestamp for creation time of relationship (based on the local system clock)
+    google.protobuf.Timestamp created_at = 2;
+
+    // app_data opaque application data sent by the client
+    bytes app_data = 3;
+}
+
+message Relationship {
+    RelationNode source = 1;
+    RelationNode dest = 2;
+}
+
+message RelationNode {
+    string resource = 1;
+    string id = 2;
+    string relation = 3;
+    RelationType type = 4;
+}
+
+enum RelationType {
+    UNKNOWN = 0;
+    OBJECT = 1;
+    OBJECT_SET = 2;
+    RESOURCE_SET = 3;
+}

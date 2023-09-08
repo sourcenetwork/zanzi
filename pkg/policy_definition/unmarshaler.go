@@ -7,15 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-/*
-parser should not contain policy validation, that should be in the polciy package
-
-parser is actually just an yaml unmarshaller
-
-add policy validation functions, no need for complex logic in unmarshaler
-*/
-
-// Parse receives a policy as a yaml string and returns the parsed Policy object
+// UnmarshalPolicyDefinition receives a policy as a yaml string and returns the parsed Policy object
 func UnmarshalPolicyDefinition(policyYaml string) (*PolicyDefinition, error) {
 	reader := strings.NewReader(policyYaml)
 	decoder := yaml.NewDecoder(reader)
@@ -27,10 +19,6 @@ func UnmarshalPolicyDefinition(policyYaml string) (*PolicyDefinition, error) {
 		return nil, fmt.Errorf("could not parse policy: %w", err)
 	}
 
-	if !isVersionSupported(policyDef.Version) {
-		return nil, fmt.Errorf("invalid policy version %v", policyDef.Version)
-	}
-
 	setEntityNames(&policyDef)
 
 	return &policyDef, nil
@@ -39,11 +27,14 @@ func UnmarshalPolicyDefinition(policyYaml string) (*PolicyDefinition, error) {
 func setEntityNames(p *PolicyDefinition) {
 
 	for resName, resource := range p.Resources {
-		resource.Name = resName
+            if resource == nil {
+                resDef := ResourceDefinition{}
+                p.Resources[resName] = &resDef
+                resource = &resDef
+            }
 
-		for permissionName, permission := range resource.Permissions {
-			permission.Name = permissionName
-		}
+		resource.name = resName
+
 
 		for relationName, relation := range resource.Relations {
 			// The policy may define an empty relation placeholder
@@ -54,28 +45,8 @@ func setEntityNames(p *PolicyDefinition) {
 				relation = &relDef
 			}
 
-			relation.Name = relationName
+			relation.name = relationName
 		}
 
-	}
-
-	for actorName, actor := range p.Actors {
-		// The `actors` section accepts an actor name key
-		// as a placeholder definition for an actor.
-		if actor == nil {
-			actorDef := ActorDefinition{}
-			p.Actors[actorName] = &actorDef
-			actor = &actorDef
-		}
-		actor.Name = actorName
-	}
-}
-
-func isVersionSupported(version string) bool {
-	switch version {
-	case "0.1":
-		return true
-	default:
-		return false
 	}
 }

@@ -1,0 +1,71 @@
+// relation_expression_tree.proto defines the Relation Expression Tree types.
+
+syntax = "proto3";
+
+package sourcenetwork.zanzi.domain;
+
+option go_package = "github.com/sourcenetwork/zanzi/pkg/domain";
+
+// RelationExpressionTree defines the root of the
+// relation expression mini language
+message RelationExpressionTree {
+    oneof node {
+        OpNode op_node = 1;
+        Rule rule = 2;
+    }
+}
+
+enum Operator {
+    UNION = 0;
+    INTERSECTION = 1;
+    DIFFERENCE = 2;
+}
+
+message OpNode {
+    RelationExpressionTree left = 1;
+    Operator operator = 2;
+    RelationExpressionTree right = 3;
+}
+
+// Rule expresses the possible Rewrite rules of the system.
+message Rule {
+    oneof rule {
+        This this = 1;
+        ComputedUserset cu = 2;
+        TupleToUserset ttu = 3;
+    }
+}
+
+// This specifies a Rule which returns all sucessors for the given (object, relation) pair.
+message This { }
+
+// ComputedUsersetRule specifies a rule which creates a RelationNode with the object actively being fetched.
+// Computed Usersets are used to model a inheritance, such that one relation implies the existence of another.
+message ComputedUserset {
+    // name of the relation used in the built TupleNode.
+    string target_relation = 1;
+}
+
+// TupleToUserset is rule which is used to traverse hierarchical relations.
+// For a given object `obj` it works as follows:
+// 1. Fetch the direct neighbors of the (`obj`, tupleset_relation) pair
+// 2. For each fetched tuple `tf`, create a computed userset of (tf.Namespace, tf.ObjId, cu_relation)
+// 
+// Example:
+// Let tuplset_relation = "parent"
+// Let cu_relation = "owner"
+// Let the input object be "doc:readme"
+// TupleToUserset would then:
+// 1. Lookup all tuples matching (obj="doc:readme", relation="parent").
+//   Assume the matching tuples are [(obj="doc:readme", relation="parent", user=(id="dir:root", relation="..."))]
+// 2. For each found tuple, it would compute the userset (obj=${result_tuple_userset_obj}, relation=cu_relation)
+// The result for this example would be the userset: (obj="dir:root", relation="owner")
+message TupleToUserset {
+    // tupleset_relation used in the built RelationNode whose sucessors are
+    // going to be fetched.
+    string tupleset_relation = 1;
+
+    // computed_userset_relation specifies the relation which will be used in to rewrite the
+    // fetched RelationNodes.
+    string computed_userset_relation = 2;
+}

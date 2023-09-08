@@ -1,0 +1,71 @@
+// selector.proto defines types for specifying sets of relationships
+
+syntax = "proto3";
+
+package sourcenetwork.zanzi.domain;
+
+import "google/protobuf/timestamp.proto";
+import "zanzi/domain/policy.proto";
+import "zanzi/domain/relationship.proto";
+
+option go_package = "github.com/sourcenetwork/zanzi/pkg/domain";
+
+
+// RelationshipSelector is a structured representation for a set of relationships.
+message RelationshipSelector {
+    ObjectSelector object_selector = 1;
+
+    RelationSelector relation_selector = 2;
+
+    SubjectSelector subject_selector = 3;
+}
+
+// RelationNodeSelector is a structured representation for a set of RelationNodes.
+message RelationNodeSelector {
+    ObjectSelector object_selector = 1;
+
+    RelationSelector relation_selector = 2;
+}
+
+// ObjectSelector models a notation to represent a set of Objects
+message ObjectSelector {
+    oneof selector {
+        // object_spec is used to specify the single object which the selector represents.
+        sourcenetwork.zanzi.domain.Entity object_spec = 1;
+
+        // wilcard represents that all object are included in the selector.
+        WildcardSelector wildcard = 2;
+
+        // resoruce_spec represents that all objects in a resource are included in the selector.
+        string resource_spec = 3;
+    }
+}
+
+// RelationSelector models a notation to represent a set of Relations
+message RelationSelector {
+    oneof selector {
+        // relation_name specifies a single relation which the selector represents.
+        // case sensitive string comparasion is used in the matching.
+        string relation_name = 1;
+
+        // wildcard specifies that all relations are part of the selector.
+        WildcardSelector wildcard = 2;
+    }
+}
+
+// SubjectSelector models a notation to represent a set of Subjects.
+message SubjectSelector{
+    oneof selector {
+        // subject_spec represents a single subject which the selector represents.
+        sourcenetwork.zanzi.domain.Subject subject_spec = 1;
+
+        // wildcard specifies that all subjects are part of the selector.
+        WildcardSelector wildcard = 2;
+
+        // resoruce_spec represents that all entities in a resource are included in the selector.
+        string resource_spec = 3;
+    }
+}
+
+// WildcardSelector represents all entities within a set.
+message WildcardSelector {}

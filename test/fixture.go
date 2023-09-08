@@ -1,7 +1,8 @@
 package test
+/*
 
 import (
-	"github.com/sourcenetwork/zanzi/types"
+	"github.com/sourcenetwork/zanzi/pkg/domain"
 )
 
 const (
@@ -11,8 +12,8 @@ const (
 
 // FilesystemFixture returns a fixture for a sample
 // policy structure for a permisioned file system
-func FilesystemFixture() (types.Policy, []types.Relationship) {
-	rb := types.ResourceBuilder{}
+func FilesystemFixture() (core.Policy, []core.Relationship) {
+	rb := core.ResourceBuilder{}
 
 	rb.Name("file")
 	rb.Relations("owner", "reader", "contains")
@@ -24,15 +25,15 @@ func FilesystemFixture() (types.Policy, []types.Relationship) {
 	rb.Relations("member")
 	group := rb.Build()
 
-	policy := types.Policy{
+	policy := core.Policy{
 		Id:   FsPolicyId,
 		Name: "Filesystem Sample Policy",
-		Resources: []types.Resource{
+		Resources: []core.Resource{
 			file,
 			group,
 		},
-		Actors: []types.Actor{
-			types.NewActor(ActorNamespace),
+		Actors: []core.Actor{
+			core.NewActor(ActorNamespace),
 		},
 	}
 	return policy, filesystemRelationships(FsPolicyId)
@@ -53,10 +54,10 @@ func FilesystemFixture() (types.Policy, []types.Relationship) {
 // alice, bob and charlie - members of engineering
 // root - member of admin
 // trent - simple actor
-func filesystemRelationships(polId string) []types.Relationship {
-	b := types.RelationshipBuilder(polId)
+func filesystemRelationships(polId string) []core.Relationship {
+	b := core.RelationshipBuilder(polId)
 
-	return []types.Relationship{
+	return []core.Relationship{
 		b.Attribute("file", "/src", "contains", "file", "/"),
 		b.Attribute("file", "/trent", "contains", "file", "/"),
 		b.Attribute("file", "/trent/file.txt", "contains", "file", "/trent"),
@@ -78,3 +79,4 @@ func filesystemRelationships(polId string) []types.Relationship {
 		b.Grant("file", "/trent/file.txt", "reader", ActorNamespace, "alice"),
 	}
 }
+*/

@@ -1,0 +1,12 @@
+digraph RelationTree {
+1 [ label="(file:readme, owner)" ];
+2 [ label="(file:readme, reader)" ];
+3 [ label="(group:engineering, member)" ];
+5 [ label="bob" ];
+6 [ label="alice" ];
+
+1->5;
+2->3;
+2->5;
+3->6;
+}

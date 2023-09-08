@@ -1,6 +1,8 @@
 version: v1
-
 name: buf.build/sourcenetwork/zanzi
+deps:
+  - buf.build/sourcenetwork/zanzi
+  - buf.build/bufbuild/protovalidate
 
 breaking:
   use:

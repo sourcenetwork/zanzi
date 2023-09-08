@@ -1,0 +1,135 @@
+// relation_graph.proto exposes an RPC service to operate over Zanzi's RelationGraph
+
+syntax = "proto3";
+
+package sourcenetwork.zanzi.api;
+
+import "google/protobuf/timestamp.proto";
+
+import "zanzi/domain/relationship.proto";
+import "zanzi/domain/relation_graph.proto";
+import "zanzi/domain/selector.proto";
+import "zanzi/types/expand_tree.proto";
+
+option go_package = "github.com/sourcenetwork/zanzi/pkg/api";
+
+// RelationGraph exposes lookup operations over a Policy's Relation Graph
+service RelationGraph {
+    // Check verifies whether some subject has some relation to an object.
+    // Effectively this means a Graph Walk through the Relation Graph.
+    rpc Check(CheckRequest) returns (CheckResponse);
+
+    // ExplainCheck performs a Check call but outputs a serialized version of the goal tree.
+    // The goal tree can be used to understand the internals of the RelationGraph search and to debug.
+    // Note that the output of Explain Check IS NOT stable and it must be used for debug only.
+    rpc ExplainCheck(ExplainCheckRequest) returns (ExplainCheckResponse);
+
+    // Expand returns a GoalTree used to scan all nodes reachable from a stating point.
+    // Note that the output of Expand IS NOT stable and it must be used for debug only.
+    rpc Expand(ExpandRequest) returns (ExpandResponse);
+
+    // DumpRelationships walks over a Policy's Relation Graph and returns 
+    // a tree representaion of the Relationships set within a policy. 
+    // Note that it *does not* perform evaluates relation rewrite rule,
+    // meaning that only explicit Relationship Tuples are dumped.
+    rpc DumpRelationships(DumpRelationshipsRequest) returns (DumpRelationshipResponse);
+
+/*
+    rpc MultiCheck(MultiCheckRequest) returns (MultiCheckResponse);
+
+    // Reverse walks backwards through the RelationGraph and
+    // returns a Tree containing all RelationNodes wich 
+    // can reach the given entity.
+    rpc Reverse(ReverseRequest) returns (ReverseResponse);
+
+    // DOTReverse performs a REverse call but formats 
+    // the output as a DOT Graph representation.
+    rpc DOTReverse(DOTReverseRequest) returns (DOTReverseResponse);
+*/
+
+}
+
+message CheckRequest {
+    string policy_id = 1;
+    sourcenetwork.zanzi.domain.AccessRequest access_request = 2;
+}
+
+message CheckResponse {
+    message Result {
+        bool authorized = 1;
+    }
+    Result result = 1;
+}
+
+
+message ExplainCheckRequest {
+    string policy_id = 1;
+    sourcenetwork.zanzi.domain.AccessRequest access_request = 2;
+
+    // format flags which format should be used to serialize the goal tree
+    ExplainFormat format = 3;
+}
+
+enum ExplainFormat {
+    SPEW = 0;
+    JSON = 1;
+    DOT = 2;
+}
+
+message ExplainCheckResponse {
+    // goal_tree is the serialized goal tree of the Check execution
+    // NOTE Explain is a tool used for debugging and development purposes only.
+    // The output of goal_tree IS NOT stable and may change.
+    string goal_tree = 1;
+
+    bool authorized = 2;
+
+    ExplainFormat format = 3;
+}
+
+
+message ExpandRequest {
+    string policy_id = 1;
+    sourcenetwork.zanzi.domain.RelationNode root = 2;
+    ExplainFormat format = 3;
+}
+
+message ExpandResponse {
+    string goal_tree = 1;
+    ExplainFormat format = 2;
+}
+
+message MultiCheckRequest {
+    string policy_id = 1;
+    sourcenetwork.zanzi.domain.RelationNodeSelector selector = 2;
+    sourcenetwork.zanzi.domain.Entity subject = 3;
+}
+
+message MultiCheckResponse {
+    // NOTE Subject to change.
+    // It might be better to use a map instead of a list
+    // or group results by relations.
+    message Result {
+        bool authorized = 1;
+        sourcenetwork.zanzi.domain.RelationNode node = 2;
+    }
+
+    repeated Result results = 2;
+}
+
+
+message DumpRelationshipsRequest {
+    enum DumpFormat {
+        DOT = 0;
+    }
+
+    string policy_id = 1;
+    DumpFormat format = 2;
+}
+
+message  DumpRelationshipResponse {
+    oneof dump {
+        sourcenetwork.zanzi.domain.RelationTree tree = 1;
+        string dot = 2;
+    }
+}

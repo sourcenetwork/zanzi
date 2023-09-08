@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package sourcenetwork.zanzi.types;
+
+import "zanzi/domain/relationship.proto";
+
+option go_package = "github.com/sourcenetwork/zanzi/pkg/types";
+
+enum Operator {
+    UNION = 0;
+    DIFFERENCE = 1;
+    INTERSECTION = 2;
+}
+
+message VerboseExpandTree {
+    sourcenetwork.zanzi.domain.Entity entity = 1;
+    string relation = 2;
+    ExpressionNode node = 3;
+}
+
+message ExpressionNode {
+    oneof node {
+        FactorNode factor_node = 1;
+        OpNode op_node = 2;
+    }
+}
+
+message FactorNode {
+    string rewrite_rule = 1;
+    repeated VerboseExpandTree children = 2;
+}
+
+message OpNode {
+    ExpressionNode left = 1;
+    Operator operator = 2;
+    ExpressionNode right = 3;
+}

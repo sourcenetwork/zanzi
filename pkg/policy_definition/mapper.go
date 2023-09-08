@@ -2,17 +2,19 @@ package policy_definition
 
 import (
 	"sort"
+        "strings"
 
+        "golang.org/x/exp/slices"
 	"golang.org/x/exp/constraints"
 
-	"github.com/sourcenetwork/zanzi/pkg/utils"
-	"github.com/sourcenetwork/zanzi/types"
+	"github.com/sourcenetwork/zanzi/internal/utils"
+	"github.com/sourcenetwork/zanzi/pkg/domain"
 )
 
 // PolicyFromYaml attempts to unmarshal a PolicyDefinition from definition,
 // assumes definition is a YAML document.
 // If the PolicyDefinition is sucessfuly Unmarshaled, maps it to Zanzi's Policy type.
-func PolicyFromYaml(definition string) (*types.Policy, error) {
+func PolicyFromYaml(definition string) (*domain.Policy, error) {
 	def, err := UnmarshalPolicyDefinition(definition)
 	if err != nil {
 		return nil, err
@@ -23,73 +25,91 @@ func PolicyFromYaml(definition string) (*types.Policy, error) {
 
 // maps a PolicyDefinition to zanzi's Policy type.
 // Does not perform any validation or input verification over the given PolicyDefinition.
-func MapPolicyDefinition(def *PolicyDefinition) *types.Policy {
+func MapPolicyDefinition(def *PolicyDefinition) *domain.Policy {
 	resourceDefs := mapItemsToSlice(
 		def.Resources,
 		func(r *ResourceDefinition) string {
-			return r.Name
+			return r.name
 		})
 
-	actorDefs := mapItemsToSlice(
-		def.Actors,
-		func(a *ActorDefinition) string {
-			return a.Name
-		})
 
-	return &types.Policy{
+	return &domain.Policy{
+                Id: def.Id,
 		Name:        def.Name,
 		Description: def.Doc,
 		Resources:   utils.MapSlice(resourceDefs, mapResource),
-		Actors:      utils.MapSlice(actorDefs, mapActor),
 		Attributes:  def.Attributes,
 	}
 }
 
 // map ResourceDefinition to zanzi's Resource
-func mapResource(resourceDef *ResourceDefinition) *types.Resource {
-	permDefs := mapItemsToSlice(
-		resourceDef.Permissions,
-		func(p *PermissionDefinition) string {
-			return p.Name
-		})
-
+func mapResource(resourceDef *ResourceDefinition) *domain.Resource {
 	relDefs := mapItemsToSlice(
 		resourceDef.Relations,
 		func(r *RelationDefinition) string {
-			return r.Name
+			return r.name
 		})
 
-	return &types.Resource{
-		Name:        resourceDef.Name,
+	return &domain.Resource{
+		Name:        resourceDef.name,
 		Description: resourceDef.Doc,
-		Permissions: utils.MapSlice(permDefs, mapPermission),
 		Relations:   utils.MapSlice(relDefs, mapRelation),
 	}
 }
 
-// map ActorDefinition to zanzi's Actor
-func mapActor(actorDef *ActorDefinition) *types.Actor {
-	return &types.Actor{
-		Name:        actorDef.Name,
-		Description: actorDef.Doc,
-	}
-}
-
-// map PermissionDefinition to zanzi's Permission
-func mapPermission(permDef *PermissionDefinition) *types.Permission {
-	return &types.Permission{
-		Name:           permDef.Name,
-		Description:    permDef.Doc,
-		PermissionExpr: permDef.Expr,
-	}
-}
-
 // map RelationDefinition to zanzi's Relation
-func mapRelation(relDef *RelationDefinition) *types.Relation {
-	return &types.Relation{
-		Name:        relDef.Name,
+func mapRelation(relDef *RelationDefinition) *domain.Relation {
+	return &domain.Relation{
+		Name:        relDef.name,
 		Description: relDef.Doc,
+		RelationExpression: &domain.RelationExpression{
+                    Expression: &domain.RelationExpression_Expr{
+                        Expr: relDef.Expr,
+                    },
+                },
+                SubjectRestriction: mapSubjectRestriction(relDef.Types),
 	}
+}
+
+func mapSubjectRestriction(types []string) *domain.SubjectRestriction{
+    if slices.Contains(types, UniversalSetType) {
+        return &domain.SubjectRestriction{
+            SubjectRestriction: &domain.SubjectRestriction_UniversalSet{
+                UniversalSet: &domain.UniversalSet{},
+            },
+        }
+    }
+
+    return &domain.SubjectRestriction{
+        SubjectRestriction: &domain.SubjectRestriction_RestrictionSet{
+            RestrictionSet: &domain.SubjectRestrictionSet{
+                Restrictions: utils.MapSlice(types, mapSubjectRestrictionElem),
+            },
+        },
+    }
+}
+
+func mapSubjectRestrictionElem(elem string)  *domain.SubjectRestrictionSet_Restriction{
+    restriction := &domain.SubjectRestrictionSet_Restriction{}
+
+    resource, relation, found := strings.Cut(elem, TypeRelationSeparator)
+
+    if !found {
+        restriction.Entry = &domain.SubjectRestrictionSet_Restriction_Entity{
+            Entity: &domain.EntityRestriction{
+                ResourceName: resource,
+            },
+        }
+    }  else {
+        restriction.Entry = &domain.SubjectRestrictionSet_Restriction_EntitySet{
+            EntitySet: &domain.EntitySetRestriction{
+                ResourceName: resource,
+                RelationName: relation,
+            },
+        }
+    }
+
+    return restriction
 }
 
 // mapItemsToSlice extract all items in a Map, compiles them into a Slice
@@ -112,7 +132,7 @@ func mapItemsToSlice[Key comparable, Val any, Comp constraints.Ordered](m map[Ke
 // Implements the "sort" package sorting interface
 //
 // eg. Suppose T is a Person and each Person has a name,
-// the keyFunc could return T.Name to sort the Persons in the slice
+// the keyFunc could return T.name to sort the Persons in the slice
 // by their names.
 type sortable[T any, K constraints.Ordered] struct {
 	items   []T

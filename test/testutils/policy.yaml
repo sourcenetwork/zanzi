@@ -1,0 +1,38 @@
+version: 0.1
+
+name: Pastebin Policy
+
+doc: Policy Description
+
+resources:
+
+  snippet: 
+    doc: A text snippet
+    relations:
+      author:
+      reader:
+        doc: Reader
+
+    permissions:
+      read:
+        doc: Reads a snippet
+        expr: (reader + author)
+
+      # Comment
+      can_comment: 
+        expr: (read)
+
+  comment:
+    doc: A comment in a snippet
+    relations:
+      author:
+    permissions:
+      delete: 
+        expr: (author)
+
+actors:
+  user:
+    doc: App user
+
+attributes:
+  test: attr

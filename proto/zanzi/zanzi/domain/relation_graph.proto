@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package sourcenetwork.zanzi.domain;
+
+import "zanzi/domain/relationship.proto";
+import "zanzi/domain/selector.proto";
+
+option go_package = "github.com/sourcenetwork/zanzi/pkg/domain";
+
+
+message RelationNode {
+    oneof node {
+        EntitySetNode entity_set = 1;
+        EntityNode entity = 2;
+        WildcardNode wildcard = 3;
+    }
+}
+
+// EntitySetNode models an inner node in the Relation Graph
+// This node may or may not have edges to other RelationNodes
+message EntitySetNode {
+    Entity object = 1;
+    string relation = 2;
+}
+
+// EntityNode models a terminal node in the Relation Graph,
+// representing a system object
+message EntityNode {
+    Entity object = 1;
+}
+
+// WildcardNode represents a placeholder node which matches
+// all Entities within a resource
+message WildcardNode {
+    string resource = 1;
+}
+
+message RelationTree{
+    RelationNode node = 1;
+    repeated RelationTree children = 2;
+}
+
+message AccessRequest {
+    Entity object = 1;
+    string relation = 2;
+    Entity subject = 3;
+}

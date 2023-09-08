@@ -1,0 +1,10 @@
+digraph TTU {
+1 [ label = "(file:readme, parent)"];
+2 [ label = "(directory:/home, reader)"];
+3 [ label = "(directory:/home)"];
+4 [ label = "(steve)"];
+
+1->3;
+2->4;
+
+}

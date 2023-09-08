@@ -1,0 +1,134 @@
+// policy.proto contains Zanzi's Policy definition
+syntax = "proto3";
+
+package sourcenetwork.zanzi.domain;
+
+import "google/protobuf/timestamp.proto";
+import "zanzi/domain/relation_expression_tree.proto";
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/sourcenetwork/zanzi/pkg/domain";
+
+
+// A Policy encapsulate an isolated authorization environment, which models an application authorization needs.
+message Policy {
+
+    // Identifies a Policy - with a used defined identifier - accross the system.
+    string id = 1 [(buf.validate.field).string.min_len = 1];
+
+    // Display name for a Policy
+    string name = 2;
+
+    // Describes context and any additional information of interest for Policy users.
+    string description = 3;
+
+    // set of Resources defined by a Policy
+    repeated Resource resources = 4;
+
+    // key-value string attributes supplied by the user
+    map<string, string> attributes = 5;
+}
+
+// PolicyRecord is a pair containing a Policy definition and its associated data
+message PolicyRecord {
+    // Policy object
+    Policy policy = 1;
+
+    // Opaque, user supplied, satellite data associated to a Policy
+    bytes app_data = 2;
+
+    // timestamp of creation moment
+    google.protobuf.Timestamp created_at = 3;
+}
+
+// Resources represents a class of objects in the relation graph
+// Example resources: files, directories, repositories, groups
+message Resource {
+    // Resource name.
+    // Must be unique within a Policy.
+    string name = 1 [(buf.validate.field).string.min_len = 1];
+
+
+    // User supplied documentation for resource
+    string description = 2;
+
+    // relations defined within Resource
+    repeated Relation relations = 3;
+}
+
+// Relation defines a logical relation between a set of objects and subjects.
+// A Relation is defined through a rewrite_expression, which expresses a Zanzizar
+// userset rewrite expression.
+// The rewrite_expression is a mini-language used to build rewrite expressions.
+// Relations are contained within a resource
+message Relation {
+    // Relation name.
+    // Must be unique within a Resource
+    string name = 1 [(buf.validate.field).string.min_len = 1];
+
+
+    // User supplied documentation
+    string description = 2;
+
+    // A RelationExpression specifying an evaluation strategy which is used by RelationGraph.
+    RelationExpression relation_expression = 3;
+    
+    // subject_restriction specifies the permissible types of subjects for 
+    // Relationships with the current relation
+    SubjectRestriction subject_restriction = 4;
+}
+
+// SubjectRestriction models a set of conditions which a Relationship's Subject must match
+// in order for a Policy to accept a Relationship.
+//
+// Analogous to a Value Restriction from Description Logic
+message SubjectRestriction {
+    oneof subject_restriction {
+        option (buf.validate.oneof).required = true;
+        SubjectRestrictionSet restriction_set = 1;
+        UniversalSet universal_set = 2;
+    }
+}
+
+// EntityRestriction represents a restriction where any resource's entity
+// is accepted as the Subject for a Relationship.
+message EntityRestriction {
+    // resource_name is the name of the accepted entity's resource.
+    string resource_name = 1;
+}
+
+// EntitySetRestriction represents a restriction where only EntitySets
+// composed by the given resource and relation are accepted.
+message EntitySetRestriction {
+    string resource_name = 1;
+    string relation_name = 2;
+}
+
+// UniversalSet represents the set of all possible subjects.
+// This is equvalent to stating that all Subjects are allowed for the Relationship.
+message UniversalSet{}
+
+message SubjectRestrictionSet{
+    // Restriction is either an EntityRestriction or an EntitySetRestriction
+    message Restriction {
+        oneof entry {
+            option (buf.validate.oneof).required = true;
+            EntityRestriction entity = 1;
+            EntitySetRestriction entity_set = 2;
+        }
+    }
+
+    repeated Restriction restrictions = 1;
+}
+
+// RelationExpression models the runtime fetch intructions which the RelationGraph must follow.
+message RelationExpression {
+    oneof expression {
+        option (buf.validate.oneof).required = true;
+        // expr represents a plain text RewriteExpression encoded according to
+        // Zanzi's RelationExpression mini language
+        string expr = 1;
+
+        RelationExpressionTree tree = 2;
+    }
+}

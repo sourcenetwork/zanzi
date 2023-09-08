@@ -1,0 +1,76 @@
+// Relationship definition
+syntax = "proto3";
+
+package sourcenetwork.zanzi.domain;
+
+import "google/protobuf/timestamp.proto";
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/sourcenetwork/zanzi/pkg/domain";
+
+
+// Identifies a system entity
+message Entity {
+
+    // resource represents the resource name which will contain the entity
+    string resource = 1 [(buf.validate.field).string.min_len = 1];
+
+
+    // id is an unique identifier for the entity within a resource
+    string id = 2[(buf.validate.field).string.min_len = 1];
+}
+
+// Relationship expresses that some subject has a relation to an object.
+message Relationship {
+    // object represents the entity from which the relationship initiates
+    Entity object = 1;
+
+    // relation represents the relation of the relationship
+    string relation = 2[(buf.validate.field).string.min_len = 1];
+
+    // subject represents the a set of entities which are related to object.
+    Subject subject = 3;
+}
+
+// Subject represents the subject of a Relationship,
+// meaning the entity which has a relation to an object.
+message Subject {
+    oneof subject {
+        // entity represents a single entity within a resource.
+        Entity entity = 1;
+
+        // entity_set represents a set of entities within a resource
+        EntitySet entity_set = 2;
+
+        // resource_set represents the set of all entities within a resource
+        ResourceSet resource_set = 3;
+    }
+}
+
+// ResourceSet represents all Entities within a resource.
+message ResourceSet {
+    // resource_name is the name of the resource whose entities should be granted a relation
+    string resource_name = 1[(buf.validate.field).string.min_len = 1];
+}
+
+// EntitySet represents a set of entities which are reachable through the given entity, relation pair.
+message EntitySet {
+    Entity entity = 1[(buf.validate.field).string.min_len = 1];
+
+    string relation = 2[(buf.validate.field).string.min_len = 1];
+}
+
+// RelationshipRecord models a Relationship alongside auxiliary data
+message RelationshipRecord {
+    // id of the policy to which the relationship belongs
+    string policy_id = 1;
+
+    // the relationship itself
+    Relationship relationship = 2;
+
+    // timestamp for creation time of relationship (based on the local system clock)
+    google.protobuf.Timestamp created_at = 3;
+
+    // app_data opaque application data sent by the client
+    bytes app_data = 4;
+}

@@ -1,0 +1,179 @@
+// policy_service.proto defines an RPC service for managing Policies and their Relationships
+
+syntax = "proto3";
+
+package sourcenetwork.zanzi.api;
+
+import "google/protobuf/timestamp.proto";
+import "zanzi/domain/policy.proto";
+import "zanzi/domain/relationship.proto";
+import "zanzi/domain/selector.proto";
+
+option go_package = "github.com/sourcenetwork/zanzi/pkg/api";
+
+
+// PolicyService exposes operations to manage Policies and their Relationships
+service PolicyService {
+
+    // CreatePolicy creates a new Policy.
+    // Supplying a Policy whose ID already exists in the store is an error.
+    rpc CreatePolicy(CreatePolicyRequest) returns (CreatePolicyResponse);
+
+    // UpdatePolicy updates the fields and relations for a Policy.
+    rpc UpdatePolicy(UpdatePolicyRequest) returns (UpdatePolicyResponse);
+
+    // Delete removes the Policy with the given Id from the store
+    rpc DeletePolicy(DeletePolicyRequest) returns (DeletePolicyResponse);
+
+    // Get fetches a policy from the Policy store, if it exists
+    rpc GetPolicy(GetPolicyRequest) returns (GetPolicyResponse);
+
+    // List returns all Policies in the Policy store
+    rpc ListPolicyIds(ListPolicyIdsRequest) returns (ListPolicyIdsResponse);
+
+    // Set adds a Relationship in a Policy
+    rpc SetRelationship(SetRelationshipRequest) returns (SetRelationshipResponse);
+
+    // Remove a Relationship from a Policy
+    rpc DeleteRelationship(DeleteRelationshipRequest) returns (DeleteRelationshipResponse);
+
+    // Get fetches a Relationship contained in a Policy, if it exists
+    rpc GetRelationship(GetRelationshipRequest) returns (GetRelationshipResponse);
+
+    // DeleteRelationships removes all relationships which matches a SelectorSet
+    rpc DeleteRelationships(DeleteRelationshipsRequest) returns (DeleteRelationshipsResponse);
+
+    // FindRelationshipRecords returns all relationships which matches a SelectorSet
+    rpc FindRelationshipRecords(FindRelationshipRecordsRequest) returns (FindRelationshipRecordsResponse);
+}
+
+// PolicyDefinition models a Policy, which can be represented
+// as domain.Policy type or as a zanzi.policy_definition.PolicyDefinition yaml representation.
+message PolicyDefinition {
+    oneof definition {
+        sourcenetwork.zanzi.domain.Policy policy = 1;
+
+        // Set a YAML serialized Policy definition according to the type definitions
+        string policy_yaml = 2;
+    }
+}
+
+message CreatePolicyRequest {
+    PolicyDefinition policy_definition = 1;
+
+    // app_data is an opaque byte array which applications
+    // can send to associate satellite data to a Policy
+    bytes app_data = 2;
+}
+
+message UpdatePolicyRequest {
+    enum UpdateStrategy {
+        IGNORE_ORPHANS = 0;
+    }
+
+    PolicyDefinition policy_definition = 1;
+
+    // app_data is an opaque byte array which applications
+    // can send to associate satellite data to a Policy
+    bytes app_data = 2;
+
+    UpdateStrategy strategy = 3;
+}
+
+message CreatePolicyResponse {
+    sourcenetwork.zanzi.domain.PolicyRecord record = 1;
+}
+
+message UpdatePolicyResponse {
+}
+
+message DeletePolicyRequest {
+    // id of policy to be deleted
+    string id = 1;
+}
+
+message DeletePolicyResponse {
+    // found flags whether Policy was found and then removed from store.
+    bool found = 1;
+    uint64 relationships_removed = 2;
+}
+
+message GetPolicyRequest {
+    // id of policy to be fetched
+    string id = 1;
+}
+
+message GetPolicyResponse {
+    optional sourcenetwork.zanzi.domain.PolicyRecord record = 1;
+}
+
+message ListPolicyIdsRequest {
+    // TODO add pagination
+}
+
+message ListPolicyIdsResponse {
+    message Record {
+        string id = 1;
+    }
+
+    repeated Record records = 1;
+}
+
+message SetRelationshipRequest {
+    // policy which contains relationship
+    string policy_id = 1;
+
+    sourcenetwork.zanzi.domain.Relationship relationship = 2;
+
+    // opaque byte array to be stored with relationship
+    bytes app_data = 3;
+}
+
+message SetRelationshipResponse {
+    // flag indicates whether record was overwritten.
+    // if true record existed, otherwise it was created
+    bool record_overwritten = 1;
+}
+
+message DeleteRelationshipRequest {
+    string policy_id = 1;
+
+    sourcenetwork.zanzi.domain.Relationship relationship = 2;
+}
+
+message DeleteRelationshipResponse {
+    // flag indicates whether relationship was found then removed
+    bool found = 1;
+}
+
+message GetRelationshipRequest {
+    string policy_id = 1;
+    sourcenetwork.zanzi.domain.Relationship relationship = 2;
+}
+
+message GetRelationshipResponse {
+    optional sourcenetwork.zanzi.domain.RelationshipRecord record = 1;
+}
+
+message FindRelationshipRecordsRequest{
+    string policy_id = 1;
+    sourcenetwork.zanzi.domain.RelationshipSelector selector = 2;
+}
+
+message FindRelationshipRecordsResponse{
+    RelationshipRecordSet result = 1;
+}
+
+message DeleteRelationshipsRequest{
+    string policy_id = 1;
+    sourcenetwork.zanzi.domain.RelationshipSelector selector = 2;
+}
+
+message DeleteRelationshipsResponse{ 
+    // number of records affected by delete call
+    uint64 records_affected = 1;
+}
+
+message RelationshipRecordSet {
+    repeated sourcenetwork.zanzi.domain.RelationshipRecord records = 1;
+}

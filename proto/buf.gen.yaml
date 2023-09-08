@@ -1,6 +1,39 @@
 version: v1
 plugins:
-  - name: gocosmos
+  - name: grpc-gateway
     out: ..
-    opt: plugins=Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types,Mgoogle/protobuf/timestamp.proto=github.com/cosmos/gogoproto/types
+    opt: 
+      - logtostderr=true
+      - generate_unbound_methods=true
+      - paths=import
+      - module=github.com/sourcenetwork/zanzi
 
+
+  - name: go
+    out: ..
+    opt: 
+      - paths=import
+      - module=github.com/sourcenetwork/zanzi
+
+  - name: go-grpc
+    out: ..
+    opt: 
+      - paths=import
+      - module=github.com/sourcenetwork/zanzi
+
+  - name: cobra
+    out: ..
+    opt: 
+      - paths=import
+      - module=github.com/sourcenetwork/zanzi
+
+  - name: validate-go
+    out: ..
+    opt: 
+      - paths=import
+      - module=github.com/sourcenetwork/zanzi
+
+  - name: openapiv2
+    out: ../openapi/gen
+    opt:
+      - generate_unbound_methods=true

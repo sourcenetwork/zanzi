@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package sourcenetwork.zanzi.types;
+
+option go_package = "github.com/sourcenetwork/zanzi/pkg/types";
+
+message GraphEdge {
+    string source = 1;
+    string dest = 2;
+    string label = 3;
+}
+
+message GraphNode {
+    string id = 1;
+    string data = 2;
+}
+
+// EdgeMap models a collection of edges
+message EdgeMap {
+    map<string, GraphEdge> edges = 1;
+}
+
+// MapDiGraph models a generic Directed Graph using maps.
+// Uses more memory for faster look-up - better for storage, bad for transmission.
+message MapDiGraph {
+    map<string, GraphNode> nodes = 1;
+    map<string, EdgeMap> forward_edges = 2;
+    map<string, EdgeMap> back_edges = 3;
+}
+
+// ListDiGraph models a generic Directed Graph using the adjency list model.
+// Has slower lookup than MapDiGraph but has a smaller memory footprint.
+message ListDiGraph {
+    repeated GraphNode nodes = 1;
+    repeated GraphEdge edges = 2;
+}
