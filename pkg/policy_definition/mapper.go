@@ -2,10 +2,10 @@ package policy_definition
 
 import (
 	"sort"
-        "strings"
+	"strings"
 
-        "golang.org/x/exp/slices"
 	"golang.org/x/exp/constraints"
+	"golang.org/x/exp/slices"
 
 	"github.com/sourcenetwork/zanzi/internal/utils"
 	"github.com/sourcenetwork/zanzi/pkg/domain"
@@ -32,9 +32,8 @@ func MapPolicyDefinition(def *PolicyDefinition) *domain.Policy {
 			return r.name
 		})
 
-
 	return &domain.Policy{
-                Id: def.Id,
+		Id:          def.Id,
 		Name:        def.Name,
 		Description: def.Doc,
 		Resources:   utils.MapSlice(resourceDefs, mapResource),
@@ -63,53 +62,53 @@ func mapRelation(relDef *RelationDefinition) *domain.Relation {
 		Name:        relDef.name,
 		Description: relDef.Doc,
 		RelationExpression: &domain.RelationExpression{
-                    Expression: &domain.RelationExpression_Expr{
-                        Expr: relDef.Expr,
-                    },
-                },
-                SubjectRestriction: mapSubjectRestriction(relDef.Types),
+			Expression: &domain.RelationExpression_Expr{
+				Expr: relDef.Expr,
+			},
+		},
+		SubjectRestriction: mapSubjectRestriction(relDef.Types),
 	}
 }
 
-func mapSubjectRestriction(types []string) *domain.SubjectRestriction{
-    if slices.Contains(types, UniversalSetType) {
-        return &domain.SubjectRestriction{
-            SubjectRestriction: &domain.SubjectRestriction_UniversalSet{
-                UniversalSet: &domain.UniversalSet{},
-            },
-        }
-    }
+func mapSubjectRestriction(types []string) *domain.SubjectRestriction {
+	if slices.Contains(types, UniversalSetType) {
+		return &domain.SubjectRestriction{
+			SubjectRestriction: &domain.SubjectRestriction_UniversalSet{
+				UniversalSet: &domain.UniversalSet{},
+			},
+		}
+	}
 
-    return &domain.SubjectRestriction{
-        SubjectRestriction: &domain.SubjectRestriction_RestrictionSet{
-            RestrictionSet: &domain.SubjectRestrictionSet{
-                Restrictions: utils.MapSlice(types, mapSubjectRestrictionElem),
-            },
-        },
-    }
+	return &domain.SubjectRestriction{
+		SubjectRestriction: &domain.SubjectRestriction_RestrictionSet{
+			RestrictionSet: &domain.SubjectRestrictionSet{
+				Restrictions: utils.MapSlice(types, mapSubjectRestrictionElem),
+			},
+		},
+	}
 }
 
-func mapSubjectRestrictionElem(elem string)  *domain.SubjectRestrictionSet_Restriction{
-    restriction := &domain.SubjectRestrictionSet_Restriction{}
+func mapSubjectRestrictionElem(elem string) *domain.SubjectRestrictionSet_Restriction {
+	restriction := &domain.SubjectRestrictionSet_Restriction{}
 
-    resource, relation, found := strings.Cut(elem, TypeRelationSeparator)
+	resource, relation, found := strings.Cut(elem, TypeRelationSeparator)
 
-    if !found {
-        restriction.Entry = &domain.SubjectRestrictionSet_Restriction_Entity{
-            Entity: &domain.EntityRestriction{
-                ResourceName: resource,
-            },
-        }
-    }  else {
-        restriction.Entry = &domain.SubjectRestrictionSet_Restriction_EntitySet{
-            EntitySet: &domain.EntitySetRestriction{
-                ResourceName: resource,
-                RelationName: relation,
-            },
-        }
-    }
+	if !found {
+		restriction.Entry = &domain.SubjectRestrictionSet_Restriction_Entity{
+			Entity: &domain.EntityRestriction{
+				ResourceName: resource,
+			},
+		}
+	} else {
+		restriction.Entry = &domain.SubjectRestrictionSet_Restriction_EntitySet{
+			EntitySet: &domain.EntitySetRestriction{
+				ResourceName: resource,
+				RelationName: relation,
+			},
+		}
+	}
 
-    return restriction
+	return restriction
 }
 
 // mapItemsToSlice extract all items in a Map, compiles them into a Slice

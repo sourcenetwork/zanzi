@@ -12,9 +12,9 @@ package relation_expression_parser
 import (
 	"fmt"
 
-	"github.com/sourcenetwork/zanzi/pkg/types"
 	"github.com/sourcenetwork/zanzi/internal/utils"
 	"github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/types"
 )
 
 type Term = *domain.RelationExpressionTree
@@ -63,7 +63,7 @@ func computedUsersetParser(tokens []token) (Term, error, []token) {
 		return nil, err, tokens
 	}
 
-        return domain.CUNode(id.Lexeme), nil, tail
+	return domain.CUNode(id.Lexeme), nil, tail
 }
 
 // parser for ThisNode
@@ -73,7 +73,7 @@ func thisParser(tokens []token) (Term, error, []token) {
 		return nil, err, tokens
 	}
 
-        return domain.ThisNode(), nil, tail
+	return domain.ThisNode(), nil, tail
 }
 
 // parser for TTUNode
@@ -93,7 +93,7 @@ func tupleToUsersetParser(tokens []token) (Term, error, []token) {
 		return nil, buildErr(tokens, "TupleToUserset needs: identifier arrow identifier"), tokens
 	}
 
-        return domain.TTUNode(first.Lexeme, second.Lexeme), nil, tail
+	return domain.TTUNode(first.Lexeme, second.Lexeme), nil, tail
 }
 
 // parses: tokenUnion | tokenIntersection | tokenDifference

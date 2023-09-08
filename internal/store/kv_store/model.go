@@ -17,18 +17,17 @@ var _ rcdb.NodeKeyer[*RelationNode] = (*relationNodeKeyer)(nil)
 var _ rcdb.Ider[*domain.PolicyRecord] = (*policyIDer)(nil)
 var _ rcdb.Ider[*RelationshipData] = (*relationshipDataIDer)(nil)
 
-
 // relationNodeKeyer implements the NodeKeyer interface as defined in raccoondb
 // Map an TupleNodeRecord into []byte
 // Uses a sha256 to generete the keys
-type relationNodeKeyer struct { }
+type relationNodeKeyer struct{}
 
 func (t *relationNodeKeyer) Key(node *RelationNode) []byte {
-    hasher := sha256.New()
-    hasher.Write([]byte(node.Resource))
-    hasher.Write([]byte(node.Id))
-    hasher.Write([]byte(node.Relation))
-    return hasher.Sum(nil)
+	hasher := sha256.New()
+	hasher.Write([]byte(node.Resource))
+	hasher.Write([]byte(node.Id))
+	hasher.Write([]byte(node.Relation))
+	return hasher.Sum(nil)
 }
 
 // Min possible key is a slice of sha256bytes min byte val (0)

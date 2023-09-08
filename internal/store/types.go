@@ -6,6 +6,6 @@ import (
 )
 
 type Store interface {
-    GetPolicyRepository() policy.Repository
-    GetRelationNodeRepository() relation_graph.NodeRepository
+	GetPolicyRepository() policy.Repository
+	GetRelationNodeRepository() relation_graph.NodeRepository
 }

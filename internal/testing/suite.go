@@ -10,7 +10,7 @@ import (
 // Implementing types should have internal Member functions whose name start with "Test"
 // in order for the Runner to pick it up.
 // See RunSuite for usage example
-type TestSuite interface { }
+type TestSuite interface{}
 
 // Run a TestSuite
 // The suite type must have methods prefixed with "Test" and these methods must receive a

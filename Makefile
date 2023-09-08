@@ -35,7 +35,7 @@ test:
 
 .PHONY: fmt
 fmt:
-	gofmt -w $(fd '\.go$')
+	gofmt -w .
 
 .PHONY: clean
 clean:

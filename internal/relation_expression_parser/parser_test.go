@@ -5,16 +5,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-        "github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/domain"
 )
 
 func TestExpressionParserSimple(t *testing.T) {
 	got, err := Parse("a + b")
 
 	var want Term = domain.UnionNode(
-            domain.CUNode("a"),
-            domain.CUNode("b"),
-        )
+		domain.CUNode("a"),
+		domain.CUNode("b"),
+	)
 
 	assert.Nil(t, err)
 	assert.Equal(t, got, want)
@@ -24,15 +24,15 @@ func TestExpressionParserNested(t *testing.T) {
 	got, err := Parse("a + (c - d) + b")
 
 	var want Term = domain.UnionNode(
-            domain.UnionNode(
-                domain.CUNode("a"),
-                domain.DifferenceNode(
-                    domain.CUNode("c"),
-                    domain.CUNode("d"),
-                ),
-            ),
-            domain.CUNode("b"),
-        )
+		domain.UnionNode(
+			domain.CUNode("a"),
+			domain.DifferenceNode(
+				domain.CUNode("c"),
+				domain.CUNode("d"),
+			),
+		),
+		domain.CUNode("b"),
+	)
 
 	assert.Nil(t, err)
 	assert.Equal(t, got, want)
@@ -41,20 +41,19 @@ func TestExpressionParserNested(t *testing.T) {
 func TestExpressionParserDoublyNested(t *testing.T) {
 	got, err := Parse("a + (_this - (f->g & d)) + b")
 
-	var want Term = 
-        domain.UnionNode(
-            domain.UnionNode(
-                domain.CUNode("a"),
-                domain.DifferenceNode(
-                    domain.ThisNode(),
-                    domain.IntersectionNode(
-                        domain.TTUNode("f", "g"),
-                        domain.CUNode("d"),
-                    ),
-                ),
-            ),
-            domain.CUNode("b"),
-        )
+	var want Term = domain.UnionNode(
+		domain.UnionNode(
+			domain.CUNode("a"),
+			domain.DifferenceNode(
+				domain.ThisNode(),
+				domain.IntersectionNode(
+					domain.TTUNode("f", "g"),
+					domain.CUNode("d"),
+				),
+			),
+		),
+		domain.CUNode("b"),
+	)
 
 	assert.Nil(t, err)
 	assert.Equal(t, got, want)
@@ -72,7 +71,7 @@ func TestRuleParserTTU(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, len(tail), 1)
-        assert.Equal(t, tree, domain.TTUNode("from", "to"))
+	assert.Equal(t, tree, domain.TTUNode("from", "to"))
 }
 
 func TestRuleParserCU(t *testing.T) {
@@ -85,7 +84,7 @@ func TestRuleParserCU(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, len(tail), 1)
-        assert.Equal(t, tree, domain.CUNode("relation"))
+	assert.Equal(t, tree, domain.CUNode("relation"))
 }
 
 func TestRuleParserThis(t *testing.T) {
@@ -98,5 +97,5 @@ func TestRuleParserThis(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, len(tail), 1)
-        assert.Equal(t, tree, domain.ThisNode())
+	assert.Equal(t, tree, domain.ThisNode())
 }

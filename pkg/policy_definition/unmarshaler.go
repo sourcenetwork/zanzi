@@ -27,14 +27,13 @@ func UnmarshalPolicyDefinition(policyYaml string) (*PolicyDefinition, error) {
 func setEntityNames(p *PolicyDefinition) {
 
 	for resName, resource := range p.Resources {
-            if resource == nil {
-                resDef := ResourceDefinition{}
-                p.Resources[resName] = &resDef
-                resource = &resDef
-            }
+		if resource == nil {
+			resDef := ResourceDefinition{}
+			p.Resources[resName] = &resDef
+			resource = &resDef
+		}
 
 		resource.name = resName
-
 
 		for relationName, relation := range resource.Relations {
 			// The policy may define an empty relation placeholder

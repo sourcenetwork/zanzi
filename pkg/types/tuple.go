@@ -2,7 +2,7 @@ package types
 
 // Pair models as 2-tuple
 type Pair[T any, U any] struct {
-	first T
+	first  T
 	second U
 }
 
@@ -16,7 +16,7 @@ func (p *Pair[T, U]) Second() U {
 
 func NewPair[T any, U any](first T, second U) Pair[T, U] {
 	return Pair[T, U]{
-		first: first,
+		first:  first,
 		second: second,
 	}
 }

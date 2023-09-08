@@ -16,9 +16,9 @@ func MapSliceErr[T any, U any](ts []T, mapper func(T) (U, error)) ([]U, error) {
 
 	for _, t := range ts {
 		u, err := mapper(t)
-                if err != nil {
-                    return nil, err
-                }
+		if err != nil {
+			return nil, err
+		}
 		us = append(us, u)
 	}
 
@@ -38,23 +38,23 @@ func ConsumeChan[T any](ch <-chan T) []T {
 }
 
 func Conditional[T any](proposition bool, trueChoice, falseChoice T) T {
-    if proposition {
-        return trueChoice
-    } else {
-        return falseChoice
-    }
+	if proposition {
+		return trueChoice
+	} else {
+		return falseChoice
+	}
 }
 
-func Filter[T any](ts []T, filter func (T) bool) []T {
-    filtered := make([]T, 0, len(ts))
-    for _, t := range ts {
-        if filter(t) {
-            filtered = append(filtered, t)
-        }
-    }
-    return filtered
+func Filter[T any](ts []T, filter func(T) bool) []T {
+	filtered := make([]T, 0, len(ts))
+	for _, t := range ts {
+		if filter(t) {
+			filtered = append(filtered, t)
+		}
+	}
+	return filtered
 }
 
 func Identity[T any](t T) T {
-    return t
+	return t
 }
