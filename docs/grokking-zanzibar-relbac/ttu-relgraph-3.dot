@@ -1,12 +1,16 @@
 digraph TTU {
+    0 [ label = "(directory:/home)"];
     1 [ label = "(directory:/home, owner)"];
     2 [ label = "(Alice)"];
 
     3 [ label = "(file:/home/readme, owner)"];
     4 [ label = "(Bob)"];
     5 [ label = "(file:/home/readme, reader)"];
+    6 [ label = "(file:/home/readme, parent)"];
 
     1->2;
     3->4;
     5->3;
+    6->0;
+
 }
