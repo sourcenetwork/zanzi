@@ -7,17 +7,6 @@ import (
 
 const eof rune = -1
 
-// permission expression language:
-// expr = term op expr | term
-// op = union | diff | intersection
-// term = subexpr | rule
-// rule = cu | ttu | this
-// this = "_this"
-// cu = identifier
-// ttu = identifier arrow identifier
-// subexpr = groupBegin expr groupEnd
-// identifier = alphanum*
-
 type token struct {
 	Type     tokenType
 	Lexeme   string
@@ -39,7 +28,7 @@ type predicate func(rune) bool
 
 func isIdentifierRune(elem rune) bool {
 	// TODO read this https://www.unicode.org/reports/tr31/#Introduction
-	return unicode.IsLetter(elem) || elem == '_'
+	return unicode.IsLetter(elem) || unicode.IsDigit(elem) || elem == '_'
 }
 
 type tokenType int

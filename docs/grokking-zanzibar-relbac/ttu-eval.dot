@@ -1,0 +1,18 @@
+digraph "ttu-evaluation" {
+    rankdir="LR"
+
+    1 [label="(file:readme, reader)", shape="oval"];
+    2 [label="Tupleset Rewrite", shape="box"];
+    3 [label="(file:readme, parent)", shape="oval"];
+    4 [label="Fetch Sucessors", shape="box"];
+    5 [label="[(directory:home)]", shape="oval"];
+    6 [label="Computed Userset Rewrite", shape="box"];
+    7 [label="[(directory:home, reader)]", shape="oval"];
+
+    1->2;
+    2->3;
+    3->4;
+    4->5;
+    5->6;
+    6->7;
+}

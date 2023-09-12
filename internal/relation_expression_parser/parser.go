@@ -1,12 +1,3 @@
-// Parser recognizes permission expression language.
-// The accept language is:
-// expr = term | term (op, term)+
-// op = union | diff | intersection
-// term = rule | subexpr
-// rule = cu | ttu
-// cu = identifier
-// ttu = identifier + arrow + identifier
-// subexpr = groupBegin + expr + groupEnd
 package relation_expression_parser
 
 import (
