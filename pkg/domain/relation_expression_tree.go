@@ -1,5 +1,9 @@
 package domain
 
+import (
+	"fmt"
+)
+
 func CUNode(targetRelation string) *RelationExpressionTree {
 	return &RelationExpressionTree{
 		Node: &RelationExpressionTree_Rule{
@@ -81,3 +85,57 @@ func (tree *RelationExpressionTree) getRules(acc []*Rule) []*Rule {
 	}
 	return acc
 }
+
+// Convert a Relation Expression Tree to its string representation
+// as defined in the Relation Expression mini-language
+func (tree *RelationExpressionTree) RelationExpression() string {
+	switch node := tree.Node.(type) {
+	case *RelationExpressionTree_Rule:
+		return node.Rule.RelationExpression()
+	case *RelationExpressionTree_OpNode:
+		left := node.OpNode.Left.RelationExpression()
+		right := node.OpNode.Right.RelationExpression()
+		return fmt.Sprintf("%v%v %v %v%v", GroupBeginLexeme, left, node.OpNode.Operator.RelationExpression(), right, GroupEndLexeme)
+	}
+
+	return ""
+}
+
+// Convert a Rule to its string representation
+// as defined in the Relation Expression mini-language
+func (r *Rule) RelationExpression() string {
+	var ruleStr string
+	switch rule := r.Rule.(type) {
+	case *Rule_This:
+		ruleStr = ThisLexeme
+	case *Rule_Cu:
+		ruleStr = rule.Cu.TargetRelation
+	case *Rule_Ttu:
+		ruleStr = rule.Ttu.TuplesetRelation + ArrowLexeme + rule.Ttu.ComputedUsersetRelation
+	}
+	return ruleStr
+}
+
+// Convert an Operator to its string representation
+// as defined in the Relation Expression mini-language
+func (op *Operator) RelationExpression() string {
+	switch *op {
+	case Operator_UNION:
+		return UnionLexeme
+	case Operator_INTERSECTION:
+		return IntersectionLexeme
+	case Operator_DIFFERENCE:
+		return DifferenceLexeme
+	}
+	return ""
+}
+
+const (
+	UnionLexeme        string = "+"
+	IntersectionLexeme        = "&"
+	DifferenceLexeme          = "-"
+	ArrowLexeme               = "->"
+	ThisLexeme                = "_this"
+	GroupBeginLexeme          = "("
+	GroupEndLexeme            = ")"
+)

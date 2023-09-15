@@ -1,7 +1,7 @@
 // package relation_expression_parser implements a parser for the relation expression mini language
 //
 // Currently the parser recognizes the following language:
-// 
+//
 // expr := term | term tail+
 // tail := ( op , term )
 // op := union | diff | intersection

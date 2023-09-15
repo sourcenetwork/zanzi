@@ -3,6 +3,8 @@ package relation_expression_parser
 import (
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/sourcenetwork/zanzi/pkg/domain"
 )
 
 const eof rune = -1
@@ -13,16 +15,6 @@ type token struct {
 	StartPos int
 	EndPos   int
 }
-
-const (
-	unionLexeme        string = "+"
-	intersectionLexeme        = "&"
-	differenceLexeme          = "-"
-	arrowLexeme               = "->"
-	thisLexeme                = "_this"
-	groupBeginLexeme          = "("
-	groupEndLexeme            = ")"
-)
 
 type predicate func(rune) bool
 
@@ -179,13 +171,13 @@ func (l *Lexer) scan() {
 	// consume as many operators, expressions or parenthesis
 	// as it can
 	for {
-		if l.lexTerminal(tokenGroupBegin, groupBeginLexeme) {
-		} else if l.lexTerminal(tokenGroupEnd, groupEndLexeme) {
-		} else if l.lexTerminal(tokenArrow, arrowLexeme) { // arrow has higher precedence than difference
-		} else if l.lexTerminal(tokenUnion, unionLexeme) {
-		} else if l.lexTerminal(tokenDifference, differenceLexeme) {
-		} else if l.lexTerminal(tokenIntersection, intersectionLexeme) {
-		} else if l.lexTerminal(tokenThis, thisLexeme) {
+		if l.lexTerminal(tokenGroupBegin, domain.GroupBeginLexeme) {
+		} else if l.lexTerminal(tokenGroupEnd, domain.GroupEndLexeme) {
+		} else if l.lexTerminal(tokenArrow, domain.ArrowLexeme) { // arrow has higher precedence than difference
+		} else if l.lexTerminal(tokenUnion, domain.UnionLexeme) {
+		} else if l.lexTerminal(tokenDifference, domain.DifferenceLexeme) {
+		} else if l.lexTerminal(tokenIntersection, domain.IntersectionLexeme) {
+		} else if l.lexTerminal(tokenThis, domain.ThisLexeme) {
 		} else if l.lexIdentifier() {
 		} else if char, _ := l.peek(); unicode.IsSpace(char) {
 			l.skipSpaces()
