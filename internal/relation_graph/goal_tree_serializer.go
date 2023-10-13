@@ -42,7 +42,7 @@ func (s *dotSerializer) Serialize(goalTree GoalTree) (string, error) {
 
 	err = s.handleGoalTree("root", goalTree, graph)
 	if err != nil {
-		return "", fmt.Errorf("dot serialize: %v")
+		return "", fmt.Errorf("dot serialize: %v", err)
 	}
 
 	return graph.String(), nil

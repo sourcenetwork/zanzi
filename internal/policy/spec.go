@@ -175,7 +175,7 @@ type AllowedRelationshipSpec struct {
 func (s *AllowedRelationshipSpec) requiredFields(relationship *domain.Relationship) error {
 	err := relationship.Validate()
 	if err != nil {
-		return fmt.Errorf("%v: %w", ErrInvalidRelationship)
+		return fmt.Errorf("relationship %v: %w", relationship, ErrInvalidRelationship)
 	}
 	return nil
 }
@@ -210,7 +210,7 @@ func (s *AllowedRelationshipSpec) checkSymbols(relationship *domain.Relationship
 	case *domain.Subject_ResourceSet:
 		resource := lut.GetResource(s.ResourceSet.ResourceName)
 		if resource == nil {
-			return fmt.Errorf("resource %v: ", s.ResourceSet.ResourceName, ErrResourceNotFound)
+			return fmt.Errorf("resource %v: %w", s.ResourceSet.ResourceName, ErrResourceNotFound)
 		}
 	default:
 		return fmt.Errorf("subject %v: %w", s, domain.ErrInvalidVariant)

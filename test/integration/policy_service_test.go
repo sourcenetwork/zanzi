@@ -26,21 +26,23 @@ func setup() (context.Context, api.PolicyServiceServer) {
 	return context.Background(), policy.NewService(kvStore.GetPolicyRepository())
 }
 
-func setupWithPolicy(policy *domain.Policy) (context.Context, api.PolicyServiceServer) {
+func setupWithPolicy(policies ...*domain.Policy) (context.Context, api.PolicyServiceServer) {
 	ctx, service := setup()
 
-	createReq := &api.CreatePolicyRequest{
-		PolicyDefinition: &api.PolicyDefinition{
-			Definition: &api.PolicyDefinition_Policy_{
-				Policy_: policy,
-			},
-		},
-		AppData: []byte("app data"),
-	}
-	_, err := service.CreatePolicy(ctx, createReq)
-	if err != nil {
-		panic(err)
-	}
+        for _, policy := range policies {
+            createReq := &api.CreatePolicyRequest{
+                PolicyDefinition: &api.PolicyDefinition{
+                    Definition: &api.PolicyDefinition_Policy{
+                        Policy: policy,
+                    },
+                },
+                AppData: []byte("app data"),
+            }
+            _, err := service.CreatePolicy(ctx, createReq)
+            if err != nil {
+                panic(err)
+            }
+        }
 	return ctx, service
 }
 
@@ -230,8 +232,8 @@ func TestCreatePolicy(t *testing.T) {
 
 	createReq := &api.CreatePolicyRequest{
 		PolicyDefinition: &api.PolicyDefinition{
-			Definition: &api.PolicyDefinition_Policy_{
-				Policy_: testPolicy,
+			Definition: &api.PolicyDefinition_Policy{
+				Policy: testPolicy,
 			},
 		},
 		AppData: []byte("app data"),
@@ -266,8 +268,8 @@ func TestCreatePolicyWithIdClashRaisesError(t *testing.T) {
 	t.Log("Create Policy 10")
 	createReq := &api.CreatePolicyRequest{
 		PolicyDefinition: &api.PolicyDefinition{
-			Definition: &api.PolicyDefinition_Policy_{
-				Policy_: testPolicy,
+			Definition: &api.PolicyDefinition_Policy{
+				Policy: testPolicy,
 			},
 		},
 		AppData: []byte("app data"),
@@ -278,8 +280,8 @@ func TestCreatePolicyWithIdClashRaisesError(t *testing.T) {
 	t.Log("Create another Policy 10")
 	createReq = &api.CreatePolicyRequest{
 		PolicyDefinition: &api.PolicyDefinition{
-			Definition: &api.PolicyDefinition_Policy_{
-				Policy_: testPolicy,
+			Definition: &api.PolicyDefinition_Policy{
+				Policy: testPolicy,
 			},
 		},
 		AppData: []byte("more data"),
@@ -298,8 +300,8 @@ func TestUpdatePolicyUpdatesPolicy(t *testing.T) {
 	t.Log("Create Policy 10")
 	createReq := &api.CreatePolicyRequest{
 		PolicyDefinition: &api.PolicyDefinition{
-			Definition: &api.PolicyDefinition_Policy_{
-				Policy_: policy,
+			Definition: &api.PolicyDefinition_Policy{
+				Policy: policy,
 			},
 		},
 		AppData: []byte("app data"),
@@ -311,8 +313,8 @@ func TestUpdatePolicyUpdatesPolicy(t *testing.T) {
 	policy.Name = "some name"
 	updateReq := &api.UpdatePolicyRequest{
 		PolicyDefinition: &api.PolicyDefinition{
-			Definition: &api.PolicyDefinition_Policy_{
-				Policy_: policy,
+			Definition: &api.PolicyDefinition_Policy{
+				Policy: policy,
 			},
 		},
 		AppData:  []byte("more data"),
@@ -360,8 +362,8 @@ func TestDeletingPolicyRemovesFromStore(t *testing.T) {
 	t.Log("Create Policy")
 	createReq := &api.CreatePolicyRequest{
 		PolicyDefinition: &api.PolicyDefinition{
-			Definition: &api.PolicyDefinition_Policy_{
-				Policy_: testPolicy,
+			Definition: &api.PolicyDefinition_Policy{
+				Policy: testPolicy,
 			},
 		},
 		AppData: []byte("app data"),
@@ -500,11 +502,20 @@ func TestSetRelationshipWithEmptyObjectErrorsOut(t *testing.T) {
 	require.True(t, errors.Is(err, policy.ErrInvalidRelationship))
 }
 
-// list policy returns all policies
+func TestListPolicyIdsReturnsAllPolicies(t *testing.T) {
+    ctx, service := setupWithPolicy(testPolicy, restrictedPolicy)
+
+    got, err := service.ListPolicyIds(ctx, &api.ListPolicyIdsRequest{})
+
+    want := []*api.ListPolicyIdsResponse_Record{
+        &api.ListPolicyIdsResponse_Record{ Id: testPolicy.Id },
+        &api.ListPolicyIdsResponse_Record{ Id: restrictedPolicy.Id },
+    }
+    require.Nil(t, err)
+    require.Equal(t, want, got.Records)
+}
 
 /*
-
-
 func (s *RelationshipServiceTestSuite) TestDeleteRelationship() {
 }
 

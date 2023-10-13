@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/sourcenetwork/zanzi/internal/policy"
@@ -118,9 +118,9 @@ func (s *PolicyRepositoryTestSuite) TestPolicySetGet(t *testing.T) {
 
 	got, getErr := repository.GetPolicy(ctx, policyDef.Id)
 
-	assert.Nil(t, setErr)
-	assert.Nil(t, getErr)
-	assert.False(t, bool(found))
+	require.Nil(t, setErr)
+	require.Nil(t, getErr)
+	require.False(t, bool(found))
 	_testing.ProtoEq(t, policyRecord, got)
 }
 
@@ -131,9 +131,9 @@ func (s *PolicyRepositoryTestSuite) TestDeletingASetPolicy(t *testing.T) {
 
 	found, getErr := repository.DeletePolicy(ctx, policyDef.Id)
 
-	assert.Nil(t, setErr)
-	assert.Nil(t, getErr)
-	assert.True(t, bool(found))
+	require.Nil(t, setErr)
+	require.Nil(t, getErr)
+	require.True(t, bool(found))
 }
 
 func (s *PolicyRepositoryTestSuite) TestDeletingAnUnknownPolicyDoesNotErrorOut(t *testing.T) {
@@ -141,10 +141,34 @@ func (s *PolicyRepositoryTestSuite) TestDeletingAnUnknownPolicyDoesNotErrorOut(t
 
 	found, getErr := repository.DeletePolicy(ctx, "")
 
-	assert.Nil(t, getErr)
-	assert.False(t, bool(found))
+	require.Nil(t, getErr)
+	require.False(t, bool(found))
 }
 
 func (s *PolicyRepositoryTestSuite) setup() (context.Context, policy.Repository) {
 	return context.Background(), s.factory()
+}
+
+func (s *PolicyRepositoryTestSuite) TestListingPolicyIdsReturnAllIds(t *testing.T) {
+	ctx, repository := s.setup()
+
+        rec1 := &domain.PolicyRecord{
+            Policy:    &domain.Policy{
+                Id: "1",
+            },
+        }
+        rec2 := &domain.PolicyRecord{
+            Policy:    &domain.Policy{
+                Id: "2",
+            },
+        }
+        _, err := repository.SetPolicy(ctx, rec1)
+        require.Nil(t, err)
+        _, err = repository.SetPolicy(ctx, rec2)
+        require.Nil(t, err)
+
+        ids, err := repository.ListPolicyIds(ctx)
+
+        require.Nil(t, err)
+        require.Equal(t, []string{"1", "2"}, ids)
 }

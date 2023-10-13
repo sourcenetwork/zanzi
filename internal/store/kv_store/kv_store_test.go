@@ -21,5 +21,5 @@ func factory() policy.Repository {
 
 func TestKVStore(t *testing.T) {
 	suite := store.NewPolicyRepositoryTestSuite(factory)
-	_testing.RunSuite(t, suite)
+	_testing.RunSuite(t, &suite)
 }

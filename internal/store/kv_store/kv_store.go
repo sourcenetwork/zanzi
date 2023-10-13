@@ -23,7 +23,7 @@ func NewKVStore(store rcdb.KVStore) (KVStore, error) {
 	ider := &policyIDer{}
 	protoMarshaler := rcdb.ProtoMarshaler[*domain.PolicyRecord](factory)
 	policyPrefixWrapper := rcdb.NewWrapperKV(store, policyStorePrefix)
-	policyStore := rcdb.NewObjStore[*domain.PolicyRecord](policyPrefixWrapper, nil, protoMarshaler, ider)
+	policyStore := rcdb.NewObjStore[*domain.PolicyRecord](policyPrefixWrapper, protoMarshaler, ider)
 
 	return KVStore{
 		baseKV:                   store,
@@ -60,7 +60,7 @@ func (kv *KVStore) getRelationshipDataStore(policyId string) *rcdb.ObjectStore[*
 	factory := func() *RelationshipData { return &RelationshipData{} }
 	marshaler := rcdb.ProtoMarshaler[*RelationshipData](factory)
 	ider := relationshipDataIDer{}
-	store := rcdb.NewObjStore[*RelationshipData](kv.relationshipDataPrefixKV, nil, marshaler, &ider)
+	store := rcdb.NewObjStore[*RelationshipData](kv.relationshipDataPrefixKV, marshaler, &ider)
 	return &store
 }
 
