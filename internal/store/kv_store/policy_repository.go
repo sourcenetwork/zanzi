@@ -78,7 +78,15 @@ func (r *policyRepository) DeletePolicy(ctx context.Context, id string) (types.R
 }
 
 func (r *policyRepository) ListPolicyIds(context.Context) ([]string, error) {
-	return nil, fmt.Errorf("not implemented")
+    store := r.kvStore.getPolicyStore()
+    ids, err := store.ListIds()
+    if err != nil {
+        return nil, fmt.Errorf("list policy ids: %w", err)
+    }
+
+    return utils.MapSlice(ids, func(id []byte) string {
+        return string(id)
+    }), nil
 }
 
 func (r *policyRepository) SetRelationship(ctx context.Context, record *domain.RelationshipRecord) (bool, error) {
