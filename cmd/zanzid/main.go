@@ -40,6 +40,6 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.Flags().StringVar(&address, "address", "localhost:8080", "sets the address zanzi will listen on")
+	rootCmd.Flags().StringVar(&address, "address", "0.0.0.0:8080", "sets the address zanzi will listen on")
 	rootCmd.Flags().StringVar(&dataDir, "data_dir", "~/.zanzi", "sets the directory zanzi will store application data")
 }
