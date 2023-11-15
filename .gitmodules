@@ -1,0 +1,3 @@
+[submodule "raccoondb"]
+	path = raccoondb
+	url = git@github.com:sourcenetwork/raccoondb.git
