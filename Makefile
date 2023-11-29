@@ -10,7 +10,7 @@ zanzi-cli:
 
 .PHONY: zanzid
 zanzid:
-	go build -gcflags="-e" -v -o build/zanzid cmd/zanzid/main.go
+	go build -o build/zanzid cmd/zanzid/main.go
 
 .PHONY: proto
 proto:
