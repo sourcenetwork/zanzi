@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -25,14 +26,19 @@ func main() {
 
 	ctx := context.Background()
 
-	// Create Policy
-	createResponse, err := policyServ.CreatePolicy(ctx, &api.CreatePolicyRequest{
+	polReq := &api.CreatePolicyRequest{
 		PolicyDefinition: &api.PolicyDefinition{
-			Definition: &api.PolicyDefinition_PolicyYaml{
-				PolicyYaml: policyYaml,
-			},
+			PolicyYaml: policyYaml,
 		},
-	})
+	}
+
+	buf, err := json.Marshal(polReq)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("policy (json):", string(buf))
+	// Create Policy
+	createResponse, err := policyServ.CreatePolicy(ctx, polReq)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,17 +46,23 @@ func main() {
 
 	// Set Relationships
 	for _, relationship := range relationships {
-		_, err = policyServ.SetRelationship(ctx, &api.SetRelationshipRequest{
+		data := &api.SetRelationshipRequest{
 			PolicyId:     createResponse.Record.Policy.Id,
 			Relationship: &relationship,
-		})
+		}
+		buf, err := json.Marshal(data)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(string(buf))
+		_, err = policyServ.SetRelationship(ctx, data)
 		if err != nil {
 			log.Fatal("set relationship:", err)
 		}
 	}
 
 	res, err := relGraph.DumpRelationships(ctx, &api.DumpRelationshipsRequest{
-		PolicyId: "10",
+		PolicyId: "1",
 		Format:   api.DumpRelationshipsRequest_DOT,
 	})
 	if err != nil {
@@ -59,18 +71,16 @@ func main() {
 	dot := res.Dump.(*api.DumpRelationshipResponse_Dot).Dot
 	fmt.Println(dot)
 
-	/*
-	   res, err := relGraph.Check(ctx, &api.CheckRequest{
-	       PolicyId: "10",
-	       AccessRequest: &domain.AccessRequest{
-	           Object: domain.NewEntity("file", "readme"),
-	           Relation: "read",
-	           Subject: domain.NewEntity("user", "bob"),
-	       },
-	   })
+	check, err := relGraph.Check(ctx, &api.CheckRequest{
+		PolicyId: "1",
+		AccessRequest: &domain.AccessRequest{
+			Object:   domain.NewEntity("secret", "privateKey"),
+			Relation: "read",
+			Subject:  domain.NewEntity("user", "alice"),
+		},
+	})
 
-	   fmt.Println(res.Result.Authorized)
-	*/
+	fmt.Println("Check Result:", check.Result.Authorized)
 
 	/*
 	   res, err := relGraph.Expand(ctx, &api.ExpandRequest{
@@ -94,64 +104,31 @@ func main() {
 }
 
 var policyYaml = `
-id: 10
+id: 1
 name: test
 doc: test policy
 
 resources:
-  file:
-    doc: file resource
+  secret:
+    doc: sensitive secret
     relations:
       owner:
         expr: _this
         types:
           - '*'
-      parent:
+      collaborator:
         expr: _this
         types:
-          - directory
+          - user
       read:
-        expr: owner + parent->read
+        expr: owner + collaborator
         types: []
-  directory:
-    relations:
-      owner:
-        types:
-          - user
-          - group:member
-          - group:owner
-        expr: _this
-      reader:
-        expr: _this
-        types:
-          - user
-          - group:member
-      read:
-        expr: owner + reader
-
-  group:
-    relations:
-      member:
-        expr: _this + owner
-        types:
-          - user
-      owner:
-        expr: _this
-        types:
-          - user
   user:
-
-attributes:
-  foo: bar
 `
 
 var builder domain.RelationshipBuilder
 
 var relationships []domain.Relationship = []domain.Relationship{
-	builder.Relationship("file", "readme", "owner", "user", "charlie"),
-	builder.Relationship("file", "readme", "parent", "directory", "proj"),
-	builder.EntitySet("directory", "proj", "owner", "group", "eng", "owner"),
-	builder.EntitySet("directory", "proj", "reader", "group", "eng", "member"),
-	builder.Relationship("group", "eng", "owner", "user", "alice"),
-	builder.Relationship("group", "eng", "member", "user", "bob"),
+	builder.Relationship("secret", "privateKey", "owner", "user", "charlie"),
+	builder.Relationship("secret", "privateKey", "collaborator", "user", "alice"),
 }
