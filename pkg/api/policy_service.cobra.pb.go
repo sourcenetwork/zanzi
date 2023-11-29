@@ -37,7 +37,9 @@ func PolicyServiceClientCommand(options ...client.Option) *cobra.Command {
 
 func _PolicyServiceCreatePolicyCommand(cfg *client.Config) *cobra.Command {
 	req := &CreatePolicyRequest{
-		PolicyDefinition: &PolicyDefinition{},
+		PolicyDefinition: &PolicyDefinition{
+			Policy: &domain.Policy{},
+		},
 	}
 
 	cmd := &cobra.Command{
@@ -74,22 +76,12 @@ func _PolicyServiceCreatePolicyCommand(cfg *client.Config) *cobra.Command {
 		},
 	}
 
-	PolicyDefinitionPolicy := &domain.Policy{}
-	cmd.PersistentFlags().Bool(cfg.FlagNamer("PolicyDefinition Policy"), false, "")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
-	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicy.Id, cfg.FlagNamer("PolicyDefinition Policy Id"), "", "Identifies a Policy - with a used defined identifier - accross the system.")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Id"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
-	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicy.Name, cfg.FlagNamer("PolicyDefinition Policy Name"), "", "Display name for a Policy")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Name"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
-	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicy.Description, cfg.FlagNamer("PolicyDefinition Policy Description"), "", "Describes context and any additional information of interest for Policy users.")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Description"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
-	flag.SliceVar(cmd.PersistentFlags(), flag.ParseMessageE[*domain.Resource], &PolicyDefinitionPolicy.Resources, cfg.FlagNamer("PolicyDefinition Policy Resources"), "set of Resources defined by a Policy")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Resources"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
-	cmd.PersistentFlags().StringToStringVar(&PolicyDefinitionPolicy.Attributes, cfg.FlagNamer("PolicyDefinition Policy Attributes"), nil, "key-value string attributes supplied by the user")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Attributes"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
-	PolicyDefinitionPolicyYaml := &PolicyDefinition_PolicyYaml{}
-	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicyYaml.PolicyYaml, cfg.FlagNamer("PolicyDefinition PolicyYaml"), "", "Set a YAML serialized Policy definition according to the type definitions")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition PolicyYaml"), func() { req.PolicyDefinition.Definition = PolicyDefinitionPolicyYaml })
+	cmd.PersistentFlags().StringVar(&req.PolicyDefinition.Policy.Id, cfg.FlagNamer("PolicyDefinition Policy Id"), "", "Identifies a Policy - with a used defined identifier - accross the system.")
+	cmd.PersistentFlags().StringVar(&req.PolicyDefinition.Policy.Name, cfg.FlagNamer("PolicyDefinition Policy Name"), "", "Display name for a Policy")
+	cmd.PersistentFlags().StringVar(&req.PolicyDefinition.Policy.Description, cfg.FlagNamer("PolicyDefinition Policy Description"), "", "Describes context and any additional information of interest for Policy users.")
+	flag.SliceVar(cmd.PersistentFlags(), flag.ParseMessageE[*domain.Resource], &req.PolicyDefinition.Policy.Resources, cfg.FlagNamer("PolicyDefinition Policy Resources"), "set of Resources defined by a Policy")
+	cmd.PersistentFlags().StringToStringVar(&req.PolicyDefinition.Policy.Attributes, cfg.FlagNamer("PolicyDefinition Policy Attributes"), nil, "key-value string attributes supplied by the user")
+	cmd.PersistentFlags().StringVar(&req.PolicyDefinition.PolicyYaml, cfg.FlagNamer("PolicyDefinition PolicyYaml"), "", "Set a YAML serialized Policy definition according to the type definitions")
 	flag.BytesBase64Var(cmd.PersistentFlags(), &req.AppData, cfg.FlagNamer("AppData"), "app_data is an opaque byte array which applications\n can send to associate satellite data to a Policy")
 
 	return cmd
@@ -97,7 +89,9 @@ func _PolicyServiceCreatePolicyCommand(cfg *client.Config) *cobra.Command {
 
 func _PolicyServiceUpdatePolicyCommand(cfg *client.Config) *cobra.Command {
 	req := &UpdatePolicyRequest{
-		PolicyDefinition: &PolicyDefinition{},
+		PolicyDefinition: &PolicyDefinition{
+			Policy: &domain.Policy{},
+		},
 	}
 
 	cmd := &cobra.Command{
@@ -134,22 +128,12 @@ func _PolicyServiceUpdatePolicyCommand(cfg *client.Config) *cobra.Command {
 		},
 	}
 
-	PolicyDefinitionPolicy := &domain.Policy{}
-	cmd.PersistentFlags().Bool(cfg.FlagNamer("PolicyDefinition Policy"), false, "")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
-	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicy.Id, cfg.FlagNamer("PolicyDefinition Policy Id"), "", "Identifies a Policy - with a used defined identifier - accross the system.")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Id"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
-	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicy.Name, cfg.FlagNamer("PolicyDefinition Policy Name"), "", "Display name for a Policy")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Name"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
-	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicy.Description, cfg.FlagNamer("PolicyDefinition Policy Description"), "", "Describes context and any additional information of interest for Policy users.")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Description"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
-	flag.SliceVar(cmd.PersistentFlags(), flag.ParseMessageE[*domain.Resource], &PolicyDefinitionPolicy.Resources, cfg.FlagNamer("PolicyDefinition Policy Resources"), "set of Resources defined by a Policy")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Resources"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
-	cmd.PersistentFlags().StringToStringVar(&PolicyDefinitionPolicy.Attributes, cfg.FlagNamer("PolicyDefinition Policy Attributes"), nil, "key-value string attributes supplied by the user")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Attributes"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
-	PolicyDefinitionPolicyYaml := &PolicyDefinition_PolicyYaml{}
-	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicyYaml.PolicyYaml, cfg.FlagNamer("PolicyDefinition PolicyYaml"), "", "Set a YAML serialized Policy definition according to the type definitions")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition PolicyYaml"), func() { req.PolicyDefinition.Definition = PolicyDefinitionPolicyYaml })
+	cmd.PersistentFlags().StringVar(&req.PolicyDefinition.Policy.Id, cfg.FlagNamer("PolicyDefinition Policy Id"), "", "Identifies a Policy - with a used defined identifier - accross the system.")
+	cmd.PersistentFlags().StringVar(&req.PolicyDefinition.Policy.Name, cfg.FlagNamer("PolicyDefinition Policy Name"), "", "Display name for a Policy")
+	cmd.PersistentFlags().StringVar(&req.PolicyDefinition.Policy.Description, cfg.FlagNamer("PolicyDefinition Policy Description"), "", "Describes context and any additional information of interest for Policy users.")
+	flag.SliceVar(cmd.PersistentFlags(), flag.ParseMessageE[*domain.Resource], &req.PolicyDefinition.Policy.Resources, cfg.FlagNamer("PolicyDefinition Policy Resources"), "set of Resources defined by a Policy")
+	cmd.PersistentFlags().StringToStringVar(&req.PolicyDefinition.Policy.Attributes, cfg.FlagNamer("PolicyDefinition Policy Attributes"), nil, "key-value string attributes supplied by the user")
+	cmd.PersistentFlags().StringVar(&req.PolicyDefinition.PolicyYaml, cfg.FlagNamer("PolicyDefinition PolicyYaml"), "", "Set a YAML serialized Policy definition according to the type definitions")
 	flag.BytesBase64Var(cmd.PersistentFlags(), &req.AppData, cfg.FlagNamer("AppData"), "app_data is an opaque byte array which applications\n can send to associate satellite data to a Policy")
 	flag.EnumVar(cmd.PersistentFlags(), &req.Strategy, cfg.FlagNamer("Strategy"), "")
 

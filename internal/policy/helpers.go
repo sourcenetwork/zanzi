@@ -40,13 +40,12 @@ func GetPolicyFromDefinition(d *api.PolicyDefinition) (*domain.Policy, error) {
 	var policy *domain.Policy
 	var err error
 
-	switch definition := d.Definition.(type) {
-	case *api.PolicyDefinition_Policy:
-		policy = definition.Policy
-	case *api.PolicyDefinition_PolicyYaml:
-		policy, err = policy_definition.PolicyFromYaml(definition.PolicyYaml)
-	default:
-		err = fmt.Errorf("PolicyDefinition %v: %w", definition, domain.ErrInvalidVariant)
+	if d.Policy != nil {
+		policy = d.Policy
+	} else if d.PolicyYaml != "" {
+		policy, err = policy_definition.PolicyFromYaml(d.PolicyYaml)
+	} else {
+		err = fmt.Errorf("PolicyDefinition %v: %w", d, domain.ErrInvalidVariant)
 	}
 
 	if err != nil {

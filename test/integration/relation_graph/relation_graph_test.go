@@ -40,9 +40,7 @@ func setup() (context.Context, api.RelationGraphServer) {
 	// setup policy
 	createReq := &api.CreatePolicyRequest{
 		PolicyDefinition: &api.PolicyDefinition{
-			Definition: &api.PolicyDefinition_Policy{
-				Policy: setupPolicy,
-			},
+			Policy: setupPolicy,
 		},
 		AppData: []byte("app data"),
 	}

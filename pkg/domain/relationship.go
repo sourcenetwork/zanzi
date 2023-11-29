@@ -1,7 +1,14 @@
 package domain
 
 import (
+	"fmt"
+	"regexp"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
+)
+
+var (
+	relationshipRegex = `^(?P<ResourceGroup>\w+):(?P<ResourceID>\w+)#(?P<Relation>\w+)@(?P<SubjectGroup>\w+):(?P<SubjectID>.+)$`
 )
 
 func NewEntity(resource, id string) *Entity {
@@ -38,6 +45,30 @@ func (b *RelationshipBuilder) Relationship(objResource, objId, relation, subjRes
 			},
 		},
 	}
+}
+
+func (b *RelationshipBuilder) RelationshipFromString(relationship string) (Relationship, error) {
+	r, err := regexp.Compile(relationshipRegex)
+	if err != nil {
+		return Relationship{}, err
+	}
+
+	if !r.Match([]byte(relationship)) {
+		return Relationship{}, fmt.Errorf("relationship validation: %s", relationship)
+	}
+
+	results := r.FindStringSubmatch(relationship)
+	if len(results) != 6 {
+		return Relationship{}, fmt.Errorf("regex submatch size: %d", len(results))
+	}
+
+	return b.Relationship(
+		results[1], /* resource group */
+		results[2], /* resource id */
+		results[3], /* relation */
+		results[4], /* subject group */
+		results[5], /* subject id */
+	), nil
 }
 
 func (b *RelationshipBuilder) EntitySet(objResource, objId, relation, subjResource, subjId, subjRelation string) Relationship {

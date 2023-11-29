@@ -2,11 +2,15 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net"
+	"net/http"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	zanzi "github.com/sourcenetwork/zanzi"
 	"github.com/sourcenetwork/zanzi/pkg/api"
 )
@@ -69,4 +73,53 @@ func (s *Server) Init(z *zanzi.Zanzi) error {
 // Run is a blocking call
 func (s *Server) Run() {
 	s.server.Serve(s.listener)
+}
+
+func NewGRPCGatewayServer(grpcAddress, restAddress string) (*http.Server, error) {
+
+	ctx := context.Background()
+	// Create a client connection to the gRPC server we just started.
+	// This is where the gRPC-Gateway proxies the requests.
+	conn, err := grpc.DialContext(
+		ctx,
+		grpcAddress,
+		grpc.WithBlock(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("dial to gRPC server %s, %w", grpcAddress, err)
+	}
+
+	mux := runtime.NewServeMux()
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	}
+
+	err = api.RegisterPolicyServiceHandler(ctx, mux, conn)
+	if err != nil {
+		return nil, fmt.Errorf("register ring service handler, %w", err)
+	}
+
+	err = api.RegisterRelationGraphHandler(ctx, mux, conn)
+	if err != nil {
+		return nil, fmt.Errorf("register utility service handler, %w", err)
+	}
+
+	// Register Zanzi Services.
+	err = api.RegisterPolicyServiceHandlerFromEndpoint(ctx, mux, grpcAddress, opts)
+	if err != nil {
+		return nil, fmt.Errorf("register ring service handler from endpoint, %w", err)
+	}
+
+	err = api.RegisterRelationGraphHandlerFromEndpoint(ctx, mux, grpcAddress, opts)
+	if err != nil {
+		return nil, fmt.Errorf("register utility service handler from endpoint, %w", err)
+	}
+
+	gw := &http.Server{
+		Addr:    restAddress,
+		Handler: mux,
+	}
+
+	return gw, nil
 }

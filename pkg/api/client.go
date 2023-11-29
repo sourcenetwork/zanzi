@@ -2,7 +2,7 @@ package api
 
 import "context"
 
-type PolicyService interface {
+type PolicyClient interface {
 	// CreatePolicy creates a new Policy.
 	// Supplying a Policy whose ID already exists in the store is an error.
 	CreatePolicy(context.Context, *CreatePolicyRequest) (*CreatePolicyResponse, error)
@@ -81,6 +81,6 @@ func (p *policyService) FindRelationshipRecords(ctx context.Context, req *FindRe
 	return p.client.FindRelationshipRecords(ctx, req)
 }
 
-func PolicyServiceFromClient(client policyServiceClient) PolicyService {
+func PolicyServiceFromClient(client policyServiceClient) PolicyClient {
 	return &policyService{client}
 }

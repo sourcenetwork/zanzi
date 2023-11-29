@@ -57,63 +57,36 @@ func (m *PolicyDefinition) validate(all bool) error {
 
 	var errors []error
 
-	switch v := m.Definition.(type) {
-	case *PolicyDefinition_Policy:
-		if v == nil {
-			err := PolicyDefinitionValidationError{
-				field:  "Definition",
-				reason: "oneof value cannot be a typed-nil",
-			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
-		}
-
-		if all {
-			switch v := interface{}(m.GetPolicy()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, PolicyDefinitionValidationError{
-						field:  "Policy",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, PolicyDefinitionValidationError{
-						field:  "Policy",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetPolicy()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return PolicyDefinitionValidationError{
+	if all {
+		switch v := interface{}(m.GetPolicy()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PolicyDefinitionValidationError{
 					field:  "Policy",
 					reason: "embedded message failed validation",
 					cause:  err,
-				}
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PolicyDefinitionValidationError{
+					field:  "Policy",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
 			}
 		}
-
-	case *PolicyDefinition_PolicyYaml:
-		if v == nil {
-			err := PolicyDefinitionValidationError{
-				field:  "Definition",
-				reason: "oneof value cannot be a typed-nil",
+	} else if v, ok := interface{}(m.GetPolicy()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PolicyDefinitionValidationError{
+				field:  "Policy",
+				reason: "embedded message failed validation",
+				cause:  err,
 			}
-			if !all {
-				return err
-			}
-			errors = append(errors, err)
 		}
-		// no validation rules for PolicyYaml
-	default:
-		_ = v // ensures v is used
 	}
+
+	// no validation rules for PolicyYaml
 
 	if len(errors) > 0 {
 		return PolicyDefinitionMultiError(errors)
