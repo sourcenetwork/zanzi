@@ -103,12 +103,21 @@ func request_PolicyService_DeletePolicy_0(ctx context.Context, marshaler runtime
 	var protoReq DeletePolicyRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.Id, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
 	msg, err := client.DeletePolicy(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -120,12 +129,21 @@ func local_request_PolicyService_DeletePolicy_0(ctx context.Context, marshaler r
 	var protoReq DeletePolicyRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.Id, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
 	msg, err := server.DeletePolicy(ctx, &protoReq)
@@ -137,12 +155,21 @@ func request_PolicyService_GetPolicy_0(ctx context.Context, marshaler runtime.Ma
 	var protoReq GetPolicyRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.Id, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
 	msg, err := client.GetPolicy(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -154,12 +181,21 @@ func local_request_PolicyService_GetPolicy_0(ctx context.Context, marshaler runt
 	var protoReq GetPolicyRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.Id, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
 	msg, err := server.GetPolicy(ctx, &protoReq)
@@ -385,7 +421,7 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/CreatePolicy", runtime.WithHTTPPathPattern("/sourcenetwork.zanzi.api.PolicyService/CreatePolicy"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/CreatePolicy", runtime.WithHTTPPathPattern("/v1alpha1/policy"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -427,7 +463,7 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 
 	})
 
-	mux.Handle("POST", pattern_PolicyService_DeletePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_PolicyService_DeletePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -435,7 +471,7 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/DeletePolicy", runtime.WithHTTPPathPattern("/sourcenetwork.zanzi.api.PolicyService/DeletePolicy"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/DeletePolicy", runtime.WithHTTPPathPattern("/v1alpha1/policy/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -452,7 +488,7 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 
 	})
 
-	mux.Handle("POST", pattern_PolicyService_GetPolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_PolicyService_GetPolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -460,7 +496,7 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/GetPolicy", runtime.WithHTTPPathPattern("/sourcenetwork.zanzi.api.PolicyService/GetPolicy"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/GetPolicy", runtime.WithHTTPPathPattern("/v1alpha1/policy/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -510,7 +546,7 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/SetRelationship", runtime.WithHTTPPathPattern("/sourcenetwork.zanzi.api.PolicyService/SetRelationship"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/SetRelationship", runtime.WithHTTPPathPattern("/v1alpha1/relationship"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -674,7 +710,7 @@ func RegisterPolicyServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/CreatePolicy", runtime.WithHTTPPathPattern("/sourcenetwork.zanzi.api.PolicyService/CreatePolicy"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/CreatePolicy", runtime.WithHTTPPathPattern("/v1alpha1/policy"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -712,13 +748,13 @@ func RegisterPolicyServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 
 	})
 
-	mux.Handle("POST", pattern_PolicyService_DeletePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_PolicyService_DeletePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/DeletePolicy", runtime.WithHTTPPathPattern("/sourcenetwork.zanzi.api.PolicyService/DeletePolicy"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/DeletePolicy", runtime.WithHTTPPathPattern("/v1alpha1/policy/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -734,13 +770,13 @@ func RegisterPolicyServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 
 	})
 
-	mux.Handle("POST", pattern_PolicyService_GetPolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_PolicyService_GetPolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/GetPolicy", runtime.WithHTTPPathPattern("/sourcenetwork.zanzi.api.PolicyService/GetPolicy"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/GetPolicy", runtime.WithHTTPPathPattern("/v1alpha1/policy/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -784,7 +820,7 @@ func RegisterPolicyServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/SetRelationship", runtime.WithHTTPPathPattern("/sourcenetwork.zanzi.api.PolicyService/SetRelationship"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/sourcenetwork.zanzi.api.PolicyService/SetRelationship", runtime.WithHTTPPathPattern("/v1alpha1/relationship"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -892,17 +928,17 @@ func RegisterPolicyServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 }
 
 var (
-	pattern_PolicyService_CreatePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"sourcenetwork.zanzi.api.PolicyService", "CreatePolicy"}, ""))
+	pattern_PolicyService_CreatePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1alpha1", "policy"}, ""))
 
 	pattern_PolicyService_UpdatePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"sourcenetwork.zanzi.api.PolicyService", "UpdatePolicy"}, ""))
 
-	pattern_PolicyService_DeletePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"sourcenetwork.zanzi.api.PolicyService", "DeletePolicy"}, ""))
+	pattern_PolicyService_DeletePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1alpha1", "policy", "id"}, ""))
 
-	pattern_PolicyService_GetPolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"sourcenetwork.zanzi.api.PolicyService", "GetPolicy"}, ""))
+	pattern_PolicyService_GetPolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1alpha1", "policy", "id"}, ""))
 
 	pattern_PolicyService_ListPolicyIds_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"sourcenetwork.zanzi.api.PolicyService", "ListPolicyIds"}, ""))
 
-	pattern_PolicyService_SetRelationship_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"sourcenetwork.zanzi.api.PolicyService", "SetRelationship"}, ""))
+	pattern_PolicyService_SetRelationship_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1alpha1", "relationship"}, ""))
 
 	pattern_PolicyService_DeleteRelationship_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"sourcenetwork.zanzi.api.PolicyService", "DeleteRelationship"}, ""))
 
