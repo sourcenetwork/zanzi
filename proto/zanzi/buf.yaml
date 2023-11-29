@@ -1,7 +1,9 @@
 version: v1
-name: buf.build/sourcenetwork/zanzi
+# name: buf.build/sourcenetwork/zanzi
 deps:
-  - buf.build/sourcenetwork/zanzi
+  - buf.build/googleapis/googleapis
+  - buf.build/grpc-ecosystem/grpc-gateway
+  # - buf.build/sourcenetwork/zanzi
   - buf.build/bufbuild/protovalidate
 
 breaking:
@@ -10,3 +12,7 @@ breaking:
 lint:
   use:
     - DEFAULT
+  ignore:
+    - google/type/datetime.proto
+    - google/api/annotations.proto
+    - google/protobuf/empty.proto

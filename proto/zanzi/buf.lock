@@ -4,5 +4,15 @@ deps:
   - remote: buf.build
     owner: bufbuild
     repository: protovalidate
-    commit: c646c9dcc35947c6ba0d1c5373ef404d
-    digest: shake256:626bc9f2b732a341524ebfbd0502dd8dd51c7a1937a43e214155b966dc70d20f73ad3c93acf453ced66889bf687258f2216e5c98e4ff25c09a1fa6e882f54d96
+    commit: e097f827e65240ac9fd4b1158849a8fc
+    digest: shake256:f19252436fd9ded945631e2ffaaed28247a92c9015ccf55ae99db9fb3d9600c4fdb00fd2d3bd7701026ec2fd4715c5129e6ae517c25a59ba690020cfe80bf8ad
+  - remote: buf.build
+    owner: googleapis
+    repository: googleapis
+    commit: 28151c0d0a1641bf938a7672c500e01d
+    digest: shake256:49215edf8ef57f7863004539deff8834cfb2195113f0b890dd1f67815d9353e28e668019165b9d872395871eeafcbab3ccfdb2b5f11734d3cca95be9e8d139de
+  - remote: buf.build
+    owner: grpc-ecosystem
+    repository: grpc-gateway
+    commit: 3f42134f4c564983838425bc43c7a65f
+    digest: shake256:3d11d4c0fe5e05fda0131afefbce233940e27f0c31c5d4e385686aea58ccd30f72053f61af432fa83f1fc11cda57f5f18ca3da26a29064f73c5a0d076bba8d92

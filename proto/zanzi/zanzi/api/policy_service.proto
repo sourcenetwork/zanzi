@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package sourcenetwork.zanzi.api;
 
+import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "zanzi/domain/policy.proto";
 import "zanzi/domain/relationship.proto";
@@ -17,25 +18,50 @@ service PolicyService {
 
     // CreatePolicy creates a new Policy.
     // Supplying a Policy whose ID already exists in the store is an error.
-    rpc CreatePolicy(CreatePolicyRequest) returns (CreatePolicyResponse);
+    rpc CreatePolicy(CreatePolicyRequest) returns (CreatePolicyResponse) {
+        option (google.api.http) = {
+            post: "/v1alpha1/policy"
+            body: "*"
+        };
+    }
 
     // UpdatePolicy updates the fields and relations for a Policy.
     rpc UpdatePolicy(UpdatePolicyRequest) returns (UpdatePolicyResponse);
+    // option (google.api.http) = {
+    //     put: "/v1alpha1/policy/"
+    //     body: "*"
+    // };
 
     // Delete removes the Policy with the given Id from the store
-    rpc DeletePolicy(DeletePolicyRequest) returns (DeletePolicyResponse);
+    rpc DeletePolicy(DeletePolicyRequest) returns (DeletePolicyResponse) {
+        option (google.api.http) = {
+            delete: "/v1alpha1/policy/{id}"
+        };
+    }
 
     // Get fetches a policy from the Policy store, if it exists
-    rpc GetPolicy(GetPolicyRequest) returns (GetPolicyResponse);
+    rpc GetPolicy(GetPolicyRequest) returns (GetPolicyResponse) {
+        option (google.api.http) = {
+            get: "/v1alpha1/policy/{id}"
+        };
+    }
 
     // List returns all Policies in the Policy store
     rpc ListPolicyIds(ListPolicyIdsRequest) returns (ListPolicyIdsResponse);
 
     // Set adds a Relationship in a Policy
-    rpc SetRelationship(SetRelationshipRequest) returns (SetRelationshipResponse);
+    rpc SetRelationship(SetRelationshipRequest) returns (SetRelationshipResponse) {
+        option (google.api.http) = {
+            post: "/v1alpha1/relationship"
+            body: "*"
+        };
+    }
 
     // Remove a Relationship from a Policy
     rpc DeleteRelationship(DeleteRelationshipRequest) returns (DeleteRelationshipResponse);
+    // option (google.api.http) = {
+    //     delete: "/v1alpha1/relationship/{id}"
+    // };
 
     // Get fetches a Relationship contained in a Policy, if it exists
     rpc GetRelationship(GetRelationshipRequest) returns (GetRelationshipResponse);
@@ -50,12 +76,9 @@ service PolicyService {
 // PolicyDefinition models a Policy, which can be represented
 // as domain.Policy type or as a zanzi.policy_definition.PolicyDefinition yaml representation.
 message PolicyDefinition {
-    oneof definition {
-        sourcenetwork.zanzi.domain.Policy policy = 1;
-
-        // Set a YAML serialized Policy definition according to the type definitions
-        string policy_yaml = 2;
-    }
+    sourcenetwork.zanzi.domain.Policy policy = 1;
+    // Set a YAML serialized Policy definition according to the type definitions
+    string policy_yaml = 2;
 }
 
 message CreatePolicyRequest {
