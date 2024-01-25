@@ -77,3 +77,25 @@ func (b *RelationshipBuilder) Wildcard(objResource, objId, relation, subjResourc
 		},
 	}
 }
+
+// GetResourceName returns the Subject's Resource Name
+func (s *Subject) GetResourceName() string {
+	switch subj := s.Subject.(type) {
+	case *Subject_Entity:
+		return subj.Entity.Resource
+	case *Subject_EntitySet:
+		return subj.EntitySet.Relation
+	case *Subject_ResourceSet:
+		return subj.ResourceSet.ResourceName
+	}
+	return ""
+}
+
+func (r *Resource) GetRelationByName(name string) *Relation {
+	for _, relation := range r.Relations {
+		if relation.Name == name {
+			return relation
+		}
+	}
+	return nil
+}

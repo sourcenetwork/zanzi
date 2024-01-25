@@ -2,7 +2,7 @@ module github.com/sourcenetwork/zanzi
 
 replace github.com/gogo/protobuf/grpc v1.3.2 => google.golang.org/grpc v1.51.0
 
-go 1.18
+go 1.21
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20230802163732-1c33ebd9ecfa.1

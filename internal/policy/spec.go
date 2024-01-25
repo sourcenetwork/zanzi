@@ -333,3 +333,93 @@ func (s *SubjectRestrictionSpec) satisfiesRestriction(restriction *domain.Subjec
 	}
 	return ErrSubjectRestriction
 }
+
+// ValidSelectorSpec verifies whether a RelationshipSelector is valid for a Policy
+type ValidSelectorSpec struct{}
+
+func (s *ValidSelectorSpec) Satisfies(selector *domain.RelationshipSelector, policy *domain.Policy) error {
+	err := s.validObjectSelector(selector.ObjectSelector, policy)
+	if err != nil {
+		return fmt.Errorf("object selector invalid: policy %v: %w", policy.Id, err)
+	}
+
+	err = s.validRelationSelector(selector.ObjectSelector, selector.RelationSelector, policy)
+	if err != nil {
+		return fmt.Errorf("relation selector invalid: policy %v: %w", policy.Id, err)
+	}
+
+	err = s.validSubjectSelector(selector.SubjectSelector, policy)
+	if err != nil {
+		return fmt.Errorf("subject selector invalid: policy %v: %w", policy.Id, err)
+	}
+
+	return nil
+}
+
+func (s *ValidSelectorSpec) validObjectSelector(selector *domain.ObjectSelector, policy *domain.Policy) error {
+	switch s := selector.Selector.(type) {
+	case *domain.ObjectSelector_ObjectSpec:
+		resource := policy.GetResourceByName(s.ObjectSpec.Resource)
+		if resource == nil {
+			return fmt.Errorf("resource %v: %w", s.ObjectSpec.Resource, ErrResourceNotFound)
+		}
+	case *domain.ObjectSelector_ResourceSpec:
+		resource := policy.GetResourceByName(s.ResourceSpec)
+		if resource == nil {
+			return fmt.Errorf("resource %v: %w", s.ResourceSpec, ErrResourceNotFound)
+		}
+	case *domain.ObjectSelector_Wildcard:
+		break
+	default:
+		return fmt.Errorf("%v: %v", s, domain.ErrInvalidVariant)
+	}
+	return nil
+}
+
+func (s *ValidSelectorSpec) validRelationSelector(objSelector *domain.ObjectSelector, relSelector *domain.RelationSelector, policy *domain.Policy) error {
+	if relSelector.GetWildcard() != nil {
+		return nil
+	}
+
+	relName := relSelector.GetRelationName()
+
+	resourceName := s.getObjectSelectorResourceName(objSelector)
+	resource := policy.GetResourceByName(resourceName)
+	relation := resource.GetRelationByName(relName)
+	if relation == nil {
+		return fmt.Errorf("relation %v: %w", relName, ErrRelationNotFound)
+	}
+
+	return nil
+}
+
+func (s *ValidSelectorSpec) getObjectSelectorResourceName(objSelector *domain.ObjectSelector) string {
+	switch s := objSelector.Selector.(type) {
+	case *domain.ObjectSelector_ObjectSpec:
+		return s.ObjectSpec.Resource
+	case *domain.ObjectSelector_ResourceSpec:
+		return s.ResourceSpec
+	}
+	return ""
+}
+
+func (s *ValidSelectorSpec) validSubjectSelector(selector *domain.SubjectSelector, policy *domain.Policy) error {
+	switch s := selector.Selector.(type) {
+	case *domain.SubjectSelector_ResourceSpec:
+		resource := policy.GetResourceByName(s.ResourceSpec)
+		if resource == nil {
+			return fmt.Errorf("resource '%v': %w", s.ResourceSpec, ErrResourceNotFound)
+		}
+	case *domain.SubjectSelector_SubjectSpec:
+		name := s.SubjectSpec.GetResourceName()
+		resource := policy.GetResourceByName(name)
+		if resource == nil {
+			return fmt.Errorf("resource '%v': %w", name, ErrResourceNotFound)
+		}
+	case *domain.SubjectSelector_Wildcard:
+		break
+	default:
+		return fmt.Errorf("%v: %w", s, domain.ErrInvalidVariant)
+	}
+	return nil
+}

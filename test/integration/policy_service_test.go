@@ -29,20 +29,20 @@ func setup() (context.Context, api.PolicyServiceServer) {
 func setupWithPolicy(policies ...*domain.Policy) (context.Context, api.PolicyServiceServer) {
 	ctx, service := setup()
 
-        for _, policy := range policies {
-            createReq := &api.CreatePolicyRequest{
-                PolicyDefinition: &api.PolicyDefinition{
-                    Definition: &api.PolicyDefinition_Policy{
-                        Policy: policy,
-                    },
-                },
-                AppData: []byte("app data"),
-            }
-            _, err := service.CreatePolicy(ctx, createReq)
-            if err != nil {
-                panic(err)
-            }
-        }
+	for _, policy := range policies {
+		createReq := &api.CreatePolicyRequest{
+			PolicyDefinition: &api.PolicyDefinition{
+				Definition: &api.PolicyDefinition_Policy{
+					Policy: policy,
+				},
+			},
+			AppData: []byte("app data"),
+		}
+		_, err := service.CreatePolicy(ctx, createReq)
+		if err != nil {
+			panic(err)
+		}
+	}
 	return ctx, service
 }
 
@@ -503,16 +503,16 @@ func TestSetRelationshipWithEmptyObjectErrorsOut(t *testing.T) {
 }
 
 func TestListPolicyIdsReturnsAllPolicies(t *testing.T) {
-    ctx, service := setupWithPolicy(testPolicy, restrictedPolicy)
+	ctx, service := setupWithPolicy(testPolicy, restrictedPolicy)
 
-    got, err := service.ListPolicyIds(ctx, &api.ListPolicyIdsRequest{})
+	got, err := service.ListPolicyIds(ctx, &api.ListPolicyIdsRequest{})
 
-    want := []*api.ListPolicyIdsResponse_Record{
-        &api.ListPolicyIdsResponse_Record{ Id: testPolicy.Id },
-        &api.ListPolicyIdsResponse_Record{ Id: restrictedPolicy.Id },
-    }
-    require.Nil(t, err)
-    require.Equal(t, want, got.Records)
+	want := []*api.ListPolicyIdsResponse_Record{
+		&api.ListPolicyIdsResponse_Record{Id: testPolicy.Id},
+		&api.ListPolicyIdsResponse_Record{Id: restrictedPolicy.Id},
+	}
+	require.Nil(t, err)
+	require.Equal(t, want, got.Records)
 }
 
 /*
@@ -529,3 +529,61 @@ func (s *RelationshipServiceTestSuite) TestDeleteNonExistingRelationship() {
 func (s *RelationshipServiceTestSuite) TestUpdatingRelationship() {
 }
 */
+
+func TestFindRelationshipRecords_ObjectSelectorReferencingUnknownRelationReturnsErr(t *testing.T) {
+	builder := domain.SelectorBuilder{}
+	builder.WithObject(domain.NewEntity("unknown-resource", "abc"))
+	builder.AnyRelation()
+	builder.AnySubject()
+	selector := builder.Build()
+
+	ctx, service := setupWithPolicy(testPolicy)
+
+	resp, err := service.FindRelationshipRecords(ctx, &api.FindRelationshipRecordsRequest{
+		PolicyId: testPolicy.Id,
+		Selector: &selector,
+	})
+
+	require.Nil(t, resp)
+	require.ErrorIs(t, err, policy.ErrResourceNotFound)
+}
+
+func TestFindRelationshipRecords_RelationSpecToNonExistingRelationReturnsError(t *testing.T) {
+	builder := domain.SelectorBuilder{}
+	builder.WithObject(domain.NewEntity("file", "abc"))
+	builder.WithRelation("a-relation")
+	builder.AnySubject()
+	selector := builder.Build()
+
+	ctx, service := setupWithPolicy(testPolicy)
+
+	resp, err := service.FindRelationshipRecords(ctx, &api.FindRelationshipRecordsRequest{
+		PolicyId: testPolicy.Id,
+		Selector: &selector,
+	})
+
+	require.Nil(t, resp)
+	require.ErrorIs(t, err, policy.ErrRelationNotFound)
+}
+
+func TestFindRelationshipRecords_SubjectSpecReferencingNonExistingResourceReturnsError(t *testing.T) {
+	builder := domain.SelectorBuilder{}
+	builder.WithObject(domain.NewEntity("file", "abc"))
+	builder.WithRelation("owner")
+	builder.WithSubject(&domain.Subject{
+		Subject: &domain.Subject_Entity{
+			Entity: domain.NewEntity("missing-resource", "abc"),
+		},
+	})
+	selector := builder.Build()
+
+	ctx, service := setupWithPolicy(testPolicy)
+
+	resp, err := service.FindRelationshipRecords(ctx, &api.FindRelationshipRecordsRequest{
+		PolicyId: testPolicy.Id,
+		Selector: &selector,
+	})
+
+	require.Nil(t, resp)
+	require.ErrorIs(t, err, policy.ErrResourceNotFound)
+}

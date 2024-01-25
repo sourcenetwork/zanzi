@@ -11,3 +11,13 @@ func NewPolicyRecord(policy *Policy, data []byte) *PolicyRecord {
 		CreatedAt: timestamppb.Now(),
 	}
 }
+
+// GetResourceByName returns the named resource. If not found returns nil
+func (p *Policy) GetResourceByName(name string) *Resource {
+	for _, resource := range p.Resources {
+		if resource.Name == name {
+			return resource
+		}
+	}
+	return nil
+}

@@ -229,9 +229,23 @@ func (s *Service) FindRelationshipRecords(
 	req *api.FindRelationshipRecordsRequest) (*api.FindRelationshipRecordsResponse, error) {
 	repo := s.getPolicyRepository()
 
+	policy, err := repo.GetPolicy(ctx, req.PolicyId)
+	if err != nil {
+		return nil, err
+	}
+	if policy == nil {
+		return nil, fmt.Errorf("FindRelationshipRecord failed: policy %v: %w", req.PolicyId, ErrPolicyNotFound)
+	}
+
+	spec := ValidSelectorSpec{}
+	err = spec.Satisfies(req.Selector, policy.Policy)
+	if err != nil {
+		return nil, fmt.Errorf("FindRelationshipRecord failed: %w", err)
+	}
+
 	records, err := repo.FindRelationshipRecords(ctx, req.PolicyId, req.Selector)
 	if err != nil {
-		return nil, fmt.Errorf("find relationship records: %w", err)
+		return nil, fmt.Errorf("FindRelationshipRecords failed: %w", err)
 	}
 
 	return &api.FindRelationshipRecordsResponse{
