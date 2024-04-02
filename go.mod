@@ -2,8 +2,6 @@ module github.com/sourcenetwork/zanzi
 
 replace github.com/gogo/protobuf/grpc v1.3.2 => google.golang.org/grpc v1.51.0
 
-replace github.com/sourcenetwork/raccoondb => ./raccoondb
-
 go 1.18
 
 require (
