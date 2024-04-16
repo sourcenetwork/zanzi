@@ -50,7 +50,7 @@ swagger:
 
 .PHONY: example
 example:
-	go build -o build/example example/embedded/main.go
+	go build -o build/example ./example/embedded/main.go
 
 .PHONY: docs
 docs:
