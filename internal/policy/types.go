@@ -23,6 +23,7 @@ type Repository interface {
 	GetPolicy(context.Context, string) (*domain.PolicyRecord, error)
 	DeletePolicy(context.Context, string) (types.RecordFound, error)
 	ListPolicyIds(context.Context) ([]string, error)
+	ListPolicies(context.Context) ([]*domain.PolicyRecord, error)
 
 	SetRelationship(ctx context.Context, record *domain.RelationshipRecord) (bool, error)
 	DeleteRelationship(ctx context.Context, policyId string, spec *domain.Relationship) (types.RecordFound, error)

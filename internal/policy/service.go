@@ -269,3 +269,51 @@ func (s *Service) DeleteRelationships(
 		RecordsAffected: count,
 	}, nil
 }
+
+func (s *Service) ListPolicies(ctx context.Context, req *api.ListPoliciesRequest) (*api.ListPoliciesResponse, error) {
+	repo := s.getPolicyRepository()
+
+	records, err := repo.ListPolicies(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list policies: %v", err)
+	}
+
+	return &api.ListPoliciesResponse{
+		Records: records,
+	}, nil
+}
+
+func (s *Service) ValdiatePolicy(ctx context.Context, req *api.ValidatePolicyRequest) (*api.ValidatePolicyResponse, error) {
+	response := &api.ValidatePolicyResponse{
+		Valid: false,
+	}
+
+	policy, err := GetPolicyFromDefinition(req.PolicyDefinition)
+	if err != nil {
+		response.ErrorMsg = err.Error()
+		return response, nil
+	}
+
+	repo := s.getPolicyRepository()
+
+	fetched, err := repo.GetPolicy(ctx, policy.Id)
+	if fetched != nil {
+		response.ErrorMsg = fmt.Sprintf("pilicy %v: %v", policy.Id, ErrPolicyExists)
+		return response, nil
+	}
+	if err != nil {
+		// represents an IO error, not a validator error
+		return nil, fmt.Errorf("validate policy: %w", err)
+	}
+
+	spec := ValidPolicySpec{}
+	err = spec.Verify(policy)
+	if err != nil {
+		response.ErrorMsg = err.Error()
+		return response, nil
+	}
+
+	return &api.ValidatePolicyResponse{
+		Valid: true,
+	}, nil
+}

@@ -19,6 +19,9 @@ service PolicyService {
     // Supplying a Policy whose ID already exists in the store is an error.
     rpc CreatePolicy(CreatePolicyRequest) returns (CreatePolicyResponse);
 
+    // ValidatePolicy verifies whether a given policy is valid and returns validation errors
+    rpc ValdiatePolicy(ValidatePolicyRequest) returns (ValidatePolicyResponse);
+
     // UpdatePolicy updates the fields and relations for a Policy.
     rpc UpdatePolicy(UpdatePolicyRequest) returns (UpdatePolicyResponse);
 
@@ -30,6 +33,9 @@ service PolicyService {
 
     // List returns all Policies in the Policy store
     rpc ListPolicyIds(ListPolicyIdsRequest) returns (ListPolicyIdsResponse);
+
+    // ListPolicies returns all Policies regsitered in the system
+    rpc ListPolicies(ListPoliciesRequest) returns (ListPoliciesResponse);
 
     // Set adds a Relationship in a Policy
     rpc SetRelationship(SetRelationshipRequest) returns (SetRelationshipResponse);
@@ -176,4 +182,22 @@ message DeleteRelationshipsResponse{
 
 message RelationshipRecordSet {
     repeated sourcenetwork.zanzi.domain.RelationshipRecord records = 1;
+}
+
+message ListPoliciesRequest{
+
+}
+
+message ListPoliciesResponse{
+    repeated sourcenetwork.zanzi.domain.PolicyRecord records = 1;
+}
+
+message ValidatePolicyRequest {
+    PolicyDefinition policy_definition = 1;
+}
+
+
+message ValidatePolicyResponse {
+    bool valid = 1;
+    string error_msg = 2;
 }

@@ -22,10 +22,12 @@ func PolicyServiceClientCommand(options ...client.Option) *cobra.Command {
 	cfg.BindFlags(cmd.PersistentFlags())
 	cmd.AddCommand(
 		_PolicyServiceCreatePolicyCommand(cfg),
+		_PolicyServiceValdiatePolicyCommand(cfg),
 		_PolicyServiceUpdatePolicyCommand(cfg),
 		_PolicyServiceDeletePolicyCommand(cfg),
 		_PolicyServiceGetPolicyCommand(cfg),
 		_PolicyServiceListPolicyIdsCommand(cfg),
+		_PolicyServiceListPoliciesCommand(cfg),
 		_PolicyServiceSetRelationshipCommand(cfg),
 		_PolicyServiceDeleteRelationshipCommand(cfg),
 		_PolicyServiceGetRelationshipCommand(cfg),
@@ -91,6 +93,65 @@ func _PolicyServiceCreatePolicyCommand(cfg *client.Config) *cobra.Command {
 	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicyYaml.PolicyYaml, cfg.FlagNamer("PolicyDefinition PolicyYaml"), "", "Set a YAML serialized Policy definition according to the type definitions")
 	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition PolicyYaml"), func() { req.PolicyDefinition.Definition = PolicyDefinitionPolicyYaml })
 	flag.BytesBase64Var(cmd.PersistentFlags(), &req.AppData, cfg.FlagNamer("AppData"), "app_data is an opaque byte array which applications\n can send to associate satellite data to a Policy")
+
+	return cmd
+}
+
+func _PolicyServiceValdiatePolicyCommand(cfg *client.Config) *cobra.Command {
+	req := &ValidatePolicyRequest{
+		PolicyDefinition: &PolicyDefinition{},
+	}
+
+	cmd := &cobra.Command{
+		Use:   cfg.CommandNamer("ValdiatePolicy"),
+		Short: "ValdiatePolicy RPC client",
+		Long:  "ValidatePolicy verifies whether a given policy is valid and returns validation errors",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if cfg.UseEnvVars {
+				if err := flag.SetFlagsFromEnv(cmd.Parent().PersistentFlags(), true, cfg.EnvVarNamer, cfg.EnvVarPrefix, "PolicyService"); err != nil {
+					return err
+				}
+				if err := flag.SetFlagsFromEnv(cmd.PersistentFlags(), false, cfg.EnvVarNamer, cfg.EnvVarPrefix, "PolicyService", "ValdiatePolicy"); err != nil {
+					return err
+				}
+			}
+			return client.RoundTrip(cmd.Context(), cfg, func(cc grpc.ClientConnInterface, in iocodec.Decoder, out iocodec.Encoder) error {
+				cli := NewPolicyServiceClient(cc)
+				v := &ValidatePolicyRequest{}
+
+				if err := in(v); err != nil {
+					return err
+				}
+				proto.Merge(v, req)
+
+				res, err := cli.ValdiatePolicy(cmd.Context(), v)
+
+				if err != nil {
+					return err
+				}
+
+				return out(res)
+
+			})
+		},
+	}
+
+	PolicyDefinitionPolicy := &domain.Policy{}
+	cmd.PersistentFlags().Bool(cfg.FlagNamer("PolicyDefinition Policy"), false, "")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
+	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicy.Id, cfg.FlagNamer("PolicyDefinition Policy Id"), "", "Identifies a Policy - with a used defined identifier - accross the system.")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Id"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
+	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicy.Name, cfg.FlagNamer("PolicyDefinition Policy Name"), "", "Display name for a Policy")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Name"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
+	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicy.Description, cfg.FlagNamer("PolicyDefinition Policy Description"), "", "Describes context and any additional information of interest for Policy users.")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Description"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
+	flag.SliceVar(cmd.PersistentFlags(), flag.ParseMessageE[*domain.Resource], &PolicyDefinitionPolicy.Resources, cfg.FlagNamer("PolicyDefinition Policy Resources"), "set of Resources defined by a Policy")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Resources"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
+	cmd.PersistentFlags().StringToStringVar(&PolicyDefinitionPolicy.Attributes, cfg.FlagNamer("PolicyDefinition Policy Attributes"), nil, "key-value string attributes supplied by the user")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Attributes"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
+	PolicyDefinitionPolicyYaml := &PolicyDefinition_PolicyYaml{}
+	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicyYaml.PolicyYaml, cfg.FlagNamer("PolicyDefinition PolicyYaml"), "", "Set a YAML serialized Policy definition according to the type definitions")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition PolicyYaml"), func() { req.PolicyDefinition.Definition = PolicyDefinitionPolicyYaml })
 
 	return cmd
 }
@@ -266,6 +327,46 @@ func _PolicyServiceListPolicyIdsCommand(cfg *client.Config) *cobra.Command {
 				proto.Merge(v, req)
 
 				res, err := cli.ListPolicyIds(cmd.Context(), v)
+
+				if err != nil {
+					return err
+				}
+
+				return out(res)
+
+			})
+		},
+	}
+
+	return cmd
+}
+
+func _PolicyServiceListPoliciesCommand(cfg *client.Config) *cobra.Command {
+	req := &ListPoliciesRequest{}
+
+	cmd := &cobra.Command{
+		Use:   cfg.CommandNamer("ListPolicies"),
+		Short: "ListPolicies RPC client",
+		Long:  "ListPolicies returns all Policies regsitered in the system",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if cfg.UseEnvVars {
+				if err := flag.SetFlagsFromEnv(cmd.Parent().PersistentFlags(), true, cfg.EnvVarNamer, cfg.EnvVarPrefix, "PolicyService"); err != nil {
+					return err
+				}
+				if err := flag.SetFlagsFromEnv(cmd.PersistentFlags(), false, cfg.EnvVarNamer, cfg.EnvVarPrefix, "PolicyService", "ListPolicies"); err != nil {
+					return err
+				}
+			}
+			return client.RoundTrip(cmd.Context(), cfg, func(cc grpc.ClientConnInterface, in iocodec.Decoder, out iocodec.Encoder) error {
+				cli := NewPolicyServiceClient(cc)
+				v := &ListPoliciesRequest{}
+
+				if err := in(v); err != nil {
+					return err
+				}
+				proto.Merge(v, req)
+
+				res, err := cli.ListPolicies(cmd.Context(), v)
 
 				if err != nil {
 					return err

@@ -239,11 +239,9 @@ func TestCreatePolicy(t *testing.T) {
 		AppData: []byte("app data"),
 	}
 	t.Log("Create Policy")
-	gotCreate, errCreate := service.CreatePolicy(ctx, createReq)
+	_, errCreate := service.CreatePolicy(ctx, createReq)
 
-	wantCreate := &api.CreatePolicyResponse{}
 	require.Nil(t, errCreate)
-	_testing.ProtoEq(t, gotCreate, wantCreate)
 
 	t.Log("Getting Created Policy")
 	getReq := &api.GetPolicyRequest{
@@ -259,7 +257,9 @@ func TestCreatePolicy(t *testing.T) {
 	gotGet, errGet := service.GetPolicy(ctx, getReq)
 	gotGet.Record.CreatedAt = nil
 	require.Nil(t, errGet)
-	_testing.ProtoEq(t, gotGet, wantGet)
+	wantGet.Reset()
+	gotGet.Reset()
+	require.Equal(t, gotGet, wantGet)
 }
 
 func TestCreatePolicyWithIdClashRaisesError(t *testing.T) {

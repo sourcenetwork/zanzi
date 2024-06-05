@@ -78,15 +78,15 @@ func (r *policyRepository) DeletePolicy(ctx context.Context, id string) (types.R
 }
 
 func (r *policyRepository) ListPolicyIds(context.Context) ([]string, error) {
-    store := r.kvStore.getPolicyStore()
-    ids, err := store.ListIds()
-    if err != nil {
-        return nil, fmt.Errorf("list policy ids: %w", err)
-    }
+	store := r.kvStore.getPolicyStore()
+	ids, err := store.ListIds()
+	if err != nil {
+		return nil, fmt.Errorf("list policy ids: %w", err)
+	}
 
-    return utils.MapSlice(ids, func(id []byte) string {
-        return string(id)
-    }), nil
+	return utils.MapSlice(ids, func(id []byte) string {
+		return string(id)
+	}), nil
 }
 
 func (r *policyRepository) SetRelationship(ctx context.Context, record *domain.RelationshipRecord) (bool, error) {
@@ -215,4 +215,8 @@ func (r *policyRepository) DeleteRelationships(ctx context.Context, policyId str
 
 	removed := len(utils.MapSlice(founds, utils.Identity[types.RecordFound]))
 	return uint64(removed), nil
+}
+
+func (r *policyRepository) ListPolicies(ctx context.Context) ([]*domain.PolicyRecord, error) {
+	return r.kvStore.policyStore.List()
 }

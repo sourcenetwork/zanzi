@@ -23,7 +23,7 @@ func WithDefaultKVStore(path string) option {
 			path = strings.Replace(path, "~", home, 1)
 		}
 
-		kv, err := rcdb.NewLevelDB(path, dataFile)
+		kv, _, err := rcdb.NewLevelDB(path, dataFile)
 		if err != nil {
 			return fmt.Errorf("error initializing kv store: %v", err)
 		}

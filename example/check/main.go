@@ -26,14 +26,12 @@ func main() {
 
 	setupData(ctx, policyServ)
 
-        /*
-		res, err := relGraph.DumpRelationships(ctx, &api.DumpRelationshipsRequest{
-			PolicyId: "10",
-			Format:   api.DumpRelationshipsRequest_DOT,
-		})
-		dot := res.Dump.(*api.DumpRelationshipResponse_Dot).Dot
-		fmt.Println(dot)
-                */
+	res, err := relGraph.DumpRelationships(ctx, &api.DumpRelationshipsRequest{
+		PolicyId: "10",
+		Format:   api.DumpRelationshipsRequest_DOT,
+	})
+	dot := res.Dump.(*api.DumpRelationshipResponse_Dot).Dot
+	fmt.Println(dot)
 
 	/*
 	   res, err := relGraph.Check(ctx, &api.CheckRequest{
@@ -48,23 +46,25 @@ func main() {
 	   fmt.Println(res.Result.Authorized)
 	*/
 
-	res, err := relGraph.Expand(ctx, &api.ExpandRequest{
-		PolicyId: "10",
-		Root: &domain.RelationNode{
-			Node: &domain.RelationNode_EntitySet{
-				EntitySet: &domain.EntitySetNode{
-					Object:   domain.NewEntity("file", "readme"),
-					Relation: "read",
-				},
-			},
-		},
-		Format: api.ExplainFormat_DOT,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
+	/*
+	   res, err := relGraph.Expand(ctx, &api.ExpandRequest{
+	       PolicyId: "10",
+	       Root: &domain.RelationNode{
+	           Node: &domain.RelationNode_EntitySet{
+	               EntitySet: &domain.EntitySetNode{
+	                   Object: domain.NewEntity("file", "readme"),
+	                   Relation: "read",
+	               },
+	           },
+	       },
+	       Format: api.ExplainFormat_DOT,
+	   })
+	   if err != nil {
+	       log.Fatal(err)
+	   }
 
-	fmt.Println(res.GoalTree)
+	   fmt.Println(res.GoalTree)
+	*/
 }
 
 func setupData(ctx context.Context, service api.PolicyServiceServer) {

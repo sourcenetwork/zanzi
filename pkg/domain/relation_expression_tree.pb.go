@@ -410,10 +410,9 @@ func (x *ComputedUserset) GetTargetRelation() string {
 // Let cu_relation = "owner"
 // Let the input object be "doc:readme"
 // TupleToUserset would then:
-//  1. Lookup all tuples matching (obj="doc:readme", relation="parent").
-//     Assume the matching tuples are [(obj="doc:readme", relation="parent", user=(id="dir:root", relation="..."))]
-//  2. For each found tuple, it would compute the userset (obj=${result_tuple_userset_obj}, relation=cu_relation)
-//
+// 1. Lookup all tuples matching (obj="doc:readme", relation="parent").
+//   Assume the matching tuples are [(obj="doc:readme", relation="parent", user=(id="dir:root", relation="..."))]
+// 2. For each found tuple, it would compute the userset (obj=${result_tuple_userset_obj}, relation=cu_relation)
 // The result for this example would be the userset: (obj="dir:root", relation="owner")
 type TupleToUserset struct {
 	state         protoimpl.MessageState

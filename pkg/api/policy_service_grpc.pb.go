@@ -22,10 +22,12 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	PolicyService_CreatePolicy_FullMethodName            = "/sourcenetwork.zanzi.api.PolicyService/CreatePolicy"
+	PolicyService_ValdiatePolicy_FullMethodName          = "/sourcenetwork.zanzi.api.PolicyService/ValdiatePolicy"
 	PolicyService_UpdatePolicy_FullMethodName            = "/sourcenetwork.zanzi.api.PolicyService/UpdatePolicy"
 	PolicyService_DeletePolicy_FullMethodName            = "/sourcenetwork.zanzi.api.PolicyService/DeletePolicy"
 	PolicyService_GetPolicy_FullMethodName               = "/sourcenetwork.zanzi.api.PolicyService/GetPolicy"
 	PolicyService_ListPolicyIds_FullMethodName           = "/sourcenetwork.zanzi.api.PolicyService/ListPolicyIds"
+	PolicyService_ListPolicies_FullMethodName            = "/sourcenetwork.zanzi.api.PolicyService/ListPolicies"
 	PolicyService_SetRelationship_FullMethodName         = "/sourcenetwork.zanzi.api.PolicyService/SetRelationship"
 	PolicyService_DeleteRelationship_FullMethodName      = "/sourcenetwork.zanzi.api.PolicyService/DeleteRelationship"
 	PolicyService_GetRelationship_FullMethodName         = "/sourcenetwork.zanzi.api.PolicyService/GetRelationship"
@@ -40,6 +42,8 @@ type PolicyServiceClient interface {
 	// CreatePolicy creates a new Policy.
 	// Supplying a Policy whose ID already exists in the store is an error.
 	CreatePolicy(ctx context.Context, in *CreatePolicyRequest, opts ...grpc.CallOption) (*CreatePolicyResponse, error)
+	// ValidatePolicy verifies whether a given policy is valid and returns validation errors
+	ValdiatePolicy(ctx context.Context, in *ValidatePolicyRequest, opts ...grpc.CallOption) (*ValidatePolicyResponse, error)
 	// UpdatePolicy updates the fields and relations for a Policy.
 	UpdatePolicy(ctx context.Context, in *UpdatePolicyRequest, opts ...grpc.CallOption) (*UpdatePolicyResponse, error)
 	// Delete removes the Policy with the given Id from the store
@@ -48,6 +52,8 @@ type PolicyServiceClient interface {
 	GetPolicy(ctx context.Context, in *GetPolicyRequest, opts ...grpc.CallOption) (*GetPolicyResponse, error)
 	// List returns all Policies in the Policy store
 	ListPolicyIds(ctx context.Context, in *ListPolicyIdsRequest, opts ...grpc.CallOption) (*ListPolicyIdsResponse, error)
+	// ListPolicies returns all Policies regsitered in the system
+	ListPolicies(ctx context.Context, in *ListPoliciesRequest, opts ...grpc.CallOption) (*ListPoliciesResponse, error)
 	// Set adds a Relationship in a Policy
 	SetRelationship(ctx context.Context, in *SetRelationshipRequest, opts ...grpc.CallOption) (*SetRelationshipResponse, error)
 	// Remove a Relationship from a Policy
@@ -71,6 +77,15 @@ func NewPolicyServiceClient(cc grpc.ClientConnInterface) PolicyServiceClient {
 func (c *policyServiceClient) CreatePolicy(ctx context.Context, in *CreatePolicyRequest, opts ...grpc.CallOption) (*CreatePolicyResponse, error) {
 	out := new(CreatePolicyResponse)
 	err := c.cc.Invoke(ctx, PolicyService_CreatePolicy_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) ValdiatePolicy(ctx context.Context, in *ValidatePolicyRequest, opts ...grpc.CallOption) (*ValidatePolicyResponse, error) {
+	out := new(ValidatePolicyResponse)
+	err := c.cc.Invoke(ctx, PolicyService_ValdiatePolicy_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -107,6 +122,15 @@ func (c *policyServiceClient) GetPolicy(ctx context.Context, in *GetPolicyReques
 func (c *policyServiceClient) ListPolicyIds(ctx context.Context, in *ListPolicyIdsRequest, opts ...grpc.CallOption) (*ListPolicyIdsResponse, error) {
 	out := new(ListPolicyIdsResponse)
 	err := c.cc.Invoke(ctx, PolicyService_ListPolicyIds_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) ListPolicies(ctx context.Context, in *ListPoliciesRequest, opts ...grpc.CallOption) (*ListPoliciesResponse, error) {
+	out := new(ListPoliciesResponse)
+	err := c.cc.Invoke(ctx, PolicyService_ListPolicies_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -165,6 +189,8 @@ type PolicyServiceServer interface {
 	// CreatePolicy creates a new Policy.
 	// Supplying a Policy whose ID already exists in the store is an error.
 	CreatePolicy(context.Context, *CreatePolicyRequest) (*CreatePolicyResponse, error)
+	// ValidatePolicy verifies whether a given policy is valid and returns validation errors
+	ValdiatePolicy(context.Context, *ValidatePolicyRequest) (*ValidatePolicyResponse, error)
 	// UpdatePolicy updates the fields and relations for a Policy.
 	UpdatePolicy(context.Context, *UpdatePolicyRequest) (*UpdatePolicyResponse, error)
 	// Delete removes the Policy with the given Id from the store
@@ -173,6 +199,8 @@ type PolicyServiceServer interface {
 	GetPolicy(context.Context, *GetPolicyRequest) (*GetPolicyResponse, error)
 	// List returns all Policies in the Policy store
 	ListPolicyIds(context.Context, *ListPolicyIdsRequest) (*ListPolicyIdsResponse, error)
+	// ListPolicies returns all Policies regsitered in the system
+	ListPolicies(context.Context, *ListPoliciesRequest) (*ListPoliciesResponse, error)
 	// Set adds a Relationship in a Policy
 	SetRelationship(context.Context, *SetRelationshipRequest) (*SetRelationshipResponse, error)
 	// Remove a Relationship from a Policy
@@ -193,6 +221,9 @@ type UnimplementedPolicyServiceServer struct {
 func (UnimplementedPolicyServiceServer) CreatePolicy(context.Context, *CreatePolicyRequest) (*CreatePolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreatePolicy not implemented")
 }
+func (UnimplementedPolicyServiceServer) ValdiatePolicy(context.Context, *ValidatePolicyRequest) (*ValidatePolicyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValdiatePolicy not implemented")
+}
 func (UnimplementedPolicyServiceServer) UpdatePolicy(context.Context, *UpdatePolicyRequest) (*UpdatePolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePolicy not implemented")
 }
@@ -204,6 +235,9 @@ func (UnimplementedPolicyServiceServer) GetPolicy(context.Context, *GetPolicyReq
 }
 func (UnimplementedPolicyServiceServer) ListPolicyIds(context.Context, *ListPolicyIdsRequest) (*ListPolicyIdsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPolicyIds not implemented")
+}
+func (UnimplementedPolicyServiceServer) ListPolicies(context.Context, *ListPoliciesRequest) (*ListPoliciesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPolicies not implemented")
 }
 func (UnimplementedPolicyServiceServer) SetRelationship(context.Context, *SetRelationshipRequest) (*SetRelationshipResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetRelationship not implemented")
@@ -247,6 +281,24 @@ func _PolicyService_CreatePolicy_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PolicyServiceServer).CreatePolicy(ctx, req.(*CreatePolicyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_ValdiatePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidatePolicyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).ValdiatePolicy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_ValdiatePolicy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).ValdiatePolicy(ctx, req.(*ValidatePolicyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -319,6 +371,24 @@ func _PolicyService_ListPolicyIds_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PolicyServiceServer).ListPolicyIds(ctx, req.(*ListPolicyIdsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_ListPolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPoliciesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).ListPolicies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_ListPolicies_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).ListPolicies(ctx, req.(*ListPoliciesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -425,6 +495,10 @@ var PolicyService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PolicyService_CreatePolicy_Handler,
 		},
 		{
+			MethodName: "ValdiatePolicy",
+			Handler:    _PolicyService_ValdiatePolicy_Handler,
+		},
+		{
 			MethodName: "UpdatePolicy",
 			Handler:    _PolicyService_UpdatePolicy_Handler,
 		},
@@ -439,6 +513,10 @@ var PolicyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPolicyIds",
 			Handler:    _PolicyService_ListPolicyIds_Handler,
+		},
+		{
+			MethodName: "ListPolicies",
+			Handler:    _PolicyService_ListPolicies_Handler,
 		},
 		{
 			MethodName: "SetRelationship",

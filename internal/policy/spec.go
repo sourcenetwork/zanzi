@@ -177,6 +177,10 @@ func (s *AllowedRelationshipSpec) requiredFields(relationship *domain.Relationsh
 	if err != nil {
 		return fmt.Errorf("relationship %v: %w", relationship, ErrInvalidRelationship)
 	}
+
+	if relationship.Object.Id == "" {
+		return fmt.Errorf("relationship %v: object id cannot be empty: %w", relationship, ErrInvalidRelationship)
+	}
 	return nil
 }
 
