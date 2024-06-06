@@ -2,6 +2,8 @@ package zanzi
 
 import (
 	"fmt"
+	"os/user"
+	"strings"
 
 	rcdb "github.com/sourcenetwork/raccoondb"
 	"go.uber.org/zap"
@@ -152,4 +154,25 @@ func (z *Zanzi) GetPolicyService() api.PolicyServiceServer {
 
 func (z *Zanzi) GetLogger() types.Logger {
 	return z.logger
+}
+
+// WithDefaultKVStore configures Zanzi to use Raccoons default PersistentKV Store. Data will be stored in path
+func WithDefaultKVStore(path string) option {
+	return func(z *Zanzi) error {
+		if strings.HasPrefix(path, "~") {
+			usr, err := user.Current()
+			if err != nil {
+				return fmt.Errorf("error identifying user: %w", err)
+			}
+			home := usr.HomeDir
+
+			path = strings.Replace(path, "~", home, 1)
+		}
+
+		kv, err := rcdb.NewPersistentKV(path, dataFile)
+		if err != nil {
+			return fmt.Errorf("error initializing kv store: %v", err)
+		}
+		return WithKVStore(kv)(z)
+	}
 }

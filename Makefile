@@ -4,6 +4,10 @@ GO_MOD="github.com/sourcenetwork/zanzi"
 .PHONY: build
 build: zanzi-cli zanzid
 
+.PHONY: build-wasm
+build-wasm:
+	GOOS=js GOARCH=wasm go build cmd/zanzid/main.go
+
 .PHONY: zanzi-cli
 zanzi-cli:
 	go build -gcflags="-e" -v -o build/zanzi-cli cmd/zanzi-cli/main.go
