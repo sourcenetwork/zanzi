@@ -11,7 +11,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/google/go-cmp v0.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.2
-	github.com/sourcenetwork/raccoondb v0.2.1-0.20240606191850-1a981f852a15
+	github.com/sourcenetwork/raccoondb v0.2.1-0.20240606193653-1e91e9be9234
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.24.0

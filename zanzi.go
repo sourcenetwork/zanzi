@@ -129,6 +129,7 @@ type Zanzi struct {
 	relGraphService api.RelationGraphServer
 	logger          types.Logger
 	store           store.Store
+	terminationFns  []func() error
 }
 
 func (z *Zanzi) init() {
@@ -156,6 +157,16 @@ func (z *Zanzi) GetLogger() types.Logger {
 	return z.logger
 }
 
+func (z *Zanzi) Cleanup() error {
+	for _, fn := range z.terminationFns {
+		err := fn()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // WithDefaultKVStore configures Zanzi to use Raccoons default PersistentKV Store. Data will be stored in path
 func WithDefaultKVStore(path string) option {
 	return func(z *Zanzi) error {
@@ -169,10 +180,11 @@ func WithDefaultKVStore(path string) option {
 			path = strings.Replace(path, "~", home, 1)
 		}
 
-		kv, err := rcdb.NewPersistentKV(path, dataFile)
+		kv, closeFn, err := rcdb.NewPersistentKV(path, dataFile)
 		if err != nil {
 			return fmt.Errorf("error initializing kv store: %v", err)
 		}
+		z.terminationFns = append(z.terminationFns, closeFn)
 		return WithKVStore(kv)(z)
 	}
 }
