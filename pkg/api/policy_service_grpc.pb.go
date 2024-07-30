@@ -29,6 +29,7 @@ const (
 	PolicyService_ListPolicyIds_FullMethodName           = "/sourcenetwork.zanzi.api.PolicyService/ListPolicyIds"
 	PolicyService_ListPolicies_FullMethodName            = "/sourcenetwork.zanzi.api.PolicyService/ListPolicies"
 	PolicyService_SetRelationship_FullMethodName         = "/sourcenetwork.zanzi.api.PolicyService/SetRelationship"
+	PolicyService_ValidateRelationship_FullMethodName    = "/sourcenetwork.zanzi.api.PolicyService/ValidateRelationship"
 	PolicyService_DeleteRelationship_FullMethodName      = "/sourcenetwork.zanzi.api.PolicyService/DeleteRelationship"
 	PolicyService_GetRelationship_FullMethodName         = "/sourcenetwork.zanzi.api.PolicyService/GetRelationship"
 	PolicyService_DeleteRelationships_FullMethodName     = "/sourcenetwork.zanzi.api.PolicyService/DeleteRelationships"
@@ -56,6 +57,8 @@ type PolicyServiceClient interface {
 	ListPolicies(ctx context.Context, in *ListPoliciesRequest, opts ...grpc.CallOption) (*ListPoliciesResponse, error)
 	// Set adds a Relationship in a Policy
 	SetRelationship(ctx context.Context, in *SetRelationshipRequest, opts ...grpc.CallOption) (*SetRelationshipResponse, error)
+	// ValidateRelationship verifies whether a Relationship would be accepeted by a Policy
+	ValidateRelationship(ctx context.Context, in *ValidateRelationshipRequest, opts ...grpc.CallOption) (*ValidateRelationshipResponse, error)
 	// Remove a Relationship from a Policy
 	DeleteRelationship(ctx context.Context, in *DeleteRelationshipRequest, opts ...grpc.CallOption) (*DeleteRelationshipResponse, error)
 	// Get fetches a Relationship contained in a Policy, if it exists
@@ -146,6 +149,15 @@ func (c *policyServiceClient) SetRelationship(ctx context.Context, in *SetRelati
 	return out, nil
 }
 
+func (c *policyServiceClient) ValidateRelationship(ctx context.Context, in *ValidateRelationshipRequest, opts ...grpc.CallOption) (*ValidateRelationshipResponse, error) {
+	out := new(ValidateRelationshipResponse)
+	err := c.cc.Invoke(ctx, PolicyService_ValidateRelationship_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *policyServiceClient) DeleteRelationship(ctx context.Context, in *DeleteRelationshipRequest, opts ...grpc.CallOption) (*DeleteRelationshipResponse, error) {
 	out := new(DeleteRelationshipResponse)
 	err := c.cc.Invoke(ctx, PolicyService_DeleteRelationship_FullMethodName, in, out, opts...)
@@ -203,6 +215,8 @@ type PolicyServiceServer interface {
 	ListPolicies(context.Context, *ListPoliciesRequest) (*ListPoliciesResponse, error)
 	// Set adds a Relationship in a Policy
 	SetRelationship(context.Context, *SetRelationshipRequest) (*SetRelationshipResponse, error)
+	// ValidateRelationship verifies whether a Relationship would be accepeted by a Policy
+	ValidateRelationship(context.Context, *ValidateRelationshipRequest) (*ValidateRelationshipResponse, error)
 	// Remove a Relationship from a Policy
 	DeleteRelationship(context.Context, *DeleteRelationshipRequest) (*DeleteRelationshipResponse, error)
 	// Get fetches a Relationship contained in a Policy, if it exists
@@ -241,6 +255,9 @@ func (UnimplementedPolicyServiceServer) ListPolicies(context.Context, *ListPolic
 }
 func (UnimplementedPolicyServiceServer) SetRelationship(context.Context, *SetRelationshipRequest) (*SetRelationshipResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetRelationship not implemented")
+}
+func (UnimplementedPolicyServiceServer) ValidateRelationship(context.Context, *ValidateRelationshipRequest) (*ValidateRelationshipResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateRelationship not implemented")
 }
 func (UnimplementedPolicyServiceServer) DeleteRelationship(context.Context, *DeleteRelationshipRequest) (*DeleteRelationshipResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteRelationship not implemented")
@@ -411,6 +428,24 @@ func _PolicyService_SetRelationship_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PolicyService_ValidateRelationship_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateRelationshipRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).ValidateRelationship(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_ValidateRelationship_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).ValidateRelationship(ctx, req.(*ValidateRelationshipRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _PolicyService_DeleteRelationship_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRelationshipRequest)
 	if err := dec(in); err != nil {
@@ -521,6 +556,10 @@ var PolicyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetRelationship",
 			Handler:    _PolicyService_SetRelationship_Handler,
+		},
+		{
+			MethodName: "ValidateRelationship",
+			Handler:    _PolicyService_ValidateRelationship_Handler,
 		},
 		{
 			MethodName: "DeleteRelationship",

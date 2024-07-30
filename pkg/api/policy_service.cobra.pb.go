@@ -29,6 +29,7 @@ func PolicyServiceClientCommand(options ...client.Option) *cobra.Command {
 		_PolicyServiceListPolicyIdsCommand(cfg),
 		_PolicyServiceListPoliciesCommand(cfg),
 		_PolicyServiceSetRelationshipCommand(cfg),
+		_PolicyServiceValidateRelationshipCommand(cfg),
 		_PolicyServiceDeleteRelationshipCommand(cfg),
 		_PolicyServiceGetRelationshipCommand(cfg),
 		_PolicyServiceDeleteRelationshipsCommand(cfg),
@@ -463,6 +464,91 @@ func _PolicyServiceSetRelationshipCommand(cfg *client.Config) *cobra.Command {
 		req.Relationship.Subject.Subject = &domain.Subject_ResourceSet{ResourceSet: RelationshipSubjectResourceSet}
 	})
 	flag.BytesBase64Var(cmd.PersistentFlags(), &req.AppData, cfg.FlagNamer("AppData"), "opaque byte array to be stored with relationship")
+
+	return cmd
+}
+
+func _PolicyServiceValidateRelationshipCommand(cfg *client.Config) *cobra.Command {
+	req := &ValidateRelationshipRequest{
+		Relationship: &domain.Relationship{
+			Object:  &domain.Entity{},
+			Subject: &domain.Subject{},
+		},
+	}
+
+	cmd := &cobra.Command{
+		Use:   cfg.CommandNamer("ValidateRelationship"),
+		Short: "ValidateRelationship RPC client",
+		Long:  "ValidateRelationship verifies whether a Relationship would be accepeted by a Policy",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if cfg.UseEnvVars {
+				if err := flag.SetFlagsFromEnv(cmd.Parent().PersistentFlags(), true, cfg.EnvVarNamer, cfg.EnvVarPrefix, "PolicyService"); err != nil {
+					return err
+				}
+				if err := flag.SetFlagsFromEnv(cmd.PersistentFlags(), false, cfg.EnvVarNamer, cfg.EnvVarPrefix, "PolicyService", "ValidateRelationship"); err != nil {
+					return err
+				}
+			}
+			return client.RoundTrip(cmd.Context(), cfg, func(cc grpc.ClientConnInterface, in iocodec.Decoder, out iocodec.Encoder) error {
+				cli := NewPolicyServiceClient(cc)
+				v := &ValidateRelationshipRequest{}
+
+				if err := in(v); err != nil {
+					return err
+				}
+				proto.Merge(v, req)
+
+				res, err := cli.ValidateRelationship(cmd.Context(), v)
+
+				if err != nil {
+					return err
+				}
+
+				return out(res)
+
+			})
+		},
+	}
+
+	cmd.PersistentFlags().StringVar(&req.PolicyId, cfg.FlagNamer("PolicyId"), "", "policy which contains relationship")
+	cmd.PersistentFlags().StringVar(&req.Relationship.Object.Resource, cfg.FlagNamer("Relationship Object Resource"), "", "resource represents the resource name which will contain the entity")
+	cmd.PersistentFlags().StringVar(&req.Relationship.Object.Id, cfg.FlagNamer("Relationship Object Id"), "", "id is an unique identifier for the entity within a resource")
+	cmd.PersistentFlags().StringVar(&req.Relationship.Relation, cfg.FlagNamer("Relationship Relation"), "", "relation represents the relation of the relationship")
+	RelationshipSubjectEntity := &domain.Entity{}
+	cmd.PersistentFlags().Bool(cfg.FlagNamer("Relationship Subject Entity"), false, "")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Relationship Subject Entity"), func() { req.Relationship.Subject.Subject = &domain.Subject_Entity{Entity: RelationshipSubjectEntity} })
+	cmd.PersistentFlags().StringVar(&RelationshipSubjectEntity.Resource, cfg.FlagNamer("Relationship Subject Entity Resource"), "", "resource represents the resource name which will contain the entity")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Relationship Subject Entity Resource"), func() { req.Relationship.Subject.Subject = &domain.Subject_Entity{Entity: RelationshipSubjectEntity} })
+	cmd.PersistentFlags().StringVar(&RelationshipSubjectEntity.Id, cfg.FlagNamer("Relationship Subject Entity Id"), "", "id is an unique identifier for the entity within a resource")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Relationship Subject Entity Id"), func() { req.Relationship.Subject.Subject = &domain.Subject_Entity{Entity: RelationshipSubjectEntity} })
+	RelationshipSubjectEntitySet := &domain.EntitySet{
+		Entity: &domain.Entity{},
+	}
+	cmd.PersistentFlags().Bool(cfg.FlagNamer("Relationship Subject EntitySet"), false, "")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Relationship Subject EntitySet"), func() {
+		req.Relationship.Subject.Subject = &domain.Subject_EntitySet{EntitySet: RelationshipSubjectEntitySet}
+	})
+	cmd.PersistentFlags().StringVar(&RelationshipSubjectEntitySet.Entity.Resource, cfg.FlagNamer("Relationship Subject EntitySet Entity Resource"), "", "resource represents the resource name which will contain the entity")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Relationship Subject EntitySet Entity Resource"), func() {
+		req.Relationship.Subject.Subject = &domain.Subject_EntitySet{EntitySet: RelationshipSubjectEntitySet}
+	})
+	cmd.PersistentFlags().StringVar(&RelationshipSubjectEntitySet.Entity.Id, cfg.FlagNamer("Relationship Subject EntitySet Entity Id"), "", "id is an unique identifier for the entity within a resource")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Relationship Subject EntitySet Entity Id"), func() {
+		req.Relationship.Subject.Subject = &domain.Subject_EntitySet{EntitySet: RelationshipSubjectEntitySet}
+	})
+	cmd.PersistentFlags().StringVar(&RelationshipSubjectEntitySet.Relation, cfg.FlagNamer("Relationship Subject EntitySet Relation"), "", "")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Relationship Subject EntitySet Relation"), func() {
+		req.Relationship.Subject.Subject = &domain.Subject_EntitySet{EntitySet: RelationshipSubjectEntitySet}
+	})
+	RelationshipSubjectResourceSet := &domain.ResourceSet{}
+	cmd.PersistentFlags().Bool(cfg.FlagNamer("Relationship Subject ResourceSet"), false, "")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Relationship Subject ResourceSet"), func() {
+		req.Relationship.Subject.Subject = &domain.Subject_ResourceSet{ResourceSet: RelationshipSubjectResourceSet}
+	})
+	cmd.PersistentFlags().StringVar(&RelationshipSubjectResourceSet.ResourceName, cfg.FlagNamer("Relationship Subject ResourceSet ResourceName"), "", "resource_name is the name of the resource whose entities should be granted a relation")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Relationship Subject ResourceSet ResourceName"), func() {
+		req.Relationship.Subject.Subject = &domain.Subject_ResourceSet{ResourceSet: RelationshipSubjectResourceSet}
+	})
 
 	return cmd
 }

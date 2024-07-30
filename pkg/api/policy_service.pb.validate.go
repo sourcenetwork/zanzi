@@ -3238,6 +3238,247 @@ var _ interface {
 	ErrorName() string
 } = ValidatePolicyResponseValidationError{}
 
+// Validate checks the field values on ValidateRelationshipRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ValidateRelationshipRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ValidateRelationshipRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ValidateRelationshipRequestMultiError, or nil if none found.
+func (m *ValidateRelationshipRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ValidateRelationshipRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for PolicyId
+
+	if all {
+		switch v := interface{}(m.GetRelationship()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ValidateRelationshipRequestValidationError{
+					field:  "Relationship",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ValidateRelationshipRequestValidationError{
+					field:  "Relationship",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRelationship()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ValidateRelationshipRequestValidationError{
+				field:  "Relationship",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ValidateRelationshipRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ValidateRelationshipRequestMultiError is an error wrapping multiple
+// validation errors returned by ValidateRelationshipRequest.ValidateAll() if
+// the designated constraints aren't met.
+type ValidateRelationshipRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ValidateRelationshipRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ValidateRelationshipRequestMultiError) AllErrors() []error { return m }
+
+// ValidateRelationshipRequestValidationError is the validation error returned
+// by ValidateRelationshipRequest.Validate if the designated constraints
+// aren't met.
+type ValidateRelationshipRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ValidateRelationshipRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ValidateRelationshipRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ValidateRelationshipRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ValidateRelationshipRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ValidateRelationshipRequestValidationError) ErrorName() string {
+	return "ValidateRelationshipRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ValidateRelationshipRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sValidateRelationshipRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ValidateRelationshipRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ValidateRelationshipRequestValidationError{}
+
+// Validate checks the field values on ValidateRelationshipResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ValidateRelationshipResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ValidateRelationshipResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ValidateRelationshipResponseMultiError, or nil if none found.
+func (m *ValidateRelationshipResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ValidateRelationshipResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Valid
+
+	// no validation rules for ErrorMsg
+
+	if len(errors) > 0 {
+		return ValidateRelationshipResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ValidateRelationshipResponseMultiError is an error wrapping multiple
+// validation errors returned by ValidateRelationshipResponse.ValidateAll() if
+// the designated constraints aren't met.
+type ValidateRelationshipResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ValidateRelationshipResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ValidateRelationshipResponseMultiError) AllErrors() []error { return m }
+
+// ValidateRelationshipResponseValidationError is the validation error returned
+// by ValidateRelationshipResponse.Validate if the designated constraints
+// aren't met.
+type ValidateRelationshipResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ValidateRelationshipResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ValidateRelationshipResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ValidateRelationshipResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ValidateRelationshipResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ValidateRelationshipResponseValidationError) ErrorName() string {
+	return "ValidateRelationshipResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ValidateRelationshipResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sValidateRelationshipResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ValidateRelationshipResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ValidateRelationshipResponseValidationError{}
+
 // Validate checks the field values on ListPolicyIdsResponse_Record with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

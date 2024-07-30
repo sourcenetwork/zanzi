@@ -40,6 +40,9 @@ service PolicyService {
     // Set adds a Relationship in a Policy
     rpc SetRelationship(SetRelationshipRequest) returns (SetRelationshipResponse);
 
+    // ValidateRelationship verifies whether a Relationship would be accepeted by a Policy
+    rpc ValidateRelationship(ValidateRelationshipRequest) returns (ValidateRelationshipResponse);
+
     // Remove a Relationship from a Policy
     rpc DeleteRelationship(DeleteRelationshipRequest) returns (DeleteRelationshipResponse);
 
@@ -196,8 +199,18 @@ message ValidatePolicyRequest {
     PolicyDefinition policy_definition = 1;
 }
 
-
 message ValidatePolicyResponse {
+    bool valid = 1;
+    string error_msg = 2;
+}
+
+message ValidateRelationshipRequest{
+    // policy which contains relationship
+    string policy_id = 1;
+    sourcenetwork.zanzi.domain.Relationship relationship = 2;
+}
+
+message ValidateRelationshipResponse{
     bool valid = 1;
     string error_msg = 2;
 }

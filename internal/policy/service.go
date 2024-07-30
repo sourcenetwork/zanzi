@@ -317,3 +317,30 @@ func (s *Service) ValdiatePolicy(ctx context.Context, req *api.ValidatePolicyReq
 		Valid: true,
 	}, nil
 }
+
+func (s *Service) ValidateRelationship(ctx context.Context, req *api.ValidateRelationshipRequest) (*api.ValidateRelationshipResponse, error) {
+	repo := s.getPolicyRepository()
+
+	record, err := repo.GetPolicy(ctx, req.PolicyId)
+	if err != nil {
+		return nil, fmt.Errorf("validate relationship: %w", err)
+	} else if record == nil {
+		return nil, fmt.Errorf("validate relationship: policy %v: %w", req.PolicyId, ErrPolicyNotFound)
+	}
+
+	lut := NewPolicyLookUpTable(record.Policy)
+	spec := AllowedRelationshipSpec{}
+
+	err = spec.Satisfies(req.Relationship, lut)
+	if err != nil {
+		return &api.ValidateRelationshipResponse{
+			Valid:    false,
+			ErrorMsg: err.Error(),
+		}, nil
+	}
+
+	return &api.ValidateRelationshipResponse{
+		Valid:    true,
+		ErrorMsg: "",
+	}, nil
+}
