@@ -387,6 +387,10 @@ func (s *ValidSelectorSpec) validRelationSelector(objSelector *domain.ObjectSele
 
 	relName := relSelector.GetRelationName()
 
+	if objSelector.GetWildcard() != nil {
+		return nil
+	}
+
 	resourceName := s.getObjectSelectorResourceName(objSelector)
 	resource := policy.GetResourceByName(resourceName)
 	relation := resource.GetRelationByName(relName)
