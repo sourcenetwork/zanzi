@@ -149,23 +149,12 @@ func (r *policyRepository) DeleteRelationship(ctx context.Context, policyId stri
 
 func (r *policyRepository) FindRelationships(ctx context.Context, policyId string, selector *domain.RelationshipSelector) ([]*domain.Relationship, error) {
 	relationshipStore := r.kvStore.getRelationshipStore(policyId)
-
-	rels, err := relationshipStore.List()
+	fetcher := newRelationshipFetcher(relationshipStore, r.mapper)
+	result, err := fetcher.Fetch(ctx, selector)
 	if err != nil {
 		return nil, err
 	}
-
-	spec, err := policy.NewSelectorSpec(selector)
-	if err != nil {
-		return nil, err
-	}
-
-	mapped := utils.MapSlice(rels, func(relationship *Relationship) *domain.Relationship {
-		mapped := r.mapper.FromInternal(relationship)
-		return &mapped
-	})
-	filtered := utils.Filter(mapped, func(relationship *domain.Relationship) bool { return spec.Satisfies(relationship) })
-	return filtered, nil
+	return result, nil
 }
 
 func (r *policyRepository) GetRelationship(ctx context.Context, policyId string, relationship *domain.Relationship) (*domain.RelationshipRecord, error) {
