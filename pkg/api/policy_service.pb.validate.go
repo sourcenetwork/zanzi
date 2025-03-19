@@ -326,6 +326,274 @@ var _ interface {
 	ErrorName() string
 } = CreatePolicyRequestValidationError{}
 
+// Validate checks the field values on EditPolicyRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *EditPolicyRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on EditPolicyRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// EditPolicyRequestMultiError, or nil if none found.
+func (m *EditPolicyRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *EditPolicyRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for PolicyId
+
+	if all {
+		switch v := interface{}(m.GetPolicyDefinition()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, EditPolicyRequestValidationError{
+					field:  "PolicyDefinition",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, EditPolicyRequestValidationError{
+					field:  "PolicyDefinition",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPolicyDefinition()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return EditPolicyRequestValidationError{
+				field:  "PolicyDefinition",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for AppData
+
+	if len(errors) > 0 {
+		return EditPolicyRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// EditPolicyRequestMultiError is an error wrapping multiple validation errors
+// returned by EditPolicyRequest.ValidateAll() if the designated constraints
+// aren't met.
+type EditPolicyRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m EditPolicyRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m EditPolicyRequestMultiError) AllErrors() []error { return m }
+
+// EditPolicyRequestValidationError is the validation error returned by
+// EditPolicyRequest.Validate if the designated constraints aren't met.
+type EditPolicyRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e EditPolicyRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e EditPolicyRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e EditPolicyRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e EditPolicyRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e EditPolicyRequestValidationError) ErrorName() string {
+	return "EditPolicyRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e EditPolicyRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sEditPolicyRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = EditPolicyRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = EditPolicyRequestValidationError{}
+
+// Validate checks the field values on EditPolicyResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *EditPolicyResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on EditPolicyResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// EditPolicyResponseMultiError, or nil if none found.
+func (m *EditPolicyResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *EditPolicyResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetRecord()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, EditPolicyResponseValidationError{
+					field:  "Record",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, EditPolicyResponseValidationError{
+					field:  "Record",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRecord()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return EditPolicyResponseValidationError{
+				field:  "Record",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for RemovedRelationshipsCount
+
+	if len(errors) > 0 {
+		return EditPolicyResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// EditPolicyResponseMultiError is an error wrapping multiple validation errors
+// returned by EditPolicyResponse.ValidateAll() if the designated constraints
+// aren't met.
+type EditPolicyResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m EditPolicyResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m EditPolicyResponseMultiError) AllErrors() []error { return m }
+
+// EditPolicyResponseValidationError is the validation error returned by
+// EditPolicyResponse.Validate if the designated constraints aren't met.
+type EditPolicyResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e EditPolicyResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e EditPolicyResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e EditPolicyResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e EditPolicyResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e EditPolicyResponseValidationError) ErrorName() string {
+	return "EditPolicyResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e EditPolicyResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sEditPolicyResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = EditPolicyResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = EditPolicyResponseValidationError{}
+
 // Validate checks the field values on UpdatePolicyRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

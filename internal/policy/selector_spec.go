@@ -46,6 +46,8 @@ func NewSelectorSpec(selector *domain.RelationshipSelector) (RelationshipSelecto
 		spec.subjectPredicate = spec.subjectWildcardSpec()
 	case *domain.SubjectSelector_ResourceSpec:
 		spec.subjectPredicate = spec.subjectResourceSpec(subjectSelector.ResourceSpec)
+	case *domain.SubjectSelector_SubjectGroup:
+		spec.subjectPredicate = spec.subjectGroupSpec(subjectSelector.SubjectGroup.ResourceName, subjectSelector.SubjectGroup.RelationName)
 	default:
 		return spec, fmt.Errorf("SubjectSelector %v: %w", subjectSelector, domain.ErrInvalidVariant)
 	}
@@ -106,6 +108,21 @@ func (s *RelationshipSelectorSpec) subjectResourceSpec(resourceName string) pred
 			return subject.Entity.Resource == resourceName
 		case *domain.Subject_EntitySet:
 			return subject.EntitySet.Entity.Resource == resourceName
+		case *domain.Subject_ResourceSet:
+			return subject.ResourceSet.ResourceName == resourceName
+		default:
+			return false
+		}
+	}
+}
+
+func (s *RelationshipSelectorSpec) subjectGroupSpec(resourceName, relationName string) predicate {
+	return func(r *domain.Relationship) bool {
+		switch subject := r.Subject.Subject.(type) {
+		case *domain.Subject_Entity:
+			return false
+		case *domain.Subject_EntitySet:
+			return subject.EntitySet.Entity.Resource == resourceName && subject.EntitySet.Relation == relationName
 		case *domain.Subject_ResourceSet:
 			return subject.ResourceSet.ResourceName == resourceName
 		default:

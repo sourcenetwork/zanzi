@@ -344,3 +344,46 @@ func (s *Service) ValidateRelationship(ctx context.Context, req *api.ValidateRel
 		ErrorMsg: "",
 	}, nil
 }
+
+func (s *Service) EditPolicy(ctx context.Context, req *api.EditPolicyRequest) (*api.EditPolicyResponse, error) {
+	record, err := s.repository.GetPolicy(ctx, req.PolicyId)
+	if err != nil {
+		return nil, fmt.Errorf("edit policy: %w", err)
+	} else if record == nil {
+		return nil, fmt.Errorf("edit policy: policy %v: %w", req.PolicyId, ErrPolicyNotFound)
+	}
+
+	policy, err := GetPolicyFromDefinition(req.PolicyDefinition)
+	if err != nil {
+		return nil, fmt.Errorf("edit policy: %w", err)
+	}
+
+	spec := ValidPolicySpec{}
+	err = spec.Verify(policy)
+	if err != nil {
+		return nil, fmt.Errorf("edit policy: %w", err)
+	}
+
+	comparator := policyComparator{}
+	ops := comparator.Compare(ctx, record.Policy, policy)
+
+	acc := operationResult{}
+	for _, op := range ops {
+		result, err := op.Execute(ctx, s.repository, record.Policy.Id)
+		if err != nil {
+			return nil, fmt.Errorf("edit policy: %w", err)
+		}
+		acc.RelationshipsRemoved += result.RelationshipsRemoved
+	}
+
+	record.Policy = policy
+	_, err = s.repository.SetPolicy(ctx, record)
+	if err != nil {
+		return nil, fmt.Errorf("edit policy: %w", err)
+	}
+
+	return &api.EditPolicyResponse{
+		Record:                    record,
+		RemovedRelationshipsCount: acc.RelationshipsRemoved,
+	}, nil
+}

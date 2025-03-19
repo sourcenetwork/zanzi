@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"github.com/sourcenetwork/zanzi/internal/utils"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -20,4 +21,14 @@ func (p *Policy) GetResourceByName(name string) *Resource {
 		}
 	}
 	return nil
+}
+
+// GetResourcesNames returns a slice of resource names contained in the policy
+func (p *Policy) GetResourcesNames() []string {
+	return utils.MapSlice(p.Resources, func(r *Resource) string { return r.Name })
+}
+
+// GetRelationsNames returns a slice of relation names contained in the resource
+func (r *Resource) GetRelationsNames() []string {
+	return utils.MapSlice(r.Relations, func(r *Relation) string { return r.Name })
 }

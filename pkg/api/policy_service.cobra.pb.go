@@ -22,6 +22,7 @@ func PolicyServiceClientCommand(options ...client.Option) *cobra.Command {
 	cfg.BindFlags(cmd.PersistentFlags())
 	cmd.AddCommand(
 		_PolicyServiceCreatePolicyCommand(cfg),
+		_PolicyServiceEditPolicyCommand(cfg),
 		_PolicyServiceValdiatePolicyCommand(cfg),
 		_PolicyServiceUpdatePolicyCommand(cfg),
 		_PolicyServiceDeletePolicyCommand(cfg),
@@ -77,6 +78,67 @@ func _PolicyServiceCreatePolicyCommand(cfg *client.Config) *cobra.Command {
 		},
 	}
 
+	PolicyDefinitionPolicy := &domain.Policy{}
+	cmd.PersistentFlags().Bool(cfg.FlagNamer("PolicyDefinition Policy"), false, "")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
+	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicy.Id, cfg.FlagNamer("PolicyDefinition Policy Id"), "", "Identifies a Policy - with a used defined identifier - accross the system.")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Id"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
+	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicy.Name, cfg.FlagNamer("PolicyDefinition Policy Name"), "", "Display name for a Policy")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Name"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
+	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicy.Description, cfg.FlagNamer("PolicyDefinition Policy Description"), "", "Describes context and any additional information of interest for Policy users.")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Description"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
+	flag.SliceVar(cmd.PersistentFlags(), flag.ParseMessageE[*domain.Resource], &PolicyDefinitionPolicy.Resources, cfg.FlagNamer("PolicyDefinition Policy Resources"), "set of Resources defined by a Policy")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Resources"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
+	cmd.PersistentFlags().StringToStringVar(&PolicyDefinitionPolicy.Attributes, cfg.FlagNamer("PolicyDefinition Policy Attributes"), nil, "key-value string attributes supplied by the user")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy Attributes"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
+	PolicyDefinitionPolicyYaml := &PolicyDefinition_PolicyYaml{}
+	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicyYaml.PolicyYaml, cfg.FlagNamer("PolicyDefinition PolicyYaml"), "", "Set a YAML serialized Policy definition according to the type definitions")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition PolicyYaml"), func() { req.PolicyDefinition.Definition = PolicyDefinitionPolicyYaml })
+	flag.BytesBase64Var(cmd.PersistentFlags(), &req.AppData, cfg.FlagNamer("AppData"), "app_data is an opaque byte array which applications\n can send to associate satellite data to a Policy")
+
+	return cmd
+}
+
+func _PolicyServiceEditPolicyCommand(cfg *client.Config) *cobra.Command {
+	req := &EditPolicyRequest{
+		PolicyDefinition: &PolicyDefinition{},
+	}
+
+	cmd := &cobra.Command{
+		Use:   cfg.CommandNamer("EditPolicy"),
+		Short: "EditPolicy RPC client",
+		Long:  "EditPolicy modifies a previously created Policy definition.\n It adds and removes resources and relations in order to match the\n new given Policy definition.\n \n If the mutation removes a resource / relation from a Policy,\n associated relationships are also removed.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if cfg.UseEnvVars {
+				if err := flag.SetFlagsFromEnv(cmd.Parent().PersistentFlags(), true, cfg.EnvVarNamer, cfg.EnvVarPrefix, "PolicyService"); err != nil {
+					return err
+				}
+				if err := flag.SetFlagsFromEnv(cmd.PersistentFlags(), false, cfg.EnvVarNamer, cfg.EnvVarPrefix, "PolicyService", "EditPolicy"); err != nil {
+					return err
+				}
+			}
+			return client.RoundTrip(cmd.Context(), cfg, func(cc grpc.ClientConnInterface, in iocodec.Decoder, out iocodec.Encoder) error {
+				cli := NewPolicyServiceClient(cc)
+				v := &EditPolicyRequest{}
+
+				if err := in(v); err != nil {
+					return err
+				}
+				proto.Merge(v, req)
+
+				res, err := cli.EditPolicy(cmd.Context(), v)
+
+				if err != nil {
+					return err
+				}
+
+				return out(res)
+
+			})
+		},
+	}
+
+	cmd.PersistentFlags().StringVar(&req.PolicyId, cfg.FlagNamer("PolicyId"), "", "")
 	PolicyDefinitionPolicy := &domain.Policy{}
 	cmd.PersistentFlags().Bool(cfg.FlagNamer("PolicyDefinition Policy"), false, "")
 	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition Policy"), func() { req.PolicyDefinition.Definition = &PolicyDefinition_Policy{Policy: PolicyDefinitionPolicy} })
@@ -842,8 +904,21 @@ func _PolicyServiceDeleteRelationshipsCommand(cfg *client.Config) *cobra.Command
 		SelectorSubjectSelectorSubjectSpec.Subject = &domain.Subject_ResourceSet{ResourceSet: SelectorSubjectSelectorSubjectSpecResourceSet}
 	})
 	SelectorSubjectSelectorResourceSpec := &domain.SubjectSelector_ResourceSpec{}
-	cmd.PersistentFlags().StringVar(&SelectorSubjectSelectorResourceSpec.ResourceSpec, cfg.FlagNamer("Selector SubjectSelector ResourceSpec"), "", "resoruce_spec represents that all entities in a resource are included in the selector.")
+	cmd.PersistentFlags().StringVar(&SelectorSubjectSelectorResourceSpec.ResourceSpec, cfg.FlagNamer("Selector SubjectSelector ResourceSpec"), "", "resource_spec represents that all entities in a resource are included in the selector.")
 	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Selector SubjectSelector ResourceSpec"), func() { req.Selector.SubjectSelector.Selector = SelectorSubjectSelectorResourceSpec })
+	SelectorSubjectSelectorSubjectGroup := &domain.SubjectGroupSelector{}
+	cmd.PersistentFlags().Bool(cfg.FlagNamer("Selector SubjectSelector SubjectGroup"), false, "")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Selector SubjectSelector SubjectGroup"), func() {
+		req.Selector.SubjectSelector.Selector = &domain.SubjectSelector_SubjectGroup{SubjectGroup: SelectorSubjectSelectorSubjectGroup}
+	})
+	cmd.PersistentFlags().StringVar(&SelectorSubjectSelectorSubjectGroup.ResourceName, cfg.FlagNamer("Selector SubjectSelector SubjectGroup ResourceName"), "", "")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Selector SubjectSelector SubjectGroup ResourceName"), func() {
+		req.Selector.SubjectSelector.Selector = &domain.SubjectSelector_SubjectGroup{SubjectGroup: SelectorSubjectSelectorSubjectGroup}
+	})
+	cmd.PersistentFlags().StringVar(&SelectorSubjectSelectorSubjectGroup.RelationName, cfg.FlagNamer("Selector SubjectSelector SubjectGroup RelationName"), "", "")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Selector SubjectSelector SubjectGroup RelationName"), func() {
+		req.Selector.SubjectSelector.Selector = &domain.SubjectSelector_SubjectGroup{SubjectGroup: SelectorSubjectSelectorSubjectGroup}
+	})
 
 	return cmd
 }
@@ -967,8 +1042,21 @@ func _PolicyServiceFindRelationshipRecordsCommand(cfg *client.Config) *cobra.Com
 		SelectorSubjectSelectorSubjectSpec.Subject = &domain.Subject_ResourceSet{ResourceSet: SelectorSubjectSelectorSubjectSpecResourceSet}
 	})
 	SelectorSubjectSelectorResourceSpec := &domain.SubjectSelector_ResourceSpec{}
-	cmd.PersistentFlags().StringVar(&SelectorSubjectSelectorResourceSpec.ResourceSpec, cfg.FlagNamer("Selector SubjectSelector ResourceSpec"), "", "resoruce_spec represents that all entities in a resource are included in the selector.")
+	cmd.PersistentFlags().StringVar(&SelectorSubjectSelectorResourceSpec.ResourceSpec, cfg.FlagNamer("Selector SubjectSelector ResourceSpec"), "", "resource_spec represents that all entities in a resource are included in the selector.")
 	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Selector SubjectSelector ResourceSpec"), func() { req.Selector.SubjectSelector.Selector = SelectorSubjectSelectorResourceSpec })
+	SelectorSubjectSelectorSubjectGroup := &domain.SubjectGroupSelector{}
+	cmd.PersistentFlags().Bool(cfg.FlagNamer("Selector SubjectSelector SubjectGroup"), false, "")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Selector SubjectSelector SubjectGroup"), func() {
+		req.Selector.SubjectSelector.Selector = &domain.SubjectSelector_SubjectGroup{SubjectGroup: SelectorSubjectSelectorSubjectGroup}
+	})
+	cmd.PersistentFlags().StringVar(&SelectorSubjectSelectorSubjectGroup.ResourceName, cfg.FlagNamer("Selector SubjectSelector SubjectGroup ResourceName"), "", "")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Selector SubjectSelector SubjectGroup ResourceName"), func() {
+		req.Selector.SubjectSelector.Selector = &domain.SubjectSelector_SubjectGroup{SubjectGroup: SelectorSubjectSelectorSubjectGroup}
+	})
+	cmd.PersistentFlags().StringVar(&SelectorSubjectSelectorSubjectGroup.RelationName, cfg.FlagNamer("Selector SubjectSelector SubjectGroup RelationName"), "", "")
+	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Selector SubjectSelector SubjectGroup RelationName"), func() {
+		req.Selector.SubjectSelector.Selector = &domain.SubjectSelector_SubjectGroup{SubjectGroup: SelectorSubjectSelectorSubjectGroup}
+	})
 
 	return cmd
 }

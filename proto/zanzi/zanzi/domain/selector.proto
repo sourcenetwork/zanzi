@@ -62,10 +62,20 @@ message SubjectSelector{
         // wildcard specifies that all subjects are part of the selector.
         WildcardSelector wildcard = 2;
 
-        // resoruce_spec represents that all entities in a resource are included in the selector.
+        // resource_spec represents that all entities in a resource are included in the selector.
         string resource_spec = 3;
+
+        SubjectGroupSelector subject_group = 4;
     }
 }
 
 // WildcardSelector represents all entities within a set.
 message WildcardSelector {}
+
+// SubjectGroupSelector models a selector which
+// matches a group of subjects, specified by
+// a resource and relation
+message SubjectGroupSelector {
+    string resource_name = 1;
+    string relation_name = 2;
+}

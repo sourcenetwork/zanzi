@@ -14,6 +14,7 @@ import (
 	_testing "github.com/sourcenetwork/zanzi/internal/testing"
 	"github.com/sourcenetwork/zanzi/pkg/api"
 	"github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/policy_definition"
 )
 
 func setup() (context.Context, api.PolicyServiceServer) {
@@ -515,21 +516,6 @@ func TestListPolicyIdsReturnsAllPolicies(t *testing.T) {
 	require.Equal(t, want, got.Records)
 }
 
-/*
-func (s *RelationshipServiceTestSuite) TestDeleteRelationship() {
-}
-
-func (s *RelationshipServiceTestSuite) TestGetNonExistingRelationship() {
-}
-
-
-func (s *RelationshipServiceTestSuite) TestDeleteNonExistingRelationship() {
-}
-
-func (s *RelationshipServiceTestSuite) TestUpdatingRelationship() {
-}
-*/
-
 func TestFindRelationshipRecords_ObjectSelectorReferencingUnknownRelationReturnsErr(t *testing.T) {
 	builder := domain.SelectorBuilder{}
 	builder.WithObject(domain.NewEntity("unknown-resource", "abc"))
@@ -586,4 +572,369 @@ func TestFindRelationshipRecords_SubjectSpecReferencingNonExistingResourceReturn
 
 	require.Nil(t, resp)
 	require.ErrorIs(t, err, policy.ErrResourceNotFound)
+}
+
+func Test_EditPolicy_RemovingPolicyRelation_RemovesForwardRelationshipsForThatRelation(t *testing.T) {
+	ctx, serv := setup()
+
+	old :=
+		`
+id: test
+name: test
+resources:
+  file:
+    relations:
+      owner:
+        expr: _this
+        types: 
+          - "*"
+  user:
+    relations:
+`
+	new :=
+		`
+id: test
+name: test
+resources:
+  file:
+    relations:
+  user:
+    relations:
+`
+
+	// Given policy with relation owner for resource file
+	// and relationships for owner
+	_, err := serv.CreatePolicy(ctx, &api.CreatePolicyRequest{
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: old,
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	rel := relationshipBuilder.Relationship("file", "foo", "owner", "user", "bob")
+	_, err = serv.SetRelationship(ctx, &api.SetRelationshipRequest{
+		PolicyId:     "test",
+		Relationship: &rel,
+	})
+	require.NoError(t, err)
+	rel = relationshipBuilder.Relationship("file", "bar", "owner", "user", "alice")
+	_, err = serv.SetRelationship(ctx, &api.SetRelationshipRequest{
+		PolicyId:     "test",
+		Relationship: &rel,
+	})
+	require.NoError(t, err)
+
+	// When I edit Policy
+	resp, err := serv.EditPolicy(ctx, &api.EditPolicyRequest{
+		PolicyId: "test",
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: new,
+			},
+		},
+	})
+
+	// Then I get no errors and 2 relationships are removed
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), resp.RemovedRelationshipsCount)
+}
+
+func Test_EditPolicy_EditingPolicy_NewPolicyIsReturned(t *testing.T) {
+	ctx, serv := setup()
+
+	old := `
+id: test
+name: test
+resources:
+  file:
+    relations:
+      owner:
+        expr: _this
+
+  user:
+    relations:
+      foo:
+        expr: _this
+      mutate_expr:
+        expr: foo + _this
+`
+	new := `
+id: test
+name: test
+resources:
+  user:
+    relations:
+      mutate_expr:
+        expr: _this
+  new_file:
+    relations:
+      new_owner:
+        expr: _this
+`
+
+	_, err := serv.CreatePolicy(ctx, &api.CreatePolicyRequest{
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: old,
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	resp, err := serv.EditPolicy(ctx, &api.EditPolicyRequest{
+		PolicyId: "test",
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: new,
+			},
+		},
+	})
+	require.NoError(t, err)
+	wantPol, err := policy_definition.PolicyFromYaml(new)
+	require.NoError(t, err)
+
+	require.Equal(t, uint64(0), resp.RemovedRelationshipsCount)
+	wantPol.Reset()
+	resp.Record.Policy.Reset()
+	require.Equal(t, wantPol, resp.Record.Policy)
+}
+
+func Test_EditPolicy_EditingPolicyWithInvalidId_ReturnsErr(t *testing.T) {
+	ctx, serv := setup()
+
+	new := `
+id: test
+name: test
+resources:
+  user:
+    relations:
+`
+
+	resp, err := serv.EditPolicy(ctx, &api.EditPolicyRequest{
+		PolicyId: "not-defined",
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: new,
+			},
+		},
+	})
+	require.ErrorIs(t, err, policy.ErrPolicyNotFound)
+	require.Nil(t, resp)
+}
+
+func Test_EditPolicy_RemovingResource_RemovesRelationships(t *testing.T) {
+	ctx, serv := setup()
+
+	old :=
+		`
+id: test
+name: test
+resources:
+  file:
+    relations:
+      reader:
+        expr: _this
+        types: 
+          - "*"
+      owner:
+        expr: _this
+        types: 
+          - "*"
+  user:
+    relations:
+`
+	new :=
+		`
+id: test
+name: test
+resources:
+  user:
+    relations:
+`
+
+	// Given policy with relation owner for resource file
+	// and relationships for owner
+	_, err := serv.CreatePolicy(ctx, &api.CreatePolicyRequest{
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: old,
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	rel := relationshipBuilder.Relationship("file", "foo", "owner", "user", "bob")
+	_, err = serv.SetRelationship(ctx, &api.SetRelationshipRequest{
+		PolicyId:     "test",
+		Relationship: &rel,
+	})
+	require.NoError(t, err)
+	rel = relationshipBuilder.Relationship("file", "bar", "reader", "user", "alice")
+	_, err = serv.SetRelationship(ctx, &api.SetRelationshipRequest{
+		PolicyId:     "test",
+		Relationship: &rel,
+	})
+	require.NoError(t, err)
+
+	// When I edit Policy
+	resp, err := serv.EditPolicy(ctx, &api.EditPolicyRequest{
+		PolicyId: "test",
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: new,
+			},
+		},
+	})
+
+	// Then I get no errors and 2 relationships are removed
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), resp.RemovedRelationshipsCount)
+}
+
+func Test_EditPolicy_RemovingPolicyRelation_RemovesBackwardsRelationshipsForThatRelation(t *testing.T) {
+	ctx, serv := setup()
+
+	old :=
+		`
+id: test
+name: test
+resources:
+  file:
+    relations:
+      owner:
+        expr: _this
+        types: 
+          - "*"
+  group:
+    relations:
+      member:
+        expr: _this
+        types:
+          - "*"
+`
+	new :=
+		`
+id: test
+name: test
+resources:
+  file:
+    relations:
+      owner:
+        expr: _this
+        types: 
+          - "*"
+  group:
+    relations:
+`
+
+	_, err := serv.CreatePolicy(ctx, &api.CreatePolicyRequest{
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: old,
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	rel := relationshipBuilder.EntitySet("file", "foo", "owner", "group", "admin", "member")
+	_, err = serv.SetRelationship(ctx, &api.SetRelationshipRequest{
+		PolicyId:     "test",
+		Relationship: &rel,
+	})
+	require.NoError(t, err)
+	rel = relationshipBuilder.Relationship("file", "bar", "owner", "group", "test")
+	_, err = serv.SetRelationship(ctx, &api.SetRelationshipRequest{
+		PolicyId:     "test",
+		Relationship: &rel,
+	})
+	require.NoError(t, err)
+
+	// When I edit Policy
+	resp, err := serv.EditPolicy(ctx, &api.EditPolicyRequest{
+		PolicyId: "test",
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: new,
+			},
+		},
+	})
+
+	// Then I get no errors and the 1 relationship which
+	// has group#member as subjects are removed
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), resp.RemovedRelationshipsCount)
+}
+
+func Test_EditPolicy_RemovingPolicyResource_RemovesAllRelationshipsWithSubjectsFromThatResource(t *testing.T) {
+	ctx, serv := setup()
+
+	old :=
+		`
+id: test
+name: test
+resources:
+  file:
+    relations:
+      owner:
+        expr: _this
+        types: 
+          - "*"
+  group:
+    relations:
+      member:
+        expr: _this
+        types:
+          - "*"
+`
+	new :=
+		`
+id: test
+name: test
+resources:
+  file:
+    relations:
+      owner:
+        expr: _this
+        types: 
+          - "*"
+`
+
+	_, err := serv.CreatePolicy(ctx, &api.CreatePolicyRequest{
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: old,
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	rel := relationshipBuilder.EntitySet("file", "foo", "owner", "group", "admin", "member")
+	_, err = serv.SetRelationship(ctx, &api.SetRelationshipRequest{
+		PolicyId:     "test",
+		Relationship: &rel,
+	})
+	require.NoError(t, err)
+	rel = relationshipBuilder.Relationship("file", "bar", "owner", "group", "test")
+	_, err = serv.SetRelationship(ctx, &api.SetRelationshipRequest{
+		PolicyId:     "test",
+		Relationship: &rel,
+	})
+	require.NoError(t, err)
+
+	// When I edit Policy
+	resp, err := serv.EditPolicy(ctx, &api.EditPolicyRequest{
+		PolicyId: "test",
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: new,
+			},
+		},
+	})
+
+	// Then I get no errors and the 1 relationship which
+	// has group#member as subjects are removed
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), resp.RemovedRelationshipsCount)
 }

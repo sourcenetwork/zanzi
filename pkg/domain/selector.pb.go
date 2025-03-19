@@ -335,6 +335,7 @@ type SubjectSelector struct {
 	//	*SubjectSelector_SubjectSpec
 	//	*SubjectSelector_Wildcard
 	//	*SubjectSelector_ResourceSpec
+	//	*SubjectSelector_SubjectGroup
 	Selector isSubjectSelector_Selector `protobuf_oneof:"selector"`
 }
 
@@ -398,6 +399,13 @@ func (x *SubjectSelector) GetResourceSpec() string {
 	return ""
 }
 
+func (x *SubjectSelector) GetSubjectGroup() *SubjectGroupSelector {
+	if x, ok := x.GetSelector().(*SubjectSelector_SubjectGroup); ok {
+		return x.SubjectGroup
+	}
+	return nil
+}
+
 type isSubjectSelector_Selector interface {
 	isSubjectSelector_Selector()
 }
@@ -413,8 +421,12 @@ type SubjectSelector_Wildcard struct {
 }
 
 type SubjectSelector_ResourceSpec struct {
-	// resoruce_spec represents that all entities in a resource are included in the selector.
+	// resource_spec represents that all entities in a resource are included in the selector.
 	ResourceSpec string `protobuf:"bytes,3,opt,name=resource_spec,json=resourceSpec,proto3,oneof"`
+}
+
+type SubjectSelector_SubjectGroup struct {
+	SubjectGroup *SubjectGroupSelector `protobuf:"bytes,4,opt,name=subject_group,json=subjectGroup,proto3,oneof"`
 }
 
 func (*SubjectSelector_SubjectSpec) isSubjectSelector_Selector() {}
@@ -422,6 +434,8 @@ func (*SubjectSelector_SubjectSpec) isSubjectSelector_Selector() {}
 func (*SubjectSelector_Wildcard) isSubjectSelector_Selector() {}
 
 func (*SubjectSelector_ResourceSpec) isSubjectSelector_Selector() {}
+
+func (*SubjectSelector_SubjectGroup) isSubjectSelector_Selector() {}
 
 // WildcardSelector represents all entities within a set.
 type WildcardSelector struct {
@@ -460,6 +474,64 @@ func (x *WildcardSelector) ProtoReflect() protoreflect.Message {
 // Deprecated: Use WildcardSelector.ProtoReflect.Descriptor instead.
 func (*WildcardSelector) Descriptor() ([]byte, []int) {
 	return file_zanzi_domain_selector_proto_rawDescGZIP(), []int{5}
+}
+
+// SubjectGroupSelector models a selector which
+// matches a group of subjects, specified by
+// a resource and relation
+type SubjectGroupSelector struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ResourceName string `protobuf:"bytes,1,opt,name=resource_name,json=resourceName,proto3" json:"resource_name,omitempty"`
+	RelationName string `protobuf:"bytes,2,opt,name=relation_name,json=relationName,proto3" json:"relation_name,omitempty"`
+}
+
+func (x *SubjectGroupSelector) Reset() {
+	*x = SubjectGroupSelector{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zanzi_domain_selector_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SubjectGroupSelector) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubjectGroupSelector) ProtoMessage() {}
+
+func (x *SubjectGroupSelector) ProtoReflect() protoreflect.Message {
+	mi := &file_zanzi_domain_selector_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SubjectGroupSelector.ProtoReflect.Descriptor instead.
+func (*SubjectGroupSelector) Descriptor() ([]byte, []int) {
+	return file_zanzi_domain_selector_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *SubjectGroupSelector) GetResourceName() string {
+	if x != nil {
+		return x.ResourceName
+	}
+	return ""
+}
+
+func (x *SubjectGroupSelector) GetRelationName() string {
+	if x != nil {
+		return x.RelationName
+	}
+	return ""
 }
 
 var File_zanzi_domain_selector_proto protoreflect.FileDescriptor
@@ -527,7 +599,7 @@ var file_zanzi_domain_selector_proto_rawDesc = []byte{
 	0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x7a, 0x61, 0x6e, 0x7a, 0x69, 0x2e, 0x64, 0x6f,
 	0x6d, 0x61, 0x69, 0x6e, 0x2e, 0x57, 0x69, 0x6c, 0x64, 0x63, 0x61, 0x72, 0x64, 0x53, 0x65, 0x6c,
 	0x65, 0x63, 0x74, 0x6f, 0x72, 0x48, 0x00, 0x52, 0x08, 0x77, 0x69, 0x6c, 0x64, 0x63, 0x61, 0x72,
-	0x64, 0x42, 0x0a, 0x0a, 0x08, 0x73, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x22, 0xda, 0x01,
+	0x64, 0x42, 0x0a, 0x0a, 0x08, 0x73, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x22, 0xb3, 0x02,
 	0x0a, 0x0f, 0x53, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f,
 	0x72, 0x12, 0x48, 0x0a, 0x0c, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x73, 0x70, 0x65,
 	0x63, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
@@ -540,13 +612,24 @@ var file_zanzi_domain_selector_proto_rawDesc = []byte{
 	0x61, 0x72, 0x64, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x48, 0x00, 0x52, 0x08, 0x77,
 	0x69, 0x6c, 0x64, 0x63, 0x61, 0x72, 0x64, 0x12, 0x25, 0x0a, 0x0d, 0x72, 0x65, 0x73, 0x6f, 0x75,
 	0x72, 0x63, 0x65, 0x5f, 0x73, 0x70, 0x65, 0x63, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00,
-	0x52, 0x0c, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x53, 0x70, 0x65, 0x63, 0x42, 0x0a,
-	0x0a, 0x08, 0x73, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x22, 0x12, 0x0a, 0x10, 0x57, 0x69,
-	0x6c, 0x64, 0x63, 0x61, 0x72, 0x64, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x42, 0x2b,
-	0x5a, 0x29, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2f, 0x7a, 0x61, 0x6e, 0x7a, 0x69,
-	0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x64, 0x6f, 0x6d, 0x61, 0x69, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x52, 0x0c, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x53, 0x70, 0x65, 0x63, 0x12, 0x57,
+	0x0a, 0x0d, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18,
+	0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x30, 0x2e, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x6e, 0x65,
+	0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x7a, 0x61, 0x6e, 0x7a, 0x69, 0x2e, 0x64, 0x6f, 0x6d, 0x61,
+	0x69, 0x6e, 0x2e, 0x53, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x53,
+	0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x48, 0x00, 0x52, 0x0c, 0x73, 0x75, 0x62, 0x6a, 0x65,
+	0x63, 0x74, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x42, 0x0a, 0x0a, 0x08, 0x73, 0x65, 0x6c, 0x65, 0x63,
+	0x74, 0x6f, 0x72, 0x22, 0x12, 0x0a, 0x10, 0x57, 0x69, 0x6c, 0x64, 0x63, 0x61, 0x72, 0x64, 0x53,
+	0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x22, 0x60, 0x0a, 0x14, 0x53, 0x75, 0x62, 0x6a, 0x65,
+	0x63, 0x74, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x12,
+	0x23, 0x0a, 0x0d, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x6e, 0x61, 0x6d, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x4e, 0x61, 0x6d, 0x65, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x6c,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4e, 0x61, 0x6d, 0x65, 0x42, 0x2b, 0x5a, 0x29, 0x67, 0x69, 0x74,
+	0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x6e, 0x65,
+	0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2f, 0x7a, 0x61, 0x6e, 0x7a, 0x69, 0x2f, 0x70, 0x6b, 0x67, 0x2f,
+	0x64, 0x6f, 0x6d, 0x61, 0x69, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -561,7 +644,7 @@ func file_zanzi_domain_selector_proto_rawDescGZIP() []byte {
 	return file_zanzi_domain_selector_proto_rawDescData
 }
 
-var file_zanzi_domain_selector_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_zanzi_domain_selector_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_zanzi_domain_selector_proto_goTypes = []interface{}{
 	(*RelationshipSelector)(nil), // 0: sourcenetwork.zanzi.domain.RelationshipSelector
 	(*RelationNodeSelector)(nil), // 1: sourcenetwork.zanzi.domain.RelationNodeSelector
@@ -569,8 +652,9 @@ var file_zanzi_domain_selector_proto_goTypes = []interface{}{
 	(*RelationSelector)(nil),     // 3: sourcenetwork.zanzi.domain.RelationSelector
 	(*SubjectSelector)(nil),      // 4: sourcenetwork.zanzi.domain.SubjectSelector
 	(*WildcardSelector)(nil),     // 5: sourcenetwork.zanzi.domain.WildcardSelector
-	(*Entity)(nil),               // 6: sourcenetwork.zanzi.domain.Entity
-	(*Subject)(nil),              // 7: sourcenetwork.zanzi.domain.Subject
+	(*SubjectGroupSelector)(nil), // 6: sourcenetwork.zanzi.domain.SubjectGroupSelector
+	(*Entity)(nil),               // 7: sourcenetwork.zanzi.domain.Entity
+	(*Subject)(nil),              // 8: sourcenetwork.zanzi.domain.Subject
 }
 var file_zanzi_domain_selector_proto_depIdxs = []int32{
 	2,  // 0: sourcenetwork.zanzi.domain.RelationshipSelector.object_selector:type_name -> sourcenetwork.zanzi.domain.ObjectSelector
@@ -578,16 +662,17 @@ var file_zanzi_domain_selector_proto_depIdxs = []int32{
 	4,  // 2: sourcenetwork.zanzi.domain.RelationshipSelector.subject_selector:type_name -> sourcenetwork.zanzi.domain.SubjectSelector
 	2,  // 3: sourcenetwork.zanzi.domain.RelationNodeSelector.object_selector:type_name -> sourcenetwork.zanzi.domain.ObjectSelector
 	3,  // 4: sourcenetwork.zanzi.domain.RelationNodeSelector.relation_selector:type_name -> sourcenetwork.zanzi.domain.RelationSelector
-	6,  // 5: sourcenetwork.zanzi.domain.ObjectSelector.object_spec:type_name -> sourcenetwork.zanzi.domain.Entity
+	7,  // 5: sourcenetwork.zanzi.domain.ObjectSelector.object_spec:type_name -> sourcenetwork.zanzi.domain.Entity
 	5,  // 6: sourcenetwork.zanzi.domain.ObjectSelector.wildcard:type_name -> sourcenetwork.zanzi.domain.WildcardSelector
 	5,  // 7: sourcenetwork.zanzi.domain.RelationSelector.wildcard:type_name -> sourcenetwork.zanzi.domain.WildcardSelector
-	7,  // 8: sourcenetwork.zanzi.domain.SubjectSelector.subject_spec:type_name -> sourcenetwork.zanzi.domain.Subject
+	8,  // 8: sourcenetwork.zanzi.domain.SubjectSelector.subject_spec:type_name -> sourcenetwork.zanzi.domain.Subject
 	5,  // 9: sourcenetwork.zanzi.domain.SubjectSelector.wildcard:type_name -> sourcenetwork.zanzi.domain.WildcardSelector
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	6,  // 10: sourcenetwork.zanzi.domain.SubjectSelector.subject_group:type_name -> sourcenetwork.zanzi.domain.SubjectGroupSelector
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_zanzi_domain_selector_proto_init() }
@@ -670,6 +755,18 @@ func file_zanzi_domain_selector_proto_init() {
 				return nil
 			}
 		}
+		file_zanzi_domain_selector_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SubjectGroupSelector); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_zanzi_domain_selector_proto_msgTypes[2].OneofWrappers = []interface{}{
 		(*ObjectSelector_ObjectSpec)(nil),
@@ -684,6 +781,7 @@ func file_zanzi_domain_selector_proto_init() {
 		(*SubjectSelector_SubjectSpec)(nil),
 		(*SubjectSelector_Wildcard)(nil),
 		(*SubjectSelector_ResourceSpec)(nil),
+		(*SubjectSelector_SubjectGroup)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -691,7 +789,7 @@ func file_zanzi_domain_selector_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_zanzi_domain_selector_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
