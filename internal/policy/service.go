@@ -377,6 +377,7 @@ func (s *Service) EditPolicy(ctx context.Context, req *api.EditPolicyRequest) (*
 	}
 
 	record.Policy = policy
+
 	_, err = s.repository.SetPolicy(ctx, record)
 	if err != nil {
 		return nil, fmt.Errorf("edit policy: %w", err)
@@ -385,5 +386,24 @@ func (s *Service) EditPolicy(ctx context.Context, req *api.EditPolicyRequest) (*
 	return &api.EditPolicyResponse{
 		Record:                    record,
 		RemovedRelationshipsCount: acc.RelationshipsRemoved,
+	}, nil
+}
+
+func (s *Service) EditPolicyAppData(ctx context.Context, req *api.EditPolicyAppDataRequest) (*api.EditPolicyAppDataResponse, error) {
+	record, err := s.repository.GetPolicy(ctx, req.PolicyId)
+	if err != nil {
+		return nil, fmt.Errorf("edit policy app_data: %w", err)
+	} else if record == nil {
+		return nil, fmt.Errorf("edit policy app_data: policy %v: %w", req.PolicyId, ErrPolicyNotFound)
+	}
+
+	record.AppData = req.AppData
+	_, err = s.repository.SetPolicy(ctx, record)
+	if err != nil {
+		return nil, fmt.Errorf("edit policy app_data: %w", err)
+	}
+
+	return &api.EditPolicyAppDataResponse{
+		Record: record,
 	}, nil
 }

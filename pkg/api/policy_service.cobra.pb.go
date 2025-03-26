@@ -23,6 +23,7 @@ func PolicyServiceClientCommand(options ...client.Option) *cobra.Command {
 	cmd.AddCommand(
 		_PolicyServiceCreatePolicyCommand(cfg),
 		_PolicyServiceEditPolicyCommand(cfg),
+		_PolicyServiceEditPolicyAppDataCommand(cfg),
 		_PolicyServiceValdiatePolicyCommand(cfg),
 		_PolicyServiceUpdatePolicyCommand(cfg),
 		_PolicyServiceDeletePolicyCommand(cfg),
@@ -155,6 +156,48 @@ func _PolicyServiceEditPolicyCommand(cfg *client.Config) *cobra.Command {
 	PolicyDefinitionPolicyYaml := &PolicyDefinition_PolicyYaml{}
 	cmd.PersistentFlags().StringVar(&PolicyDefinitionPolicyYaml.PolicyYaml, cfg.FlagNamer("PolicyDefinition PolicyYaml"), "", "Set a YAML serialized Policy definition according to the type definitions")
 	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("PolicyDefinition PolicyYaml"), func() { req.PolicyDefinition.Definition = PolicyDefinitionPolicyYaml })
+
+	return cmd
+}
+
+func _PolicyServiceEditPolicyAppDataCommand(cfg *client.Config) *cobra.Command {
+	req := &EditPolicyAppDataRequest{}
+
+	cmd := &cobra.Command{
+		Use:   cfg.CommandNamer("EditPolicyAppData"),
+		Short: "EditPolicyAppData RPC client",
+		Long:  "EditPolicyAppData updates the associated data stored in a policy record",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if cfg.UseEnvVars {
+				if err := flag.SetFlagsFromEnv(cmd.Parent().PersistentFlags(), true, cfg.EnvVarNamer, cfg.EnvVarPrefix, "PolicyService"); err != nil {
+					return err
+				}
+				if err := flag.SetFlagsFromEnv(cmd.PersistentFlags(), false, cfg.EnvVarNamer, cfg.EnvVarPrefix, "PolicyService", "EditPolicyAppData"); err != nil {
+					return err
+				}
+			}
+			return client.RoundTrip(cmd.Context(), cfg, func(cc grpc.ClientConnInterface, in iocodec.Decoder, out iocodec.Encoder) error {
+				cli := NewPolicyServiceClient(cc)
+				v := &EditPolicyAppDataRequest{}
+
+				if err := in(v); err != nil {
+					return err
+				}
+				proto.Merge(v, req)
+
+				res, err := cli.EditPolicyAppData(cmd.Context(), v)
+
+				if err != nil {
+					return err
+				}
+
+				return out(res)
+
+			})
+		},
+	}
+
+	cmd.PersistentFlags().StringVar(&req.PolicyId, cfg.FlagNamer("PolicyId"), "", "")
 	flag.BytesBase64Var(cmd.PersistentFlags(), &req.AppData, cfg.FlagNamer("AppData"), "app_data is an opaque byte array which applications\n can send to associate satellite data to a Policy")
 
 	return cmd

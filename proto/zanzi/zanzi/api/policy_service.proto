@@ -27,6 +27,9 @@ service PolicyService {
     // associated relationships are also removed.
     rpc EditPolicy(EditPolicyRequest) returns (EditPolicyResponse);
 
+    // EditPolicyAppData updates the associated data stored in a policy record
+    rpc EditPolicyAppData(EditPolicyAppDataRequest) returns (EditPolicyAppDataResponse);
+
     // ValidatePolicy verifies whether a given policy is valid and returns validation errors
     rpc ValdiatePolicy(ValidatePolicyRequest) returns (ValidatePolicyResponse);
 
@@ -86,15 +89,23 @@ message CreatePolicyRequest {
 message EditPolicyRequest {
     string policy_id = 1;
     PolicyDefinition policy_definition = 2;
-
-    // app_data is an opaque byte array which applications
-    // can send to associate satellite data to a Policy
-    bytes app_data = 3;
 }
 
 message EditPolicyResponse {
     sourcenetwork.zanzi.domain.PolicyRecord record = 1;
     uint64 removed_relationships_count = 2;
+}
+
+message EditPolicyAppDataRequest {
+    string policy_id = 1;
+    // app_data is an opaque byte array which applications
+    // can send to associate satellite data to a Policy
+    bytes app_data = 2;
+}
+
+
+message EditPolicyAppDataResponse{
+    sourcenetwork.zanzi.domain.PolicyRecord record = 1;
 }
 
 message UpdatePolicyRequest {

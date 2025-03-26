@@ -938,3 +938,113 @@ resources:
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), resp.RemovedRelationshipsCount)
 }
+
+func Test_EditPolicy_PreservesAppData(t *testing.T) {
+	ctx, serv := setup()
+
+	appData := []byte{0, 0, 1}
+	policy :=
+		`
+id: test
+name: test
+`
+	_, err := serv.CreatePolicy(ctx, &api.CreatePolicyRequest{
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: policy,
+			},
+		},
+		AppData: appData,
+	})
+	require.NoError(t, err)
+
+	// When I edit the Policy
+	response, err := serv.EditPolicy(ctx, &api.EditPolicyRequest{
+		PolicyId: "test",
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: policy,
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, appData, response.Record.AppData)
+
+	getResp, err := serv.GetPolicy(ctx, &api.GetPolicyRequest{
+		Id: "test",
+	})
+	require.NoError(t, err)
+	require.Equal(t, appData, getResp.Record.AppData)
+}
+
+func Test_EditPolicyAppData_UpdatesAppData(t *testing.T) {
+	ctx, serv := setup()
+
+	policy :=
+		`
+id: test
+name: test
+`
+	_, err := serv.CreatePolicy(ctx, &api.CreatePolicyRequest{
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: policy,
+			},
+		},
+		AppData: []byte{0, 0, 1},
+	})
+	require.NoError(t, err)
+
+	// When I edit the Policy AppData
+	newData := []byte{0, 0, 2}
+	resp, err := serv.EditPolicyAppData(ctx, &api.EditPolicyAppDataRequest{
+		PolicyId: "test",
+		AppData:  newData,
+	})
+
+	// Then response contains the new app data and record is updated
+	require.NoError(t, err)
+	require.Equal(t, newData, resp.Record.AppData)
+
+	getResp, err := serv.GetPolicy(ctx, &api.GetPolicyRequest{
+		Id: "test",
+	})
+	require.NoError(t, err)
+	require.Equal(t, newData, getResp.Record.AppData)
+}
+
+func Test_EditPolicyAppData_SendingNilErrasesAppData(t *testing.T) {
+	ctx, serv := setup()
+
+	policy :=
+		`
+id: test
+name: test
+`
+	_, err := serv.CreatePolicy(ctx, &api.CreatePolicyRequest{
+		PolicyDefinition: &api.PolicyDefinition{
+			Definition: &api.PolicyDefinition_PolicyYaml{
+				PolicyYaml: policy,
+			},
+		},
+		AppData: []byte{0, 0, 1},
+	})
+	require.NoError(t, err)
+
+	// When I edit the Policy AppData
+	var newData []byte
+	resp, err := serv.EditPolicyAppData(ctx, &api.EditPolicyAppDataRequest{
+		PolicyId: "test",
+		AppData:  newData,
+	})
+
+	// Then response contains the new app data and record is updated
+	require.NoError(t, err)
+	require.Equal(t, newData, resp.Record.AppData)
+
+	getResp, err := serv.GetPolicy(ctx, &api.GetPolicyRequest{
+		Id: "test",
+	})
+	require.NoError(t, err)
+	require.Equal(t, newData, getResp.Record.AppData)
+}

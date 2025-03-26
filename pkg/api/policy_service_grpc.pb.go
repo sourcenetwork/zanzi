@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	PolicyService_CreatePolicy_FullMethodName            = "/sourcenetwork.zanzi.api.PolicyService/CreatePolicy"
 	PolicyService_EditPolicy_FullMethodName              = "/sourcenetwork.zanzi.api.PolicyService/EditPolicy"
+	PolicyService_EditPolicyAppData_FullMethodName       = "/sourcenetwork.zanzi.api.PolicyService/EditPolicyAppData"
 	PolicyService_ValdiatePolicy_FullMethodName          = "/sourcenetwork.zanzi.api.PolicyService/ValdiatePolicy"
 	PolicyService_UpdatePolicy_FullMethodName            = "/sourcenetwork.zanzi.api.PolicyService/UpdatePolicy"
 	PolicyService_DeletePolicy_FullMethodName            = "/sourcenetwork.zanzi.api.PolicyService/DeletePolicy"
@@ -51,6 +52,8 @@ type PolicyServiceClient interface {
 	// If the mutation removes a resource / relation from a Policy,
 	// associated relationships are also removed.
 	EditPolicy(ctx context.Context, in *EditPolicyRequest, opts ...grpc.CallOption) (*EditPolicyResponse, error)
+	// EditPolicyAppData updates the associated data stored in a policy record
+	EditPolicyAppData(ctx context.Context, in *EditPolicyAppDataRequest, opts ...grpc.CallOption) (*EditPolicyAppDataResponse, error)
 	// ValidatePolicy verifies whether a given policy is valid and returns validation errors
 	ValdiatePolicy(ctx context.Context, in *ValidatePolicyRequest, opts ...grpc.CallOption) (*ValidatePolicyResponse, error)
 	// UpdatePolicy updates the fields and relations for a Policy.
@@ -97,6 +100,15 @@ func (c *policyServiceClient) CreatePolicy(ctx context.Context, in *CreatePolicy
 func (c *policyServiceClient) EditPolicy(ctx context.Context, in *EditPolicyRequest, opts ...grpc.CallOption) (*EditPolicyResponse, error) {
 	out := new(EditPolicyResponse)
 	err := c.cc.Invoke(ctx, PolicyService_EditPolicy_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) EditPolicyAppData(ctx context.Context, in *EditPolicyAppDataRequest, opts ...grpc.CallOption) (*EditPolicyAppDataResponse, error) {
+	out := new(EditPolicyAppDataResponse)
+	err := c.cc.Invoke(ctx, PolicyService_EditPolicyAppData_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -225,6 +237,8 @@ type PolicyServiceServer interface {
 	// If the mutation removes a resource / relation from a Policy,
 	// associated relationships are also removed.
 	EditPolicy(context.Context, *EditPolicyRequest) (*EditPolicyResponse, error)
+	// EditPolicyAppData updates the associated data stored in a policy record
+	EditPolicyAppData(context.Context, *EditPolicyAppDataRequest) (*EditPolicyAppDataResponse, error)
 	// ValidatePolicy verifies whether a given policy is valid and returns validation errors
 	ValdiatePolicy(context.Context, *ValidatePolicyRequest) (*ValidatePolicyResponse, error)
 	// UpdatePolicy updates the fields and relations for a Policy.
@@ -261,6 +275,9 @@ func (UnimplementedPolicyServiceServer) CreatePolicy(context.Context, *CreatePol
 }
 func (UnimplementedPolicyServiceServer) EditPolicy(context.Context, *EditPolicyRequest) (*EditPolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EditPolicy not implemented")
+}
+func (UnimplementedPolicyServiceServer) EditPolicyAppData(context.Context, *EditPolicyAppDataRequest) (*EditPolicyAppDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EditPolicyAppData not implemented")
 }
 func (UnimplementedPolicyServiceServer) ValdiatePolicy(context.Context, *ValidatePolicyRequest) (*ValidatePolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValdiatePolicy not implemented")
@@ -343,6 +360,24 @@ func _PolicyService_EditPolicy_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PolicyServiceServer).EditPolicy(ctx, req.(*EditPolicyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_EditPolicyAppData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EditPolicyAppDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).EditPolicyAppData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_EditPolicyAppData_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).EditPolicyAppData(ctx, req.(*EditPolicyAppDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -577,6 +612,10 @@ var PolicyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EditPolicy",
 			Handler:    _PolicyService_EditPolicy_Handler,
+		},
+		{
+			MethodName: "EditPolicyAppData",
+			Handler:    _PolicyService_EditPolicyAppData_Handler,
 		},
 		{
 			MethodName: "ValdiatePolicy",
