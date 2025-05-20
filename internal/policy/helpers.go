@@ -1,11 +1,10 @@
 package policy
 
 import (
-	"fmt"
-
 	parser "github.com/sourcenetwork/zanzi/internal/relation_expression_parser"
 	"github.com/sourcenetwork/zanzi/pkg/api"
 	"github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/errors"
 	"github.com/sourcenetwork/zanzi/pkg/policy_definition"
 )
 
@@ -20,17 +19,18 @@ func allRelationshipsSelector() domain.RelationshipSelector {
 func GetExpressionTree(r *domain.Relation) (*domain.RelationExpressionTree, error) {
 	var tree *domain.RelationExpressionTree
 	var err error
-
 	switch t := r.RelationExpression.Expression.(type) {
 	case *domain.RelationExpression_Expr:
 		tree, err = parser.Parse(t.Expr)
 		if err != nil {
-			err = fmt.Errorf("expression tree: relation %v: %w", r.Name, err)
+			err = errors.Wrap("parsing expression tree", err)
 		}
 	case *domain.RelationExpression_Tree:
 		tree = t.Tree
 	default:
-		err = fmt.Errorf("expression tree: relation %v: obj %v: %w", r.Name, t, domain.ErrInvalidVariant)
+		err = errors.Wrap("expression tree", errors.ErrInvalidVariant,
+			errors.Pair("relation", r.Name),
+		)
 	}
 
 	return tree, err
@@ -46,12 +46,11 @@ func GetPolicyFromDefinition(d *api.PolicyDefinition) (*domain.Policy, error) {
 	case *api.PolicyDefinition_PolicyYaml:
 		policy, err = policy_definition.PolicyFromYaml(definition.PolicyYaml)
 	default:
-		err = fmt.Errorf("PolicyDefinition %v: %w", definition, domain.ErrInvalidVariant)
+		err = errors.Wrap("policy definition", errors.ErrInvalidVariant)
 	}
 
 	if err != nil {
 		return nil, err
 	}
-
 	return policy, err
 }

@@ -35,12 +35,14 @@ type Repository interface {
 
 // policy lookup table
 type PolicyLookUpTable struct {
+	id        string
 	relations map[string]*domain.Relation
 	resources map[string]*domain.Resource
 }
 
 func NewPolicyLookUpTable(policy *domain.Policy) PolicyLookUpTable {
 	lut := PolicyLookUpTable{
+		id:        policy.Id,
 		relations: make(map[string]*domain.Relation),
 		resources: make(map[string]*domain.Resource),
 	}
@@ -75,4 +77,8 @@ func (l *PolicyLookUpTable) GetResource(resourceName string) *domain.Resource {
 		return nil
 	}
 	return resource
+}
+
+func (l *PolicyLookUpTable) GetId() string {
+	return l.id
 }

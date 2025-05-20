@@ -8,7 +8,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 
 	"github.com/sourcenetwork/zanzi/pkg/api"
-	"github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/errors"
 )
 
 type spewSerializer struct{}
@@ -61,7 +61,7 @@ func (s *dotSerializer) handleGoalTree(parentId string, tree GoalTree, graph *go
 	case nil:
 		break
 	default:
-		return fmt.Errorf("GoalTree %v: %w", node, domain.ErrInvalidVariant)
+		return errors.Wrap("goal tree", errors.ErrInvalidVariant)
 	}
 	return nil
 }
@@ -193,6 +193,6 @@ func SerializerFactory(model api.ExplainFormat) (GoalTreeSerializer, error) {
 	case api.ExplainFormat_DOT:
 		return &dotSerializer{}, nil
 	default:
-		return nil, fmt.Errorf("ExplainFormat %v: %w", model, domain.ErrInvalidVariant)
+		return nil, errors.Wrap("explain format", errors.ErrInvalidVariant)
 	}
 }

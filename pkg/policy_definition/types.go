@@ -19,7 +19,6 @@ const TypeRelationSeparator string = ":"
 type PolicyDefinition struct {
 	// User defined policy ID
 	Id string `yaml:"id"`
-	//Version    string                         `yaml:"version"`
 
 	// Display name for Policy
 	Name string `yaml:"name"`

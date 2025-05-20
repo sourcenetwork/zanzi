@@ -1,10 +1,10 @@
 package policy
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/errors"
 )
 
 type predicate func(*domain.Relationship) bool
@@ -27,7 +27,7 @@ func NewSelectorSpec(selector *domain.RelationshipSelector) (RelationshipSelecto
 	case *domain.ObjectSelector_ResourceSpec:
 		spec.objectPredicate = spec.objectResourceSpec(objectSelector.ResourceSpec)
 	default:
-		return spec, fmt.Errorf("ObjectSelector %v: %w", objectSelector, domain.ErrInvalidVariant)
+		return spec, errors.Wrap("Object Selector", errors.ErrInvalidVariant)
 	}
 
 	switch relationSelector := selector.RelationSelector.Selector.(type) {
@@ -36,7 +36,7 @@ func NewSelectorSpec(selector *domain.RelationshipSelector) (RelationshipSelecto
 	case *domain.RelationSelector_Wildcard:
 		spec.relationPredicate = spec.relationWildcardSpec()
 	default:
-		return spec, fmt.Errorf("RelationSelector %v: %w", relationSelector, domain.ErrInvalidVariant)
+		return spec, errors.Wrap("Relation Selector", errors.ErrInvalidVariant)
 	}
 
 	switch subjectSelector := selector.SubjectSelector.Selector.(type) {
@@ -49,7 +49,7 @@ func NewSelectorSpec(selector *domain.RelationshipSelector) (RelationshipSelecto
 	case *domain.SubjectSelector_SubjectGroup:
 		spec.subjectPredicate = spec.subjectGroupSpec(subjectSelector.SubjectGroup.ResourceName, subjectSelector.SubjectGroup.RelationName)
 	default:
-		return spec, fmt.Errorf("SubjectSelector %v: %w", subjectSelector, domain.ErrInvalidVariant)
+		return spec, errors.Wrap("Subject Selector", errors.ErrInvalidVariant)
 	}
 
 	return spec, nil

@@ -1,9 +1,8 @@
 package policy
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/errors"
 )
 
 type ValidPolicySpec struct{}
@@ -11,7 +10,8 @@ type ValidPolicySpec struct{}
 func (s *ValidPolicySpec) Verify(policy *domain.Policy) error {
 	err := s.verify(policy)
 	if err != nil {
-		return fmt.Errorf("policy %v: %w", policy.Id, err)
+		return errors.Wrap("invalid policy", err,
+			errors.Pair(errors.AttrPolicy, policy.Id))
 	}
 	return nil
 }
@@ -44,18 +44,18 @@ func (s *ValidPolicySpec) RequiredFieldsPresent(policy *domain.Policy) error {
 
 func (s *ValidPolicySpec) UniqueResourceAndRelationsNames(policy *domain.Policy) error {
 	names := make(map[string]struct{})
-
 	for _, resource := range policy.Resources {
 		name := resource.Name
 		_, ok := names[name]
 		if ok {
-			return fmt.Errorf("resource %v: %w", name, ErrDuplicateDefinition)
+			return errors.Wrap("duplicated resource definition", errors.BadInput,
+				errors.Pair(errors.AttrResource, name))
 		}
 		names[name] = struct{}{}
 
 		err := s.UniqueRelationNameForResource(resource)
 		if err != nil {
-			return fmt.Errorf("resource %v: %w", name, err)
+			return errors.Attrs(err, errors.Pair(errors.AttrResource, name))
 		}
 	}
 	return nil
@@ -68,7 +68,8 @@ func (s *ValidPolicySpec) UniqueRelationNameForResource(resource *domain.Resourc
 		name := relation.Name
 		_, ok := names[name]
 		if ok {
-			return fmt.Errorf("relation %v: %w", name, ErrDuplicateDefinition)
+			return errors.Wrap("duplicated relation definition",
+				errors.BadInput, errors.Pair("relation", name))
 		}
 		names[name] = struct{}{}
 	}
@@ -80,13 +81,16 @@ func (s *ValidPolicySpec) RelationExpressionWellDefined(policy *domain.Policy, l
 		for _, relation := range resource.Relations {
 			tree, err := GetExpressionTree(relation)
 			if err != nil {
-				return fmt.Errorf("resoruce %v: relation %v: %w", resource.Name, relation.Name, err)
+				return errors.Attrs(err,
+					errors.Pair(errors.AttrResource, resource.Name),
+					errors.Pair(errors.AttrRelation, relation.Name),
+				)
 			}
 			rules := tree.GetRules()
 			for _, rule := range rules {
 				err := s.policyContainsRelationsInRule(resource.Name, relation.Name, lut, rule)
 				if err != nil {
-					return fmt.Errorf("resoruce %v: relation %v: rule %v: %w", resource.Name, relation.Name, rule, err)
+					return errors.Attrs(err, errors.Pair("rule", rule.String()))
 				}
 			}
 		}
@@ -100,14 +104,20 @@ func (s *ValidPolicySpec) policyContainsRelationsInRule(resource, relation strin
 		target := r.Cu.TargetRelation
 		rel := lut.GetRelation(resource, target)
 		if rel == nil {
-			return fmt.Errorf("resource %v missing relation %v: %w", resource, target, ErrRelExpTree)
+			return errors.Wrap("resource does not have relation", ErrRelExpTree,
+				errors.Pair(errors.AttrRelation, target),
+				errors.Pair(errors.AttrResource, resource),
+			)
 		}
 	case *domain.Rule_This:
 	case *domain.Rule_Ttu:
 		target := r.Ttu.TuplesetRelation
 		tuplesetRel := lut.GetRelation(resource, target)
 		if tuplesetRel == nil {
-			return fmt.Errorf("resource %v missing relation %v: %w", resource, target, ErrRelExpTree)
+			return errors.Wrap("resource does not have relation", ErrRelExpTree,
+				errors.Pair(errors.AttrRelation, target),
+				errors.Pair(errors.AttrResource, resource),
+			)
 		}
 
 		// TODO this check is trickier, as I have to consider
@@ -115,7 +125,7 @@ func (s *ValidPolicySpec) policyContainsRelationsInRule(resource, relation strin
 		// tbh it's pretty simple.
 		//cuRel := lut.GetRelation(resource, r.Ttu.ComputedUsersetRelation)
 	default:
-		return fmt.Errorf("rule %v: %w", r, domain.ErrInvalidVariant)
+		return errors.Wrap("invalid rule variant", errors.ErrInvalidVariant)
 	}
 	return nil
 }
@@ -128,7 +138,10 @@ func (s *ValidPolicySpec) SubjectRestrictionsConsistent(policy *domain.Policy, l
 				err = s.ValidSubjectRestriction(relation.SubjectRestriction, lut)
 			}
 			if err != nil {
-				return fmt.Errorf("%w: resource %v, relation %v: %v", ErrSubjectRestriction, resource.Name, relation.Name, err)
+				return errors.Attrs(err,
+					errors.Pair(errors.AttrResource, resource.Name),
+					errors.Pair(errors.AttrRelation, relation.Name),
+				)
 			}
 		}
 	}
@@ -142,25 +155,27 @@ func (s *ValidPolicySpec) ValidSubjectRestriction(restriction *domain.SubjectRes
 	case *domain.SubjectRestriction_UniversalSet:
 		return nil
 	default:
-		return fmt.Errorf("invalid subject restriction type %v", restriction)
+		return errors.Wrap("invalid subject resitrction", errors.ErrInvalidVariant)
 	}
 }
 
 func (s *ValidPolicySpec) validSubjectRestrictionSet(restrictionSet *domain.SubjectRestrictionSet, lut PolicyLookUpTable) error {
-
 	for _, elem := range restrictionSet.Restrictions {
 		switch restriction := elem.Entry.(type) {
 		case *domain.SubjectRestrictionSet_Restriction_Entity:
 			if lut.GetResource(restriction.Entity.ResourceName) == nil {
-				return fmt.Errorf("no resource %v", restriction.Entity.ResourceName)
+				return errors.Wrap("resource not found", errors.BadInput,
+					errors.Pair(errors.AttrResource, restriction.Entity.ResourceName))
 			}
 		case *domain.SubjectRestrictionSet_Restriction_EntitySet:
 			resource, relation := restriction.EntitySet.ResourceName, restriction.EntitySet.RelationName
 			if lut.GetRelation(resource, relation) == nil {
-				return fmt.Errorf("no relation %v for resource %v", relation, resource)
+				return errors.Wrap("relation not found", errors.BadInput,
+					errors.Pair(errors.AttrResource, resource),
+					errors.Pair(errors.AttrRelation, relation))
 			}
 		default:
-			return fmt.Errorf("invalid type %v", restrictionSet)
+			return errors.Wrap("invalid subject resitrction", errors.ErrInvalidVariant)
 		}
 	}
 	return nil
@@ -175,11 +190,11 @@ type AllowedRelationshipSpec struct {
 func (s *AllowedRelationshipSpec) requiredFields(relationship *domain.Relationship) error {
 	err := relationship.Validate()
 	if err != nil {
-		return fmt.Errorf("relationship %v: %w", relationship, ErrInvalidRelationship)
+		return errors.Wrap(err.Error(), errors.BadInput)
 	}
 
 	if relationship.Object.Id == "" {
-		return fmt.Errorf("relationship %v: object id cannot be empty: %w", relationship, ErrInvalidRelationship)
+		return errors.Wrap("invalid relationship: object id cannot be empty", errors.BadInput)
 	}
 	return nil
 }
@@ -191,33 +206,37 @@ func (s *AllowedRelationshipSpec) checkSymbols(relationship *domain.Relationship
 
 	res := lut.GetResource(resName)
 	if res == nil {
-		return fmt.Errorf("resource %v: %w", resName, ErrResourceNotFound)
+		return errors.Wrap("resource not found", errors.BadInput, errors.Pair(errors.AttrResource, resName))
 	}
 
 	rel := lut.GetRelation(resName, relName)
 	if rel == nil {
-		return fmt.Errorf("resource %v: relation %v: %w", resName, relName, ErrRelationNotFound)
+		return errors.Wrap("relation not found", errors.BadInput,
+			errors.Pair(errors.AttrResource, resName),
+			errors.Pair(errors.AttrRelation, relName))
 	}
 
 	switch s := relationship.Subject.Subject.(type) {
 	case *domain.Subject_Entity:
 		res = lut.GetResource(s.Entity.Resource)
 		if res == nil {
-			return fmt.Errorf("resource %v: %w", s.Entity.Resource, ErrResourceNotFound)
+			return errors.Wrap("resource not found", errors.BadInput, errors.Pair(errors.AttrResource, s.Entity.Resource))
 		}
 	case *domain.Subject_EntitySet:
 		res, rel := s.EntitySet.Entity.Resource, s.EntitySet.Relation
 		resource := lut.GetRelation(res, rel)
 		if resource == nil {
-			return fmt.Errorf("resource %v: relation %v: %w", res, rel, ErrRelationNotFound)
+			return errors.Wrap("relation not found", errors.BadInput,
+				errors.Pair(errors.AttrResource, res),
+				errors.Pair(errors.AttrRelation, rel))
 		}
 	case *domain.Subject_ResourceSet:
 		resource := lut.GetResource(s.ResourceSet.ResourceName)
 		if resource == nil {
-			return fmt.Errorf("resource %v: %w", s.ResourceSet.ResourceName, ErrResourceNotFound)
+			return errors.Wrap("resource not found", errors.BadInput, errors.Pair(errors.AttrResource, resource.Name))
 		}
 	default:
-		return fmt.Errorf("subject %v: %w", s, domain.ErrInvalidVariant)
+		return errors.Wrap("subject", errors.ErrInvalidVariant)
 	}
 
 	return nil
@@ -226,7 +245,7 @@ func (s *AllowedRelationshipSpec) checkSymbols(relationship *domain.Relationship
 func (s *AllowedRelationshipSpec) Satisfies(relationship *domain.Relationship, lut PolicyLookUpTable) error {
 	err := s.satisfies(relationship, lut)
 	if err != nil {
-		return fmt.Errorf("relationship %v not allowed: %w", relationship, err)
+		return errors.Wrap("invalid relationship", err, errors.Pair(errors.AttrPolicy, lut.GetId()))
 	}
 
 	return nil
@@ -256,30 +275,33 @@ type SubjectRestrictionSpec struct{}
 func (s *SubjectRestrictionSpec) Satisfies(relationship *domain.Relationship, table PolicyLookUpTable) error {
 	relation := table.GetRelation(relationship.Object.Resource, relationship.Relation)
 	if relation == nil {
-		return fmt.Errorf("relation %v: %w", relationship.Relation, ErrRelationNotFound)
+		return errors.Wrap("relation not found in policy", errors.BadInput,
+			errors.Pair(errors.AttrPolicy, table.GetId()),
+			errors.Pair(errors.AttrRelation, relation.Name))
 	}
-
-	var err error
 
 	switch restriction := relation.SubjectRestriction.SubjectRestriction.(type) {
 	case *domain.SubjectRestriction_UniversalSet:
-		err = nil
+		return nil
 	case *domain.SubjectRestriction_RestrictionSet:
-		err = s.satisfiesRestrictionSet(relationship.Subject, restriction.RestrictionSet)
+		ok := s.satisfiesRestrictionSet(relationship.Subject, restriction.RestrictionSet)
+		if !ok {
+			return errors.Wrap("invalid relationship: subject violates subject restriction in relation: double check allowed subjects for relation the policy definition",
+				errors.BadInput,
+				errors.Pair(errors.AttrPolicy, table.GetId()),
+				errors.Pair(errors.AttrResource, relationship.Object.Resource),
+				errors.Pair(errors.AttrRelation, relationship.Relation),
+			)
+		}
+		return nil
 	default:
-		err = fmt.Errorf("SubjectRestriction %v: %w", restriction, domain.ErrInvalidVariant)
+		return errors.Wrap("invalid relation subject restriction", errors.ErrInvalidVariant)
 	}
-
-	if err != nil {
-		return fmt.Errorf("%w: relation %v subject %v: %w", ErrSubjectNotAllowed, relation, relationship.Subject, err)
-	}
-
-	return nil
 }
 
-func (s *SubjectRestrictionSpec) satisfiesRestrictionSet(subject *domain.Subject, set *domain.SubjectRestrictionSet) error {
+func (s *SubjectRestrictionSpec) satisfiesRestrictionSet(subject *domain.Subject, set *domain.SubjectRestrictionSet) bool {
 	var subjResource, subjRelation string
-	var validator func(*domain.SubjectRestrictionSet_Restriction, string, string) error = s.satisfiesRestriction
+	var validator func(*domain.SubjectRestrictionSet_Restriction, string, string) bool = s.satisfiesRestriction
 
 	switch subjectType := subject.Subject.(type) {
 	case *domain.Subject_Entity:
@@ -293,49 +315,49 @@ func (s *SubjectRestrictionSpec) satisfiesRestrictionSet(subject *domain.Subject
 	}
 
 	for _, restriction := range set.Restrictions {
-		err := validator(restriction, subjResource, subjRelation)
-		if err == nil {
-			return nil
+		ok := validator(restriction, subjResource, subjRelation)
+		if ok {
+			return true
 		}
 	}
-	return fmt.Errorf("RestrictionSet does not allow subject")
+	return false
 }
 
 // satisfiesRestrictionForEntitySet verifies whether the given restriction
 // allows a Subject of type EntitySet
-func (s *SubjectRestrictionSpec) satisfiesRestrictionForEntitySet(restriction *domain.SubjectRestrictionSet_Restriction, resource, relation string) error {
+func (s *SubjectRestrictionSpec) satisfiesRestrictionForEntitySet(restriction *domain.SubjectRestrictionSet_Restriction, resource, relation string) bool {
 	switch restrictionType := restriction.Entry.(type) {
 	case *domain.SubjectRestrictionSet_Restriction_Entity:
 		// An Entity Restriction cannot satisfies an EntitySet restriction
 		// since the relation is not empty
-		return ErrSubjectRestriction
+		return false
 	case *domain.SubjectRestrictionSet_Restriction_EntitySet:
 		setRestriction := restrictionType.EntitySet
 		if setRestriction.ResourceName == resource && setRestriction.RelationName == relation {
-			return nil
+			return true
 		} else {
-			return ErrSubjectRestriction
+			return false
 		}
 	default:
-		return ErrSubjectRestriction
+		return false
 	}
 }
 
 // satisfiesRestrictions verifies whether a restriction allows a Subject
 // of type Entity or ResourceSet.
-func (s *SubjectRestrictionSpec) satisfiesRestriction(restriction *domain.SubjectRestrictionSet_Restriction, resource, _ string) error {
+func (s *SubjectRestrictionSpec) satisfiesRestriction(restriction *domain.SubjectRestrictionSet_Restriction, resource, _ string) bool {
 	switch restrictionType := restriction.Entry.(type) {
 	case *domain.SubjectRestrictionSet_Restriction_Entity:
 		if restrictionType.Entity.ResourceName == resource {
-			return nil
+			return true
 		} else {
-			return ErrSubjectRestriction
+			return false
 		}
 	case *domain.SubjectRestrictionSet_Restriction_EntitySet:
 		// Entity or ResourceSet Subjects does not satisfy a EntitySet Restriction
-		return ErrSubjectRestriction
+		return false
 	}
-	return ErrSubjectRestriction
+	return false
 }
 
 // ValidSelectorSpec verifies whether a RelationshipSelector is valid for a Policy
@@ -344,17 +366,17 @@ type ValidSelectorSpec struct{}
 func (s *ValidSelectorSpec) Satisfies(selector *domain.RelationshipSelector, policy *domain.Policy) error {
 	err := s.validObjectSelector(selector.ObjectSelector, policy)
 	if err != nil {
-		return fmt.Errorf("object selector invalid: policy %v: %w", policy.Id, err)
+		return errors.Wrap("invalid object selector", err, errors.Pair(errors.AttrPolicy, policy.Id))
 	}
 
 	err = s.validRelationSelector(selector.ObjectSelector, selector.RelationSelector, policy)
 	if err != nil {
-		return fmt.Errorf("relation selector invalid: policy %v: %w", policy.Id, err)
+		return errors.Wrap("invalid relation selector", err, errors.Pair(errors.AttrPolicy, policy.Id))
 	}
 
 	err = s.validSubjectSelector(selector.SubjectSelector, policy)
 	if err != nil {
-		return fmt.Errorf("subject selector invalid: policy %v: %w", policy.Id, err)
+		return errors.Wrap("invalid subject selector", err, errors.Pair(errors.AttrPolicy, policy.Id))
 	}
 
 	return nil
@@ -365,17 +387,19 @@ func (s *ValidSelectorSpec) validObjectSelector(selector *domain.ObjectSelector,
 	case *domain.ObjectSelector_ObjectSpec:
 		resource := policy.GetResourceByName(s.ObjectSpec.Resource)
 		if resource == nil {
-			return fmt.Errorf("resource %v: %w", s.ObjectSpec.Resource, ErrResourceNotFound)
+			return errors.Wrap("resource not defined in policy", errors.BadInput,
+				errors.Pair(errors.AttrResource, s.ObjectSpec.Resource))
 		}
 	case *domain.ObjectSelector_ResourceSpec:
 		resource := policy.GetResourceByName(s.ResourceSpec)
 		if resource == nil {
-			return fmt.Errorf("resource %v: %w", s.ResourceSpec, ErrResourceNotFound)
+			return errors.Wrap("resource not defined in policy", errors.BadInput,
+				errors.Pair(errors.AttrResource, s.ResourceSpec))
 		}
 	case *domain.ObjectSelector_Wildcard:
 		break
 	default:
-		return fmt.Errorf("%v: %v", s, domain.ErrInvalidVariant)
+		return errors.Wrap("object selector", errors.ErrInvalidVariant)
 	}
 	return nil
 }
@@ -395,7 +419,10 @@ func (s *ValidSelectorSpec) validRelationSelector(objSelector *domain.ObjectSele
 	resource := policy.GetResourceByName(resourceName)
 	relation := resource.GetRelationByName(relName)
 	if relation == nil {
-		return fmt.Errorf("relation %v: %w", relName, ErrRelationNotFound)
+		return errors.Wrap("relation resource not defined in resource", errors.BadInput,
+			errors.Pair(errors.AttrResource, resourceName),
+			errors.Pair(errors.AttrRelation, relName),
+		)
 	}
 
 	return nil
@@ -416,18 +443,20 @@ func (s *ValidSelectorSpec) validSubjectSelector(selector *domain.SubjectSelecto
 	case *domain.SubjectSelector_ResourceSpec:
 		resource := policy.GetResourceByName(s.ResourceSpec)
 		if resource == nil {
-			return fmt.Errorf("resource '%v': %w", s.ResourceSpec, ErrResourceNotFound)
+			return errors.Wrap("resource not defined in policy", errors.BadInput,
+				errors.Pair(errors.AttrResource, s.ResourceSpec))
 		}
 	case *domain.SubjectSelector_SubjectSpec:
 		name := s.SubjectSpec.GetResourceName()
 		resource := policy.GetResourceByName(name)
 		if resource == nil {
-			return fmt.Errorf("resource '%v': %w", name, ErrResourceNotFound)
+			return errors.Wrap("resource not defined in policy", errors.BadInput,
+				errors.Pair(errors.AttrResource, name))
 		}
 	case *domain.SubjectSelector_Wildcard:
 		break
 	default:
-		return fmt.Errorf("%v: %w", s, domain.ErrInvalidVariant)
+		return errors.Wrap("subject selector", errors.ErrInvalidVariant)
 	}
 	return nil
 }

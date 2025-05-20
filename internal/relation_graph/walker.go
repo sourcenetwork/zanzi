@@ -24,7 +24,7 @@ type walker struct {
 func (w *walker) Walk(ctx context.Context, policy *domain.Policy) (*domain.RelationTree, error) {
 	edges, err := w.repository.ListEdges(ctx, policy.Id)
 	if err != nil {
-		return nil, err //TODO
+		return nil, err
 	}
 
 	trees := make(map[string]*domain.RelationTree)

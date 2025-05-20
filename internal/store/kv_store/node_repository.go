@@ -6,6 +6,7 @@ import (
 	"github.com/sourcenetwork/zanzi/internal/relation_graph"
 	"github.com/sourcenetwork/zanzi/internal/utils"
 	"github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/errors"
 	"github.com/sourcenetwork/zanzi/pkg/types"
 )
 
@@ -34,7 +35,10 @@ func (r *nodeRepository) GetSucessors(ctx context.Context, policyId string, node
 
 	sucessors, err := store.GetSucessors(&internalNode)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewWithCause("getting sucessors", errors.Internal, err,
+			errors.Pair(errors.AttrUserset, node.String()),
+			errors.Pair(errors.AttrPolicy, policyId),
+		)
 	}
 
 	return utils.MapSlice(sucessors, func(relationship *Relationship) *domain.RelationNode {
@@ -48,7 +52,9 @@ func (r *nodeRepository) ListEdges(ctx context.Context, policyId string) ([]type
 
 	relationships, err := store.List()
 	if err != nil {
-		return nil, err
+		return nil, errors.NewWithCause("listing edges", errors.Internal, err,
+			errors.Pair(errors.AttrPolicy, policyId),
+		)
 	}
 
 	pairs := utils.MapSlice(relationships, func(relationship *Relationship) types.Pair[*domain.RelationNode, *domain.RelationNode] {

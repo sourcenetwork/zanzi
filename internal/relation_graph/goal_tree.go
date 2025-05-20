@@ -7,6 +7,7 @@ import (
 	"github.com/sourcenetwork/zanzi/internal/policy"
 	"github.com/sourcenetwork/zanzi/internal/utils"
 	"github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/errors"
 	"github.com/sourcenetwork/zanzi/pkg/types"
 )
 
@@ -39,13 +40,15 @@ func (b *goalTreeBuilder) Build(ctx context.Context, pol *domain.Policy, node *d
 	case *domain.RelationNode_Entity, *domain.RelationNode_Wildcard:
 		tree = b.handleTerminalNodes(node)
 	default:
-		err = fmt.Errorf("RelationNode %v: %w", nodeType, domain.ErrInvalidVariant)
+		err = errors.Wrap("relation node", errors.ErrInvalidVariant)
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("build GoalTree failed: policy %v node %v: %w", pol.Id, node, err)
+		return nil, errors.Wrap("build goal tree failed", err,
+			errors.Pair(errors.AttrPolicy, pol.Id),
+			errors.Pair("node", node.String()),
+		)
 	}
-
 	b.logger.Debugf("goal tree for node %v: tree: %#v", node, tree)
 	return tree, nil
 }
@@ -66,7 +69,11 @@ func (b *goalTreeBuilder) handleEntitySet(ctx context.Context, pol *domain.Polic
 
 	relation := table.GetRelation(node.Object.Resource, node.Relation)
 	if relation == nil {
-		return nil, policy.ErrRelationNotFound
+		return nil, errors.Wrap("relation not found", errors.BadInput,
+			errors.Pair(errors.AttrPolicy, pol.Id),
+			errors.Pair(errors.AttrResource, node.Object.Resource),
+			errors.Pair(errors.AttrRelation, node.Relation),
+		)
 	}
 
 	expressionTree, err := policy.GetExpressionTree(relation)
@@ -92,7 +99,7 @@ func (b *goalTreeBuilder) buildGoalTree(ctx context.Context, policyId string, ex
 	case *domain.RelationExpressionTree_Rule:
 		goalTree, err = b.buildGoalForRule(ctx, policyId, exprTreeNode.Rule, node)
 	default:
-		err = fmt.Errorf("relation expression tree node %v: %w", exprTreeNode, domain.ErrInvalidVariant)
+		err = errors.Wrap("relation expression tree node", errors.ErrInvalidVariant)
 	}
 
 	return goalTree, err
@@ -176,45 +183,11 @@ func (b *goalTreeBuilder) buildGoalForOpNode(ctx context.Context, polId string, 
 			Result: SearchResult_UNKNOWN,
 		}
 	default:
-		return nil, fmt.Errorf("operator %v: %w", opNode.Operator, domain.ErrInvalidVariant)
+		return nil, errors.Wrap("operator", errors.ErrInvalidVariant)
 	}
 
 	return tree, nil
 }
-
-/*
-type goalTreeFolder struct {
-}
-
-func (f *goalTreeFolder) Fold(tree GoalTree) []*domain.RelationNode { }
-
-func (f *goalTreeFolder) fold(tree GoalTree) map[string]*domain.RelationNode {
-    switch node := tree.(type) {
-    case *ANDNode:
-    case *ORNode:
-    case *DifferenceNode:
-    case *PathNode:
-    case nil:
-    default:
-    }
-}
-
-func (f *goalTreeFolder) foldORNode(tree *ORNode) map[string]*domain.RelationNode {
-    nodes := make(map[string]*RelationNode)
-
-    for _, path := range tree.Paths{
-        f.fold(path, nodes)
-    }
-}
-
-func (f *goalTreeFolder) foldANDNode(tree GoalTree) []*domain.RelationNode { }
-
-func (f *goalTreeFolder) foldDifferenceNode(tree GoalTree) []*domain.RelationNode { }
-
-func (f *goalTreeFolder) foldPathNode(tree GoalTree) []*domain.RelationNode {
-
-}
-*/
 
 func reasonBuilder(rule *domain.Rule) string {
 	var reason string

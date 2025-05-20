@@ -2,10 +2,10 @@ package relation_graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sourcenetwork/zanzi/internal/utils"
 	"github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/errors"
 	"github.com/sourcenetwork/zanzi/pkg/types"
 )
 
@@ -38,14 +38,17 @@ func (e *evaluator) Evaluate(ctx context.Context, policyId string, rule *domain.
 	case *domain.Rule_Cu:
 		nodes = e.evaluateComputedUserset(ruleType.Cu, node)
 	default:
-		err = fmt.Errorf("rule %v: %w", rule, domain.ErrInvalidVariant)
+		err = errors.Wrap("invalid rule variant", errors.ErrInvalidVariant)
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("rule evaluation: node %v rule %v: %w", node, rule, err)
+		return nil, errors.Wrap("rule evaluation failed", err,
+			errors.Pair(errors.AttrPolicy, policyId),
+			errors.Pair("node", node.String()),
+			errors.Pair("rule", rule.String()),
+		)
 	}
 
-	e.logger.Debugf("evalutator: rule %v, nodes %v", rule, nodes)
 	return nodes, nil
 }
 
@@ -55,7 +58,7 @@ func (f *evaluator) evaluateThis(ctx context.Context, policyId string, node *dom
 
 	sucessors, err := repository.GetSucessors(ctx, policyId, node)
 	if err != nil {
-		return nil, fmt.Errorf("this rule: %w", err)
+		return nil, errors.Wrap("this rule failed", err)
 	}
 
 	return sucessors, nil
@@ -93,7 +96,7 @@ func (f *evaluator) evaluateTupleToUserset(ctx context.Context, policyId string,
 	}
 	sucessors, err := repository.GetSucessors(ctx, policyId, filter)
 	if err != nil {
-		return nil, fmt.Errorf("tuple to userset rule: %w", err)
+		return nil, errors.Wrap("tuple to userset rule", err)
 	}
 	f.logger.Debugf("ttu evaluation found tuplesets: %v", sucessors)
 
@@ -119,7 +122,7 @@ func buildTupleToUsersetNode(node *domain.RelationNode, computedRelation string)
 	case *domain.RelationNode_Wildcard:
 		//TODO not sure how I should go about this scenario yet...
 	default:
-		return nil, fmt.Errorf("building tuple to userset node: node %v: %w", node, domain.ErrInvalidVariant)
+		return nil, errors.Wrap("building tuple to userset node", errors.ErrInvalidVariant)
 	}
 
 	return &domain.RelationNode{

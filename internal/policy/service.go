@@ -7,6 +7,7 @@ import (
 	"github.com/sourcenetwork/zanzi/internal/utils"
 	"github.com/sourcenetwork/zanzi/pkg/api"
 	"github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/errors"
 )
 
 var _ api.PolicyServiceServer = (*Service)(nil)
@@ -33,29 +34,30 @@ func (s *Service) CreatePolicy(
 
 	policy, err := GetPolicyFromDefinition(req.PolicyDefinition)
 	if err != nil {
-		return nil, fmt.Errorf("create policy: %w", err)
+		return nil, err
 	}
 
 	repo := s.getPolicyRepository()
 
 	fetched, err := repo.GetPolicy(ctx, policy.Id)
 	if fetched != nil {
-		return nil, fmt.Errorf("create policy: policy %v: %w", policy.Id, ErrPolicyExists)
+		return nil, errors.Wrap("policy", errors.ErrEntityExists,
+			errors.Pair(errors.AttrPolicy, policy.Id))
 	}
 	if err != nil {
-		return nil, fmt.Errorf("create policy: %w", err)
+		return nil, err
 	}
 
 	spec := ValidPolicySpec{}
 	err = spec.Verify(policy)
 	if err != nil {
-		return nil, fmt.Errorf("create policy: %w", err)
+		return nil, err
 	}
 
 	rec := domain.NewPolicyRecord(policy, req.AppData)
 	_, err = repo.SetPolicy(ctx, rec)
 	if err != nil {
-		return nil, fmt.Errorf("create policy: %w", err)
+		return nil, err
 	}
 
 	return &api.CreatePolicyResponse{
@@ -69,17 +71,17 @@ func (s *Service) UpdatePolicy(
 
 	policy, err := GetPolicyFromDefinition(req.PolicyDefinition)
 	if err != nil {
-		return nil, fmt.Errorf("update policy: %w", err)
+		return nil, err
 	}
 
 	repo := s.getPolicyRepository()
 
 	record, err := repo.GetPolicy(ctx, policy.Id)
 	if err != nil {
-		return nil, fmt.Errorf("update policy: %w", err)
+		return nil, err
 	}
 	if record == nil {
-		return nil, fmt.Errorf("update policy: policy %v: %w", policy.Id, ErrPolicyNotFound)
+		return nil, errors.ErrPolicyNotFound(policy.Id)
 	}
 
 	spec := ValidPolicySpec{}
@@ -106,7 +108,7 @@ func (s *Service) DeletePolicy(
 	// TODO wrap in Tx
 	found, err := repo.DeletePolicy(ctx, req.Id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to delete policy: %w", err)
+		return nil, err
 	}
 	if !found {
 		return &api.DeletePolicyResponse{
@@ -118,7 +120,7 @@ func (s *Service) DeletePolicy(
 	selector := allRelationshipsSelector()
 	count, err := repo.DeleteRelationships(ctx, req.Id, &selector)
 	if err != nil {
-		return nil, fmt.Errorf("failed to delete policy: %w", err)
+		return nil, err
 	}
 
 	return &api.DeletePolicyResponse{
@@ -134,7 +136,10 @@ func (s *Service) GetPolicy(
 
 	record, err := repo.GetPolicy(ctx, req.Id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get policy: %w", err)
+		return nil, err
+	}
+	if record == nil {
+		return nil, errors.ErrPolicyNotFound(req.Id)
 	}
 
 	return &api.GetPolicyResponse{
@@ -149,7 +154,7 @@ func (s *Service) ListPolicyIds(
 
 	ids, err := repo.ListPolicyIds(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list policy ids: %w", err)
+		return nil, err
 	}
 
 	records := utils.MapSlice(ids, func(id string) *api.ListPolicyIdsResponse_Record {
@@ -170,9 +175,9 @@ func (s *Service) SetRelationship(
 
 	record, err := repo.GetPolicy(ctx, req.PolicyId)
 	if err != nil {
-		return nil, fmt.Errorf("set relationship: %w", err)
+		return nil, err
 	} else if record == nil {
-		return nil, fmt.Errorf("set relationship: policy %v: %w", req.PolicyId, ErrPolicyNotFound)
+		return nil, errors.ErrPolicyNotFound(req.PolicyId)
 	}
 
 	lut := NewPolicyLookUpTable(record.Policy)
@@ -180,13 +185,13 @@ func (s *Service) SetRelationship(
 
 	err = spec.Satisfies(req.Relationship, lut)
 	if err != nil {
-		return nil, fmt.Errorf("set relationship: %w", err)
+		return nil, err
 	}
 
 	rec := domain.NewRelationshipRecord(req.PolicyId, req.Relationship, req.AppData)
 	updated, err := repo.SetRelationship(ctx, rec)
 	if err != nil {
-		return nil, fmt.Errorf("set relationship: store: %w", err)
+		return nil, err
 	}
 
 	return &api.SetRelationshipResponse{
@@ -201,7 +206,7 @@ func (s *Service) DeleteRelationship(
 
 	found, err := repo.DeleteRelationship(ctx, req.PolicyId, req.Relationship)
 	if err != nil {
-		return nil, fmt.Errorf("delete Relationship: %w", err)
+		return nil, err
 	}
 
 	return &api.DeleteRelationshipResponse{
@@ -216,7 +221,7 @@ func (s *Service) GetRelationship(
 
 	record, err := repo.GetRelationship(ctx, req.PolicyId, req.Relationship)
 	if err != nil {
-		return nil, fmt.Errorf("get relationship: %w", err)
+		return nil, err
 	}
 
 	return &api.GetRelationshipResponse{
@@ -234,18 +239,18 @@ func (s *Service) FindRelationshipRecords(
 		return nil, err
 	}
 	if policy == nil {
-		return nil, fmt.Errorf("FindRelationshipRecord failed: policy %v: %w", req.PolicyId, ErrPolicyNotFound)
+		return nil, errors.ErrPolicyNotFound(req.PolicyId)
 	}
 
 	spec := ValidSelectorSpec{}
 	err = spec.Satisfies(req.Selector, policy.Policy)
 	if err != nil {
-		return nil, fmt.Errorf("FindRelationshipRecord failed: %w", err)
+		return nil, err
 	}
 
 	records, err := repo.FindRelationshipRecords(ctx, req.PolicyId, req.Selector)
 	if err != nil {
-		return nil, fmt.Errorf("FindRelationshipRecords failed: %w", err)
+		return nil, err
 	}
 
 	return &api.FindRelationshipRecordsResponse{
@@ -262,7 +267,7 @@ func (s *Service) DeleteRelationships(
 
 	count, err := repo.DeleteRelationships(ctx, req.PolicyId, req.Selector)
 	if err != nil {
-		return nil, fmt.Errorf("delete relationships: %w", err)
+		return nil, err
 	}
 
 	return &api.DeleteRelationshipsResponse{
@@ -275,7 +280,7 @@ func (s *Service) ListPolicies(ctx context.Context, req *api.ListPoliciesRequest
 
 	records, err := repo.ListPolicies(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list policies: %v", err)
+		return nil, err
 	}
 
 	return &api.ListPoliciesResponse{
@@ -298,12 +303,12 @@ func (s *Service) ValdiatePolicy(ctx context.Context, req *api.ValidatePolicyReq
 
 	fetched, err := repo.GetPolicy(ctx, policy.Id)
 	if fetched != nil {
-		response.ErrorMsg = fmt.Sprintf("pilicy %v: %v", policy.Id, ErrPolicyExists)
+		response.ErrorMsg = fmt.Sprintf("policy %v already exists", policy.Id)
 		return response, nil
 	}
 	if err != nil {
 		// represents an IO error, not a validator error
-		return nil, fmt.Errorf("validate policy: %w", err)
+		return nil, err
 	}
 
 	spec := ValidPolicySpec{}
@@ -323,9 +328,9 @@ func (s *Service) ValidateRelationship(ctx context.Context, req *api.ValidateRel
 
 	record, err := repo.GetPolicy(ctx, req.PolicyId)
 	if err != nil {
-		return nil, fmt.Errorf("validate relationship: %w", err)
+		return nil, err
 	} else if record == nil {
-		return nil, fmt.Errorf("validate relationship: policy %v: %w", req.PolicyId, ErrPolicyNotFound)
+		return nil, errors.ErrPolicyNotFound(req.PolicyId)
 	}
 
 	lut := NewPolicyLookUpTable(record.Policy)
@@ -348,20 +353,20 @@ func (s *Service) ValidateRelationship(ctx context.Context, req *api.ValidateRel
 func (s *Service) EditPolicy(ctx context.Context, req *api.EditPolicyRequest) (*api.EditPolicyResponse, error) {
 	record, err := s.repository.GetPolicy(ctx, req.PolicyId)
 	if err != nil {
-		return nil, fmt.Errorf("edit policy: %w", err)
+		return nil, err
 	} else if record == nil {
-		return nil, fmt.Errorf("edit policy: policy %v: %w", req.PolicyId, ErrPolicyNotFound)
+		return nil, errors.ErrPolicyNotFound(req.PolicyId)
 	}
 
 	policy, err := GetPolicyFromDefinition(req.PolicyDefinition)
 	if err != nil {
-		return nil, fmt.Errorf("edit policy: %w", err)
+		return nil, err
 	}
 
 	spec := ValidPolicySpec{}
 	err = spec.Verify(policy)
 	if err != nil {
-		return nil, fmt.Errorf("edit policy: %w", err)
+		return nil, err
 	}
 
 	comparator := policyComparator{}
@@ -371,7 +376,7 @@ func (s *Service) EditPolicy(ctx context.Context, req *api.EditPolicyRequest) (*
 	for _, op := range ops {
 		result, err := op.Execute(ctx, s.repository, record.Policy.Id)
 		if err != nil {
-			return nil, fmt.Errorf("edit policy: %w", err)
+			return nil, err
 		}
 		acc.RelationshipsRemoved += result.RelationshipsRemoved
 	}
@@ -380,7 +385,7 @@ func (s *Service) EditPolicy(ctx context.Context, req *api.EditPolicyRequest) (*
 
 	_, err = s.repository.SetPolicy(ctx, record)
 	if err != nil {
-		return nil, fmt.Errorf("edit policy: %w", err)
+		return nil, err
 	}
 
 	return &api.EditPolicyResponse{
@@ -392,15 +397,15 @@ func (s *Service) EditPolicy(ctx context.Context, req *api.EditPolicyRequest) (*
 func (s *Service) EditPolicyAppData(ctx context.Context, req *api.EditPolicyAppDataRequest) (*api.EditPolicyAppDataResponse, error) {
 	record, err := s.repository.GetPolicy(ctx, req.PolicyId)
 	if err != nil {
-		return nil, fmt.Errorf("edit policy app_data: %w", err)
+		return nil, err
 	} else if record == nil {
-		return nil, fmt.Errorf("edit policy app_data: policy %v: %w", req.PolicyId, ErrPolicyNotFound)
+		return nil, errors.ErrPolicyNotFound(req.PolicyId)
 	}
 
 	record.AppData = req.AppData
 	_, err = s.repository.SetPolicy(ctx, record)
 	if err != nil {
-		return nil, fmt.Errorf("edit policy app_data: %w", err)
+		return nil, err
 	}
 
 	return &api.EditPolicyAppDataResponse{

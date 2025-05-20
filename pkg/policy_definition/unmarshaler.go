@@ -25,7 +25,6 @@ func UnmarshalPolicyDefinition(policyYaml string) (*PolicyDefinition, error) {
 }
 
 func setEntityNames(p *PolicyDefinition) {
-
 	for resName, resource := range p.Resources {
 		if resource == nil {
 			resDef := ResourceDefinition{}
@@ -43,9 +42,7 @@ func setEntityNames(p *PolicyDefinition) {
 				resource.Relations[relationName] = &relDef
 				relation = &relDef
 			}
-
 			relation.name = relationName
 		}
-
 	}
 }

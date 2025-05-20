@@ -83,7 +83,6 @@ func (r SearchResult) String() string {
 	default:
 		return ""
 	}
-	return ""
 }
 
 func (r SearchResult) MarshalJSON() ([]byte, error) {

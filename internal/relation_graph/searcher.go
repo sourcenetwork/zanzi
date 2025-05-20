@@ -2,10 +2,10 @@ package relation_graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sourcenetwork/zanzi/internal/utils"
 	"github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/errors"
 	"github.com/sourcenetwork/zanzi/pkg/types"
 )
 
@@ -33,7 +33,7 @@ func (s *Searcher) Search(ctx context.Context, policy *domain.Policy, origin *do
 	if goal.Target != nil {
 		_, isWildcard := goal.Target.Node.(*domain.RelationNode_Wildcard)
 		if isWildcard {
-			return nil, fmt.Errorf("search failed: goal %v: %w", goal, ErrWildcardGoal)
+			return nil, ErrWildcardGoal
 		}
 	}
 
@@ -47,7 +47,10 @@ func (s *Searcher) Search(ctx context.Context, policy *domain.Policy, origin *do
 
 	tree, err := s.searchPath(ctx, policy, path, goal)
 	if err != nil {
-		return nil, fmt.Errorf("search failed: %w", err)
+		return nil, errors.Wrap("search failed", err,
+			errors.Pair(errors.AttrPolicy, policy.Id),
+			errors.Pair("goal", goal.Target.String()),
+		)
 	}
 
 	return tree, nil
@@ -69,12 +72,12 @@ func (s *Searcher) search(ctx context.Context, policy *domain.Policy, tree GoalT
 	case *PathNode:
 		newTree, err = s.searchPath(ctx, policy, treeType, goal)
 	default:
-		err = fmt.Errorf("RewriteGoalTree %v: %w", treeType, domain.ErrInvalidVariant)
+		err = errors.Wrap("rewrite goal tree", errors.ErrInvalidVariant)
 	}
 
 	if err != nil {
 		s.logger.Debugf("%v", err)
-		return nil, fmt.Errorf("search failed: %w", err)
+		return nil, err
 	}
 
 	return newTree, nil

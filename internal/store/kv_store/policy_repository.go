@@ -2,13 +2,13 @@ package kv_store
 
 import (
 	"context"
-	"fmt"
 
 	rcdb "github.com/sourcenetwork/raccoondb"
 
 	"github.com/sourcenetwork/zanzi/internal/policy"
 	"github.com/sourcenetwork/zanzi/internal/utils"
 	"github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/errors"
 	"github.com/sourcenetwork/zanzi/pkg/types"
 )
 
@@ -35,12 +35,12 @@ func (r *policyRepository) SetPolicy(ctx context.Context, record *domain.PolicyR
 
 	has, err := store.HasById([]byte(record.Policy.Id))
 	if err != nil {
-		return false, err
+		return false, errors.NewWithCause("setting policy", errors.Internal, err)
 	}
 
 	err = store.SetObject(record)
 	if err != nil {
-		return false, err
+		return false, errors.NewWithCause("setting policy", errors.Internal, err)
 	}
 
 	return types.RecordFound(has), nil
@@ -50,7 +50,7 @@ func (r *policyRepository) GetPolicy(ctx context.Context, id string) (*domain.Po
 	store := r.kvStore.getPolicyStore()
 	opt, err := store.GetObject([]byte(id))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewWithCause("setting policy", errors.Internal, err)
 	}
 	if opt.IsEmpty() {
 		return nil, nil
@@ -64,7 +64,7 @@ func (r *policyRepository) DeletePolicy(ctx context.Context, id string) (types.R
 
 	found, err := store.HasById([]byte(id))
 	if err != nil {
-		return false, err
+		return false, errors.NewWithCause("deleting policy", errors.Internal, err)
 	}
 	if !found {
 		return false, nil
@@ -72,7 +72,7 @@ func (r *policyRepository) DeletePolicy(ctx context.Context, id string) (types.R
 
 	err = store.DeleteById([]byte(id))
 	if err != nil {
-		return false, err
+		return false, errors.NewWithCause("deleting policy", errors.Internal, err)
 	}
 	return true, nil
 }
@@ -81,7 +81,7 @@ func (r *policyRepository) ListPolicyIds(context.Context) ([]string, error) {
 	store := r.kvStore.getPolicyStore()
 	ids, err := store.ListIds()
 	if err != nil {
-		return nil, fmt.Errorf("list policy ids: %w", err)
+		return nil, errors.NewWithCause("listing policy ids", errors.Internal, err)
 	}
 
 	return utils.MapSlice(ids, func(id []byte) string {
@@ -99,12 +99,12 @@ func (r *policyRepository) SetRelationship(ctx context.Context, record *domain.R
 	opt, err := relationshipStore.Get(relationship.GetSource(), relationship.GetDest())
 	updated := !opt.IsEmpty()
 	if err != nil {
-		return false, fmt.Errorf("kvstore: has relationship: %w", err)
+		return false, errors.NewWithCause("setting relationship", errors.Internal, err)
 	}
 
 	err = relationshipStore.Set(&relationship)
 	if err != nil {
-		return false, fmt.Errorf("kvstore: set relationship: %w", err)
+		return false, errors.NewWithCause("setting relationship", errors.Internal, err)
 	}
 
 	data := RelationshipData{
@@ -114,7 +114,7 @@ func (r *policyRepository) SetRelationship(ctx context.Context, record *domain.R
 	}
 	err = relationshipDataStore.SetObject(&data)
 	if err != nil {
-		return false, fmt.Errorf("kvstore: set relationship appdata: %w", err)
+		return false, errors.NewWithCause("setting relationship", errors.Internal, err)
 	}
 
 	return updated, nil
@@ -131,17 +131,17 @@ func (r *policyRepository) DeleteRelationship(ctx context.Context, policyId stri
 	opt, err := relationshipStore.Get(relationship.GetSource(), relationship.GetDest())
 	found := !opt.IsEmpty()
 	if err != nil {
-		return false, err
+		return false, errors.NewWithCause("deleting relationship", errors.Internal, err)
 	}
 
 	err = relationshipStore.Delete(&relationship)
 	if err != nil {
-		return false, err
+		return false, errors.NewWithCause("deleting relationship", errors.Internal, err)
 	}
 
 	err = relationshipDataStore.DeleteById(id)
 	if err != nil {
-		return false, err
+		return false, errors.NewWithCause("deleting relationship", errors.Internal, err)
 	}
 
 	return types.RecordFound(found), nil
@@ -152,7 +152,7 @@ func (r *policyRepository) FindRelationships(ctx context.Context, policyId strin
 	fetcher := newRelationshipFetcher(relationshipStore, r.mapper)
 	result, err := fetcher.Fetch(ctx, selector)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewWithCause("looking up relationships", errors.Internal, err)
 	}
 	return result, nil
 }
@@ -164,7 +164,7 @@ func (r *policyRepository) GetRelationship(ctx context.Context, policyId string,
 	id := r.relationshipIDer.Id(&internalRelationship)
 	dataOpt, err := relationshipDataStore.GetObject(id)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewWithCause("getting relationship", errors.Internal, err)
 	}
 	if dataOpt.IsEmpty() {
 		return nil, nil
@@ -176,14 +176,14 @@ func (r *policyRepository) GetRelationship(ctx context.Context, policyId string,
 func (r *policyRepository) FindRelationshipRecords(ctx context.Context, policyId string, selector *domain.RelationshipSelector) ([]*domain.RelationshipRecord, error) {
 	relationships, err := r.FindRelationships(ctx, policyId, selector)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewWithCause("looking up relationships", errors.Internal, err)
 	}
 
 	records, err := utils.MapSliceErr(relationships, func(relationship *domain.Relationship) (*domain.RelationshipRecord, error) {
 		return r.GetRelationship(ctx, policyId, relationship)
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewWithCause("looking up relationships", errors.Internal, err)
 	}
 
 	return records, nil
@@ -192,14 +192,14 @@ func (r *policyRepository) FindRelationshipRecords(ctx context.Context, policyId
 func (r *policyRepository) DeleteRelationships(ctx context.Context, policyId string, selector *domain.RelationshipSelector) (uint64, error) {
 	relationships, err := r.FindRelationships(ctx, policyId, selector)
 	if err != nil {
-		return 0, err
+		return 0, errors.NewWithCause("deleting relationships", errors.Internal, err)
 	}
 
 	founds, err := utils.MapSliceErr(relationships, func(relationship *domain.Relationship) (types.RecordFound, error) {
 		return r.DeleteRelationship(ctx, policyId, relationship)
 	})
 	if err != nil {
-		return 0, err
+		return 0, errors.NewWithCause("deleting relationships", errors.Internal, err)
 	}
 
 	removed := len(utils.MapSlice(founds, utils.Identity[types.RecordFound]))
@@ -207,5 +207,9 @@ func (r *policyRepository) DeleteRelationships(ctx context.Context, policyId str
 }
 
 func (r *policyRepository) ListPolicies(ctx context.Context) ([]*domain.PolicyRecord, error) {
-	return r.kvStore.policyStore.List()
+	records, err := r.kvStore.policyStore.List()
+	if err != nil {
+		return nil, errors.NewWithCause("listing policies", errors.Internal, err)
+	}
+	return records, nil
 }

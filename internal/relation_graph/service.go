@@ -2,11 +2,11 @@ package relation_graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sourcenetwork/zanzi/internal/policy"
 	"github.com/sourcenetwork/zanzi/pkg/api"
 	"github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/errors"
 	"github.com/sourcenetwork/zanzi/pkg/types"
 )
 
@@ -32,10 +32,10 @@ func (s *Service) Check(
 	req *api.CheckRequest) (*api.CheckResponse, error) {
 	pol, err := s.policyRepository.GetPolicy(ctx, req.PolicyId)
 	if err != nil {
-		return nil, fmt.Errorf("check: %w: %w", api.ErrInternal, err)
+		return nil, err
 	}
 	if pol == nil {
-		return nil, fmt.Errorf("check: %w: policy %v: %w", api.ErrInvalidRequest, req.PolicyId, policy.ErrPolicyNotFound)
+		return nil, errors.ErrPolicyNotFound(req.PolicyId)
 	}
 
 	evaluator := newEvaluator(s.repository, s.logger)
@@ -82,15 +82,15 @@ func (s *Service) ExplainCheck(
 	req *api.ExplainCheckRequest) (*api.ExplainCheckResponse, error) {
 	serializer, err := SerializerFactory(req.Format)
 	if err != nil {
-		return nil, fmt.Errorf("check: %w: %w", api.ErrInvalidRequest, err)
+		return nil, err
 	}
 
 	pol, err := s.policyRepository.GetPolicy(ctx, req.PolicyId)
 	if err != nil {
-		return nil, fmt.Errorf("check: %w: %w", api.ErrInternal, err)
+		return nil, err
 	}
 	if pol == nil {
-		return nil, fmt.Errorf("check: %w: policy %v: %w", api.ErrInvalidRequest, req.PolicyId, policy.ErrPolicyNotFound)
+		return nil, errors.ErrPolicyNotFound(req.PolicyId)
 	}
 
 	evaluator := newEvaluator(s.repository, s.logger)
@@ -127,7 +127,7 @@ func (s *Service) ExplainCheck(
 
 	serialized, err := serializer.Serialize(tree)
 	if err != nil {
-		return nil, fmt.Errorf("explain check: %w: %w", api.ErrInternal, err)
+		return nil, err
 	}
 
 	return &api.ExplainCheckResponse{
@@ -141,15 +141,15 @@ func (s *Service) Expand(
 	req *api.ExpandRequest) (*api.ExpandResponse, error) {
 	serializer, err := SerializerFactory(req.Format)
 	if err != nil {
-		return nil, fmt.Errorf("expand: %w: %w", api.ErrInvalidRequest, err)
+		return nil, err
 	}
 
 	pol, err := s.policyRepository.GetPolicy(ctx, req.PolicyId)
 	if err != nil {
-		return nil, fmt.Errorf("expand: %w: %w", api.ErrInternal, err)
+		return nil, err
 	}
 	if pol == nil {
-		return nil, fmt.Errorf("expand: %w: policy %v: %w", api.ErrInvalidRequest, req.PolicyId, policy.ErrPolicyNotFound)
+		return nil, errors.ErrPolicyNotFound(req.PolicyId)
 	}
 
 	evaluator := newEvaluator(s.repository, s.logger)
@@ -161,12 +161,12 @@ func (s *Service) Expand(
 	}
 	tree, err := searcher.Search(ctx, pol.Policy, req.Root, &goal)
 	if err != nil {
-		return nil, fmt.Errorf("expand: %w", err)
+		return nil, err
 	}
 
 	serialized, err := serializer.Serialize(tree)
 	if err != nil {
-		return nil, fmt.Errorf("expand: %w: %w", api.ErrInternal, err)
+		return nil, err
 	}
 
 	return &api.ExpandResponse{
@@ -180,16 +180,16 @@ func (s *Service) DumpRelationships(
 	req *api.DumpRelationshipsRequest) (*api.DumpRelationshipResponse, error) {
 	rec, err := s.policyRepository.GetPolicy(ctx, req.PolicyId)
 	if err != nil {
-		return nil, fmt.Errorf("DumpRelationships: %w: %w", api.ErrInternal, err)
+		return nil, err
 	}
 	if rec == nil {
-		return nil, fmt.Errorf("DumpRelationships: %w: policy %v: %w", api.ErrInvalidRequest, req.PolicyId, policy.ErrPolicyNotFound)
+		return nil, errors.ErrPolicyNotFound(req.PolicyId)
 	}
 
 	walker := newWalker(s.repository, s.logger)
 	tree, err := walker.Walk(ctx, rec.Policy)
 	if err != nil {
-		return nil, fmt.Errorf("DumpRelationships: %w", err)
+		return nil, err
 	}
 
 	response := &api.DumpRelationshipResponse{}
@@ -198,13 +198,13 @@ func (s *Service) DumpRelationships(
 		serializer := RelationTreeDOTSerializer{}
 		treeStr, err := serializer.Serialize(tree)
 		if err != nil {
-			return nil, fmt.Errorf("DumpRelationships: %w", err)
+			return nil, err
 		}
 		response.Dump = &api.DumpRelationshipResponse_Dot{
 			Dot: treeStr,
 		}
 	default:
-		return nil, fmt.Errorf("DumpRelationships: format %v: %w", req.Format, domain.ErrInvalidVariant)
+		return nil, errors.Wrap("invalid format", errors.ErrInvalidVariant)
 	}
 
 	return response, nil

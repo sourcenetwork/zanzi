@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	rcdb "github.com/sourcenetwork/raccoondb"
@@ -14,6 +13,7 @@ import (
 	_testing "github.com/sourcenetwork/zanzi/internal/testing"
 	"github.com/sourcenetwork/zanzi/pkg/api"
 	"github.com/sourcenetwork/zanzi/pkg/domain"
+	"github.com/sourcenetwork/zanzi/pkg/errors"
 	"github.com/sourcenetwork/zanzi/pkg/policy_definition"
 )
 
@@ -290,7 +290,7 @@ func TestCreatePolicyWithIdClashRaisesError(t *testing.T) {
 	got, err := service.CreatePolicy(ctx, createReq)
 	require.Nil(t, got)
 	require.NotNil(t, err)
-	require.True(t, errors.Is(err, policy.ErrPolicyExists))
+	require.ErrorIs(t, err, errors.BadInput)
 }
 
 func TestUpdatePolicyUpdatesPolicy(t *testing.T) {
@@ -348,13 +348,9 @@ func TestGetNonExistingPolicyReturnsNil(t *testing.T) {
 	req := &api.GetPolicyRequest{
 		Id: "10",
 	}
-	got, err := service.GetPolicy(ctx, req)
+	_, err := service.GetPolicy(ctx, req)
 
-	want := &api.GetPolicyResponse{
-		Record: nil,
-	}
-	require.Nil(t, err)
-	_testing.ProtoEq(t, want, got)
+	require.ErrorIs(t, err, errors.NotFound)
 }
 
 func TestDeletingPolicyRemovesFromStore(t *testing.T) {
@@ -447,7 +443,7 @@ func TestSetRelationshipNotAllowedByRestrictionGraphErrors(t *testing.T) {
 	})
 
 	require.Nil(t, got)
-	require.True(t, errors.Is(err, policy.ErrSubjectNotAllowed))
+	require.ErrorIs(t, err, errors.BadInput)
 }
 
 func TestSetRelationshipWithUnknownObjectResourceErrors(t *testing.T) {
@@ -460,7 +456,7 @@ func TestSetRelationshipWithUnknownObjectResourceErrors(t *testing.T) {
 	})
 
 	require.Nil(t, got)
-	require.True(t, errors.Is(err, policy.ErrResourceNotFound))
+	require.ErrorIs(t, err, errors.BadInput)
 }
 
 func TestSetRelationshipWithUnknownSubjectResourceErrors(t *testing.T) {
@@ -473,7 +469,7 @@ func TestSetRelationshipWithUnknownSubjectResourceErrors(t *testing.T) {
 	})
 
 	require.Nil(t, got)
-	require.True(t, errors.Is(err, policy.ErrResourceNotFound))
+	require.ErrorIs(t, err, errors.BadInput)
 }
 
 func TestSetRelationshipWithUnknownRelationErrors(t *testing.T) {
@@ -486,7 +482,7 @@ func TestSetRelationshipWithUnknownRelationErrors(t *testing.T) {
 	})
 
 	require.Nil(t, got)
-	require.True(t, errors.Is(err, policy.ErrRelationNotFound))
+	require.ErrorIs(t, err, errors.BadInput)
 }
 
 func TestSetRelationshipWithEmptyObjectErrorsOut(t *testing.T) {
@@ -500,7 +496,7 @@ func TestSetRelationshipWithEmptyObjectErrorsOut(t *testing.T) {
 
 	require.Nil(t, got)
 	t.Logf("error: %v", err)
-	require.True(t, errors.Is(err, policy.ErrInvalidRelationship))
+	require.ErrorIs(t, err, errors.BadInput)
 }
 
 func TestListPolicyIdsReturnsAllPolicies(t *testing.T) {
@@ -531,7 +527,7 @@ func TestFindRelationshipRecords_ObjectSelectorReferencingUnknownRelationReturns
 	})
 
 	require.Nil(t, resp)
-	require.ErrorIs(t, err, policy.ErrResourceNotFound)
+	require.ErrorIs(t, err, errors.BadInput)
 }
 
 func TestFindRelationshipRecords_RelationSpecToNonExistingRelationReturnsError(t *testing.T) {
@@ -549,7 +545,7 @@ func TestFindRelationshipRecords_RelationSpecToNonExistingRelationReturnsError(t
 	})
 
 	require.Nil(t, resp)
-	require.ErrorIs(t, err, policy.ErrRelationNotFound)
+	require.ErrorIs(t, err, errors.BadInput)
 }
 
 func TestFindRelationshipRecords_SubjectSpecReferencingNonExistingResourceReturnsError(t *testing.T) {
@@ -571,7 +567,7 @@ func TestFindRelationshipRecords_SubjectSpecReferencingNonExistingResourceReturn
 	})
 
 	require.Nil(t, resp)
-	require.ErrorIs(t, err, policy.ErrResourceNotFound)
+	require.ErrorIs(t, err, errors.BadInput)
 }
 
 func Test_EditPolicy_RemovingPolicyRelation_RemovesForwardRelationshipsForThatRelation(t *testing.T) {
