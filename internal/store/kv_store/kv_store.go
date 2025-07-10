@@ -57,10 +57,11 @@ func (kv *KVStore) getRelationshipStore(policyId string) rcdb.RaccoonStore[*Rela
 }
 
 func (kv *KVStore) getRelationshipDataStore(policyId string) *rcdb.ObjectStore[*RelationshipData] {
+	prefixKV := rcdb.NewWrapperKV(kv.relationshipPrefixKV, []byte(policyId))
 	factory := func() *RelationshipData { return &RelationshipData{} }
 	marshaler := rcdb.ProtoMarshaler[*RelationshipData](factory)
 	ider := relationshipDataIDer{}
-	store := rcdb.NewObjStore[*RelationshipData](kv.relationshipDataPrefixKV, marshaler, &ider)
+	store := rcdb.NewObjStore[*RelationshipData](prefixKV, marshaler, &ider)
 	return &store
 }
 
