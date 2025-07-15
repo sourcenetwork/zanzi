@@ -20,8 +20,16 @@ func (s *spewSerializer) Serialize(goalTree GoalTree) (string, error) {
 type jsonSerializer struct{}
 
 func (s *jsonSerializer) Serialize(goalTree GoalTree) (string, error) {
-	bytes, err := json.MarshalIndent(goalTree, "", "  ")
-	return string(bytes), err
+	pathNode, ok := goalTree.(*PathNode)
+	if !ok {
+		return "", errors.Wrap("cannot json serialize goal tree: root is not a PathNode", errors.BadInput)
+	}
+	expandTree := ToExpandTree(pathNode)
+	marshaled, err := json.Marshal(expandTree)
+	if err != nil {
+		return "", errors.Wrap("marshaling expand tree", err)
+	}
+	return string(marshaled), nil
 }
 
 const dotGraphName string = "GoalTree"
