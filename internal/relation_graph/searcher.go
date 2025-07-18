@@ -12,14 +12,14 @@ func NewSearcher(builder goalTreeBuilder, logger types.Logger) Searcher {
 	return Searcher{
 		builder:   builder,
 		logger:    logger,
-		seenNodes: make(map[string]struct{}),
+		nodeTrail: make(map[string]struct{}),
 	}
 }
 
 type Searcher struct {
 	builder       goalTreeBuilder
 	logger        types.Logger
-	seenNodes     map[string]struct{}
+	nodeTrail     map[string]struct{}
 	resolvedTrees map[string]GoalTree
 }
 
@@ -219,16 +219,15 @@ func (s *Searcher) searchPath(ctx context.Context, policy *domain.Policy, node *
 	// termiante this execution branch otherwise we will loop
 
 	// add trail
-	// use cached value
 	nodeId := node.RelationNode.Id()
-	if _, ok := s.seenNodes[nodeId]; ok {
-		s.logger.Debugf("duplicated node - terminating brach: %v", node.RelationNode)
+	if _, ok := s.nodeTrail[nodeId]; ok {
+		s.logger.Debugf("cycle detected: terminating brach: %v", node.RelationNode)
 		pathNode.Result.Authorized = false
-		pathNode.Result.Completed = true
+		pathNode.Result.Completed = false
 		pathNode.Result.Explored = false
 		return pathNode, nil
 	} else {
-		s.seenNodes[nodeId] = struct{}{}
+		s.nodeTrail[nodeId] = struct{}{}
 	}
 	goalTree, err := s.builder.Build(ctx, policy, pathNode.RelationNode)
 	if err != nil {
@@ -244,6 +243,8 @@ func (s *Searcher) searchPath(ctx context.Context, policy *domain.Policy, node *
 	pathNode.Path = goalTree
 	pathNode.Result = goalTree.GetResult()
 
+	// remove current node from trail
+	delete(s.nodeTrail, nodeId)
 	return pathNode, nil
 }
 
