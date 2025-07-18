@@ -65,14 +65,9 @@ func (s *Service) Check(
 		return nil, err
 	}
 
-	found := false
-	if tree.GetResult() == SearchResult_SUCCESS {
-		found = true
-	}
-
 	return &api.CheckResponse{
 		Result: &api.CheckResponse_Result{
-			Authorized: found,
+			Authorized: tree.GetResult().Authorized,
 		},
 	}, nil
 }
@@ -120,11 +115,6 @@ func (s *Service) ExplainCheck(
 		return nil, err
 	}
 
-	found := false
-	if tree.GetResult() == SearchResult_SUCCESS {
-		found = true
-	}
-
 	serialized, err := serializer.Serialize(tree)
 	if err != nil {
 		return nil, err
@@ -132,7 +122,7 @@ func (s *Service) ExplainCheck(
 
 	return &api.ExplainCheckResponse{
 		GoalTree:   serialized,
-		Authorized: found,
+		Authorized: tree.GetResult().Authorized,
 	}, nil
 }
 

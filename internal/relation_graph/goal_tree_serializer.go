@@ -76,7 +76,9 @@ func (s *dotSerializer) handleGoalTree(parentId string, tree GoalTree, graph *go
 
 func (s *dotSerializer) handlePathNode(parentId string, node *PathNode, graph *gographviz.Graph) error {
 	id := s.nextId()
-	label := s.sprintf("PathNode\nrelation node: %v\nreason: %v\nresult: %v", node.RelationNode.PrettyString(), node.Reason, node.Result.String())
+	label := s.sprintf("relation node: %v\nreason: %v\nauthorized: %v\nexplored: %v\ncompleted: %v",
+		node.RelationNode.PrettyString(), node.Reason,
+		node.Result.Authorized, node.Result.Explored, node.Result.Completed)
 	attrs := map[string]string{
 		"label": label,
 	}
@@ -97,7 +99,8 @@ func (s *dotSerializer) handlePathNode(parentId string, node *PathNode, graph *g
 
 func (s *dotSerializer) handleORNode(parentId string, node *ORNode, graph *gographviz.Graph) error {
 	id := s.nextId()
-	label := s.sprintf("ORNode\nresult: %v", node.Result.String())
+	label := s.sprintf("ORNode\nauthorized: %v\nexplored: %v\ncompleted: %v",
+		node.Result.Authorized, node.Result.Explored, node.Result.Completed)
 	attrs := map[string]string{
 		"label": label,
 	}
@@ -124,7 +127,8 @@ func (s *dotSerializer) handleORNode(parentId string, node *ORNode, graph *gogra
 
 func (s *dotSerializer) handleANDNode(parentId string, node *ANDNode, graph *gographviz.Graph) error {
 	id := s.nextId()
-	label := s.sprintf("ANDNode\nresult: %v", node.Result.String())
+	label := s.sprintf("ANDNode\nauthorized: %v\nexplored: %v\ncompleted: %v",
+		node.Result.Authorized, node.Result.Explored, node.Result.Completed)
 	attrs := map[string]string{
 		"label": label,
 	}
@@ -151,7 +155,8 @@ func (s *dotSerializer) handleANDNode(parentId string, node *ANDNode, graph *gog
 
 func (s *dotSerializer) handleDifferenceNode(parentId string, node *DifferenceNode, graph *gographviz.Graph) error {
 	id := s.nextId()
-	label := s.sprintf("DifferenceNode\nresult: %v", node.Result.String())
+	label := s.sprintf("ExclusionNode\nauthorized: %v\nexplored: %v\ncompleted: %v",
+		node.Result.Authorized, node.Result.Explored, node.Result.Completed)
 	attrs := map[string]string{
 		"label": label,
 	}

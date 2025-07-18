@@ -2,13 +2,16 @@ package relation_graph
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/sourcenetwork/zanzi/pkg/domain"
 	"github.com/sourcenetwork/zanzi/pkg/types"
 )
 
-type unit struct{}
+type SearchResult struct {
+	Authorized bool
+	Completed  bool
+	Explored   bool
+}
 
 // NodeRepository
 type NodeRepository interface {
@@ -57,37 +60,6 @@ type DifferenceNode struct {
 
 func (n *DifferenceNode) GetResult() SearchResult { return n.Result }
 func (n *DifferenceNode) SetParent(p GoalTree)    { n.Parent = p }
-
-type SearchResult int
-
-const (
-	// Path hasn't been fully explored
-	// should be the default value
-	SearchResult_UNKNOWN SearchResult = iota
-
-	// Path leads to Goal
-	SearchResult_SUCCESS
-
-	// Path leads to dead end
-	SearchResult_FAILURE
-)
-
-func (r SearchResult) String() string {
-	switch r {
-	case SearchResult_UNKNOWN:
-		return "UNKNOWN"
-	case SearchResult_SUCCESS:
-		return "SUCCESS"
-	case SearchResult_FAILURE:
-		return "FAILURE"
-	default:
-		return ""
-	}
-}
-
-func (r SearchResult) MarshalJSON() ([]byte, error) {
-	return json.Marshal(r.String())
-}
 
 // PathNode represents a possible search path in the GoalTree
 type PathNode struct {

@@ -57,7 +57,11 @@ func (b *goalTreeBuilder) Build(ctx context.Context, pol *domain.Policy, node *d
 // meaning leaves / terminal nodes where there is no further possible expansion.
 func (b *goalTreeBuilder) handleTerminalNodes(node *domain.RelationNode) GoalTree {
 	return &PathNode{
-		Result:       SearchResult_UNKNOWN,
+		Result: SearchResult{
+			Authorized: false,
+			Completed:  true,
+			Explored:   true,
+		},
 		RelationNode: node,
 		Path:         nil,
 	}
@@ -131,8 +135,12 @@ func (b *goalTreeBuilder) relationNodeToPathNode(node *domain.RelationNode, reas
 		RelationNode: node,
 		Path:         nil,
 		Parent:       nil,
-		Result:       SearchResult_UNKNOWN,
-		Reason:       reason,
+		Result: SearchResult{
+			Authorized: false,
+			Explored:   false,
+			Completed:  false,
+		},
+		Reason: reason,
 	}
 }
 
@@ -149,6 +157,12 @@ func (b *goalTreeBuilder) buildGoalForOpNode(ctx context.Context, polId string, 
 		return nil, err
 	}
 
+	result := SearchResult{
+		Explored:   false,
+		Completed:  false,
+		Authorized: false,
+	}
+
 	switch opNode.Operator {
 	case domain.Operator_UNION:
 		// A set Union is equivalent to
@@ -160,7 +174,7 @@ func (b *goalTreeBuilder) buildGoalForOpNode(ctx context.Context, polId string, 
 				right,
 			},
 			Parent: nil,
-			Result: SearchResult_UNKNOWN,
+			Result: result,
 		}
 	case domain.Operator_INTERSECTION:
 		// A set Intersection is equivalent to
@@ -173,14 +187,14 @@ func (b *goalTreeBuilder) buildGoalForOpNode(ctx context.Context, polId string, 
 				right,
 			},
 			Parent: nil,
-			Result: SearchResult_UNKNOWN,
+			Result: result,
 		}
 	case domain.Operator_DIFFERENCE:
 		tree = &DifferenceNode{
 			Left:   left,
 			Right:  right,
 			Parent: nil,
-			Result: SearchResult_UNKNOWN,
+			Result: result,
 		}
 	default:
 		return nil, errors.Wrap("operator", errors.ErrInvalidVariant)

@@ -3,7 +3,6 @@ package relation_graph
 import (
 	"context"
 
-	"github.com/sourcenetwork/zanzi/internal/utils"
 	"github.com/sourcenetwork/zanzi/pkg/domain"
 	"github.com/sourcenetwork/zanzi/pkg/errors"
 	"github.com/sourcenetwork/zanzi/pkg/types"
@@ -40,9 +39,13 @@ func (s *Searcher) Search(ctx context.Context, policy *domain.Policy, origin *do
 	path := &PathNode{
 		Parent:       nil,
 		RelationNode: origin,
-		Result:       SearchResult_UNKNOWN,
-		Path:         nil,
-		Reason:       "Request",
+		Result: SearchResult{
+			Explored:   false,
+			Completed:  false,
+			Authorized: false,
+		},
+		Path:   nil,
+		Reason: "Request",
 	}
 
 	tree, err := s.searchPath(ctx, policy, path, goal)
@@ -96,17 +99,20 @@ func (s *Searcher) searchAND(ctx context.Context, policy *domain.Policy, tree *A
 		}
 
 		// ANDNode requires that all Paths to the Goal are found
-		if newPath.GetResult() == SearchResult_FAILURE {
+		if !newPath.GetResult().Authorized {
 			foundAll = false
 			s.logger.Debugf("AND Node terminated: node %v did not reach path", newPath)
 			break
 		}
 	}
 
-	result := utils.Conditional(foundAll, SearchResult_SUCCESS, SearchResult_FAILURE)
 	and := &ANDNode{
-		Paths:  paths,
-		Result: result,
+		Paths: paths,
+		Result: SearchResult{
+			Authorized: foundAll,
+			Completed:  true,
+			Explored:   true,
+		},
 		Parent: nil,
 	}
 	for _, node := range paths {
@@ -130,17 +136,20 @@ func (s *Searcher) searchOR(ctx context.Context, policy *domain.Policy, tree *OR
 		}
 
 		// ORNode requires that any Path reaches the Goal
-		if newPath.GetResult() == SearchResult_SUCCESS {
+		if newPath.GetResult().Authorized {
 			foundAny = true
 			s.logger.Debugf("OR Node terminated: node %v reached goal", newPath)
 			break
 		}
 	}
 
-	result := utils.Conditional(foundAny, SearchResult_SUCCESS, SearchResult_FAILURE)
 	or := &ORNode{
-		Paths:  paths,
-		Result: result,
+		Paths: paths,
+		Result: SearchResult{
+			Authorized: foundAny,
+			Explored:   true,
+			Completed:  true,
+		},
 		Parent: nil,
 	}
 
@@ -162,13 +171,17 @@ func (s *Searcher) searchDifference(ctx context.Context, policy *domain.Policy, 
 		return nil, err
 	}
 
-	found := leftTree.GetResult() == SearchResult_SUCCESS && rightTree.GetResult() == SearchResult_FAILURE
-	result := utils.Conditional(found, SearchResult_SUCCESS, SearchResult_FAILURE)
+	// "found" in this context means that the user was found on the right and not on the left
+	authorized := leftTree.GetResult().Authorized && !rightTree.GetResult().Authorized
 
 	diff := &DifferenceNode{
-		Left:   leftTree,
-		Right:  rightTree,
-		Result: result,
+		Left:  leftTree,
+		Right: rightTree,
+		Result: SearchResult{
+			Explored:   true,
+			Completed:  true,
+			Authorized: authorized,
+		},
 		Parent: nil,
 	}
 	leftTree.SetParent(diff)
@@ -181,31 +194,42 @@ func (s *Searcher) searchPath(ctx context.Context, policy *domain.Policy, node *
 	pathNode := &PathNode{
 		Parent:       nil,
 		RelationNode: node.RelationNode,
-		Result:       SearchResult_UNKNOWN,
-		Path:         nil,
-		Reason:       node.Reason,
+		Result: SearchResult{
+			Explored:   false,
+			Authorized: false,
+			Completed:  false,
+		},
+		Path:   nil,
+		Reason: node.Reason,
 	}
+
+	// verify node is our goal, if so we return the node with found
+	spec := GoalFoundSpec{}
+	found := spec.Found(node, goal)
+	terminal := node.RelationNode.IsTerminalNode()
+	if found || terminal {
+		s.logger.Debugf("Path terminated: Node %v Goal Reached %v", node.RelationNode, found)
+		pathNode.Result.Authorized = found
+		pathNode.Result.Completed = true
+		pathNode.Result.Explored = true
+		return pathNode, nil
+	}
+
+	// if it's not our goal but it's been seen,
+	// termiante this execution branch otherwise we will loop
 
 	// add trail
 	// use cached value
 	nodeId := node.RelationNode.Id()
 	if _, ok := s.seenNodes[nodeId]; ok {
 		s.logger.Debugf("duplicated node - terminating brach: %v", node.RelationNode)
+		pathNode.Result.Authorized = false
+		pathNode.Result.Completed = true
+		pathNode.Result.Explored = false
 		return pathNode, nil
 	} else {
 		s.seenNodes[nodeId] = struct{}{}
 	}
-
-	spec := GoalFoundSpec{}
-	found := spec.Found(node, goal)
-	terminal := node.RelationNode.IsTerminalNode()
-
-	if found || terminal {
-		s.logger.Debugf("Path terminated: Node %v Goal Reached %v", node.RelationNode, found)
-		pathNode.Result = utils.Conditional(found, SearchResult_SUCCESS, SearchResult_FAILURE)
-		return pathNode, nil
-	}
-
 	goalTree, err := s.builder.Build(ctx, policy, pathNode.RelationNode)
 	if err != nil {
 		return nil, err
@@ -226,6 +250,7 @@ func (s *Searcher) searchPath(ctx context.Context, policy *domain.Policy, node *
 type GoalFoundSpec struct{}
 
 func (s *GoalFoundSpec) Found(pathNode *PathNode, goal *Goal) bool {
+	// FIXME: this doesn't work for intersection since it will short circuit
 	if goal.Target == nil {
 		// Target is nil during Expand calls, such that the goal is never reached
 		// and the Searcher walks through the entire Graph
