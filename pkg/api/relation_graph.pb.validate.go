@@ -347,8 +347,6 @@ func (m *ExplainCheckRequest) validate(all bool) error {
 		}
 	}
 
-	// no validation rules for Format
-
 	if len(errors) > 0 {
 		return ExplainCheckRequestMultiError(errors)
 	}
@@ -451,11 +449,36 @@ func (m *ExplainCheckResponse) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for GoalTree
+	if all {
+		switch v := interface{}(m.GetTree()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ExplainCheckResponseValidationError{
+					field:  "Tree",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ExplainCheckResponseValidationError{
+					field:  "Tree",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTree()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ExplainCheckResponseValidationError{
+				field:  "Tree",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	// no validation rules for Authorized
-
-	// no validation rules for Format
 
 	if len(errors) > 0 {
 		return ExplainCheckResponseMultiError(errors)
@@ -537,475 +560,75 @@ var _ interface {
 	ErrorName() string
 } = ExplainCheckResponseValidationError{}
 
-// Validate checks the field values on ExpandRequest with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *ExpandRequest) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on ExpandRequest with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in ExpandRequestMultiError, or
-// nil if none found.
-func (m *ExpandRequest) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *ExpandRequest) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for PolicyId
-
-	if all {
-		switch v := interface{}(m.GetRoot()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ExpandRequestValidationError{
-					field:  "Root",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ExpandRequestValidationError{
-					field:  "Root",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetRoot()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ExpandRequestValidationError{
-				field:  "Root",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	// no validation rules for Format
-
-	if len(errors) > 0 {
-		return ExpandRequestMultiError(errors)
-	}
-
-	return nil
-}
-
-// ExpandRequestMultiError is an error wrapping multiple validation errors
-// returned by ExpandRequest.ValidateAll() if the designated constraints
-// aren't met.
-type ExpandRequestMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m ExpandRequestMultiError) Error() string {
-	var msgs []string
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m ExpandRequestMultiError) AllErrors() []error { return m }
-
-// ExpandRequestValidationError is the validation error returned by
-// ExpandRequest.Validate if the designated constraints aren't met.
-type ExpandRequestValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e ExpandRequestValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e ExpandRequestValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e ExpandRequestValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e ExpandRequestValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e ExpandRequestValidationError) ErrorName() string { return "ExpandRequestValidationError" }
-
-// Error satisfies the builtin error interface
-func (e ExpandRequestValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sExpandRequest.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = ExpandRequestValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = ExpandRequestValidationError{}
-
-// Validate checks the field values on ExpandResponse with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *ExpandResponse) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on ExpandResponse with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in ExpandResponseMultiError,
-// or nil if none found.
-func (m *ExpandResponse) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *ExpandResponse) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for GoalTree
-
-	// no validation rules for Format
-
-	if len(errors) > 0 {
-		return ExpandResponseMultiError(errors)
-	}
-
-	return nil
-}
-
-// ExpandResponseMultiError is an error wrapping multiple validation errors
-// returned by ExpandResponse.ValidateAll() if the designated constraints
-// aren't met.
-type ExpandResponseMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m ExpandResponseMultiError) Error() string {
-	var msgs []string
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m ExpandResponseMultiError) AllErrors() []error { return m }
-
-// ExpandResponseValidationError is the validation error returned by
-// ExpandResponse.Validate if the designated constraints aren't met.
-type ExpandResponseValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e ExpandResponseValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e ExpandResponseValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e ExpandResponseValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e ExpandResponseValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e ExpandResponseValidationError) ErrorName() string { return "ExpandResponseValidationError" }
-
-// Error satisfies the builtin error interface
-func (e ExpandResponseValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sExpandResponse.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = ExpandResponseValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = ExpandResponseValidationError{}
-
-// Validate checks the field values on MultiCheckRequest with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *MultiCheckRequest) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on MultiCheckRequest with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// MultiCheckRequestMultiError, or nil if none found.
-func (m *MultiCheckRequest) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *MultiCheckRequest) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for PolicyId
-
-	if all {
-		switch v := interface{}(m.GetSelector()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, MultiCheckRequestValidationError{
-					field:  "Selector",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, MultiCheckRequestValidationError{
-					field:  "Selector",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetSelector()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return MultiCheckRequestValidationError{
-				field:  "Selector",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if all {
-		switch v := interface{}(m.GetSubject()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, MultiCheckRequestValidationError{
-					field:  "Subject",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, MultiCheckRequestValidationError{
-					field:  "Subject",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetSubject()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return MultiCheckRequestValidationError{
-				field:  "Subject",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return MultiCheckRequestMultiError(errors)
-	}
-
-	return nil
-}
-
-// MultiCheckRequestMultiError is an error wrapping multiple validation errors
-// returned by MultiCheckRequest.ValidateAll() if the designated constraints
-// aren't met.
-type MultiCheckRequestMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m MultiCheckRequestMultiError) Error() string {
-	var msgs []string
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m MultiCheckRequestMultiError) AllErrors() []error { return m }
-
-// MultiCheckRequestValidationError is the validation error returned by
-// MultiCheckRequest.Validate if the designated constraints aren't met.
-type MultiCheckRequestValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e MultiCheckRequestValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e MultiCheckRequestValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e MultiCheckRequestValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e MultiCheckRequestValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e MultiCheckRequestValidationError) ErrorName() string {
-	return "MultiCheckRequestValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e MultiCheckRequestValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sMultiCheckRequest.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = MultiCheckRequestValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = MultiCheckRequestValidationError{}
-
-// Validate checks the field values on MultiCheckResponse with the rules
+// Validate checks the field values on DOTExplainCheckRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *MultiCheckResponse) Validate() error {
+func (m *DOTExplainCheckRequest) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on MultiCheckResponse with the rules
+// ValidateAll checks the field values on DOTExplainCheckRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// MultiCheckResponseMultiError, or nil if none found.
-func (m *MultiCheckResponse) ValidateAll() error {
+// DOTExplainCheckRequestMultiError, or nil if none found.
+func (m *DOTExplainCheckRequest) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *MultiCheckResponse) validate(all bool) error {
+func (m *DOTExplainCheckRequest) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	for idx, item := range m.GetResults() {
-		_, _ = idx, item
+	// no validation rules for PolicyId
 
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, MultiCheckResponseValidationError{
-						field:  fmt.Sprintf("Results[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, MultiCheckResponseValidationError{
-						field:  fmt.Sprintf("Results[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return MultiCheckResponseValidationError{
-					field:  fmt.Sprintf("Results[%v]", idx),
+	if all {
+		switch v := interface{}(m.GetAccessRequest()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DOTExplainCheckRequestValidationError{
+					field:  "AccessRequest",
 					reason: "embedded message failed validation",
 					cause:  err,
-				}
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DOTExplainCheckRequestValidationError{
+					field:  "AccessRequest",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
 			}
 		}
-
+	} else if v, ok := interface{}(m.GetAccessRequest()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DOTExplainCheckRequestValidationError{
+				field:  "AccessRequest",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
+	// no validation rules for OmitUnknown
+
 	if len(errors) > 0 {
-		return MultiCheckResponseMultiError(errors)
+		return DOTExplainCheckRequestMultiError(errors)
 	}
 
 	return nil
 }
 
-// MultiCheckResponseMultiError is an error wrapping multiple validation errors
-// returned by MultiCheckResponse.ValidateAll() if the designated constraints
-// aren't met.
-type MultiCheckResponseMultiError []error
+// DOTExplainCheckRequestMultiError is an error wrapping multiple validation
+// errors returned by DOTExplainCheckRequest.ValidateAll() if the designated
+// constraints aren't met.
+type DOTExplainCheckRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m MultiCheckResponseMultiError) Error() string {
+func (m DOTExplainCheckRequestMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1014,11 +637,11 @@ func (m MultiCheckResponseMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m MultiCheckResponseMultiError) AllErrors() []error { return m }
+func (m DOTExplainCheckRequestMultiError) AllErrors() []error { return m }
 
-// MultiCheckResponseValidationError is the validation error returned by
-// MultiCheckResponse.Validate if the designated constraints aren't met.
-type MultiCheckResponseValidationError struct {
+// DOTExplainCheckRequestValidationError is the validation error returned by
+// DOTExplainCheckRequest.Validate if the designated constraints aren't met.
+type DOTExplainCheckRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1026,24 +649,24 @@ type MultiCheckResponseValidationError struct {
 }
 
 // Field function returns field value.
-func (e MultiCheckResponseValidationError) Field() string { return e.field }
+func (e DOTExplainCheckRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e MultiCheckResponseValidationError) Reason() string { return e.reason }
+func (e DOTExplainCheckRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e MultiCheckResponseValidationError) Cause() error { return e.cause }
+func (e DOTExplainCheckRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e MultiCheckResponseValidationError) Key() bool { return e.key }
+func (e DOTExplainCheckRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e MultiCheckResponseValidationError) ErrorName() string {
-	return "MultiCheckResponseValidationError"
+func (e DOTExplainCheckRequestValidationError) ErrorName() string {
+	return "DOTExplainCheckRequestValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e MultiCheckResponseValidationError) Error() string {
+func (e DOTExplainCheckRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1055,14 +678,14 @@ func (e MultiCheckResponseValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sMultiCheckResponse.%s: %s%s",
+		"invalid %sDOTExplainCheckRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = MultiCheckResponseValidationError{}
+var _ error = DOTExplainCheckRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -1070,7 +693,113 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = MultiCheckResponseValidationError{}
+} = DOTExplainCheckRequestValidationError{}
+
+// Validate checks the field values on DOTExplainCheckResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DOTExplainCheckResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DOTExplainCheckResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DOTExplainCheckResponseMultiError, or nil if none found.
+func (m *DOTExplainCheckResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DOTExplainCheckResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Tree
+
+	// no validation rules for Authorized
+
+	if len(errors) > 0 {
+		return DOTExplainCheckResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// DOTExplainCheckResponseMultiError is an error wrapping multiple validation
+// errors returned by DOTExplainCheckResponse.ValidateAll() if the designated
+// constraints aren't met.
+type DOTExplainCheckResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DOTExplainCheckResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DOTExplainCheckResponseMultiError) AllErrors() []error { return m }
+
+// DOTExplainCheckResponseValidationError is the validation error returned by
+// DOTExplainCheckResponse.Validate if the designated constraints aren't met.
+type DOTExplainCheckResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DOTExplainCheckResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DOTExplainCheckResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DOTExplainCheckResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DOTExplainCheckResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DOTExplainCheckResponseValidationError) ErrorName() string {
+	return "DOTExplainCheckResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DOTExplainCheckResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDOTExplainCheckResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DOTExplainCheckResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DOTExplainCheckResponseValidationError{}
 
 // Validate checks the field values on DumpRelationshipsRequest with the rules
 // defined in the proto definition for this message. If any rules are
@@ -1441,136 +1170,3 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CheckResponse_ResultValidationError{}
-
-// Validate checks the field values on MultiCheckResponse_Result with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *MultiCheckResponse_Result) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on MultiCheckResponse_Result with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// MultiCheckResponse_ResultMultiError, or nil if none found.
-func (m *MultiCheckResponse_Result) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *MultiCheckResponse_Result) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for Authorized
-
-	if all {
-		switch v := interface{}(m.GetNode()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, MultiCheckResponse_ResultValidationError{
-					field:  "Node",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, MultiCheckResponse_ResultValidationError{
-					field:  "Node",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetNode()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return MultiCheckResponse_ResultValidationError{
-				field:  "Node",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return MultiCheckResponse_ResultMultiError(errors)
-	}
-
-	return nil
-}
-
-// MultiCheckResponse_ResultMultiError is an error wrapping multiple validation
-// errors returned by MultiCheckResponse_Result.ValidateAll() if the
-// designated constraints aren't met.
-type MultiCheckResponse_ResultMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m MultiCheckResponse_ResultMultiError) Error() string {
-	var msgs []string
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m MultiCheckResponse_ResultMultiError) AllErrors() []error { return m }
-
-// MultiCheckResponse_ResultValidationError is the validation error returned by
-// MultiCheckResponse_Result.Validate if the designated constraints aren't met.
-type MultiCheckResponse_ResultValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e MultiCheckResponse_ResultValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e MultiCheckResponse_ResultValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e MultiCheckResponse_ResultValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e MultiCheckResponse_ResultValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e MultiCheckResponse_ResultValidationError) ErrorName() string {
-	return "MultiCheckResponse_ResultValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e MultiCheckResponse_ResultValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sMultiCheckResponse_Result.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = MultiCheckResponse_ResultValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = MultiCheckResponse_ResultValidationError{}

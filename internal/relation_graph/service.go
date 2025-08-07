@@ -75,11 +75,6 @@ func (s *Service) Check(
 func (s *Service) ExplainCheck(
 	ctx context.Context,
 	req *api.ExplainCheckRequest) (*api.ExplainCheckResponse, error) {
-	serializer, err := SerializerFactory(req.Format)
-	if err != nil {
-		return nil, err
-	}
-
 	pol, err := s.policyRepository.GetPolicy(ctx, req.PolicyId)
 	if err != nil {
 		return nil, err
@@ -115,54 +110,66 @@ func (s *Service) ExplainCheck(
 		return nil, err
 	}
 
-	serialized, err := serializer.Serialize(tree)
-	if err != nil {
-		return nil, err
-	}
+	mapper := ExplainCheckTreeMapper{}
 
 	return &api.ExplainCheckResponse{
-		GoalTree:   serialized,
+		Tree:       mapper.Map(tree),
 		Authorized: tree.GetResult().Authorized,
 	}, nil
 }
 
-func (s *Service) Expand(
+func (s *Service) DOTExplainCheck(
 	ctx context.Context,
-	req *api.ExpandRequest) (*api.ExpandResponse, error) {
-	serializer, err := SerializerFactory(req.Format)
+	req *api.DOTExplainCheckRequest) (*api.DOTExplainCheckResponse, error) {
+	tree, err := s.check(ctx, req.PolicyId, req.AccessRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	pol, err := s.policyRepository.GetPolicy(ctx, req.PolicyId)
+	mapper := ExplainCheckTreeMapper{}
+	explainTree := mapper.Map(tree)
+	serializer := DotSerializer{}
+	out, err := serializer.Serialize(explainTree, req.OmitUnknown)
+	if err != nil {
+		return nil, err
+	}
+	return &api.DOTExplainCheckResponse{
+		Tree:       out,
+		Authorized: tree.GetResult().Authorized,
+	}, nil
+}
+
+func (s *Service) check(ctx context.Context, polId string, req *domain.AccessRequest) (GoalTree, error) {
+	pol, err := s.policyRepository.GetPolicy(ctx, polId)
 	if err != nil {
 		return nil, err
 	}
 	if pol == nil {
-		return nil, errors.ErrPolicyNotFound(req.PolicyId)
+		return nil, errors.ErrPolicyNotFound(polId)
 	}
 
 	evaluator := newEvaluator(s.repository, s.logger)
 	builder := newGoalTreeBuilder(evaluator, s.logger)
 	searcher := NewSearcher(builder, s.logger)
 
+	origin := domain.RelationNode{
+		Node: &domain.RelationNode_EntitySet{
+			EntitySet: &domain.EntitySetNode{
+				Object:   req.Object,
+				Relation: req.Relation,
+			},
+		},
+	}
 	goal := Goal{
-		Target: nil,
+		Target: &domain.RelationNode{
+			Node: &domain.RelationNode_Entity{
+				Entity: &domain.EntityNode{
+					Object: req.Subject,
+				},
+			},
+		},
 	}
-	tree, err := searcher.Search(ctx, pol.Policy, req.Root, &goal)
-	if err != nil {
-		return nil, err
-	}
-
-	serialized, err := serializer.Serialize(tree)
-	if err != nil {
-		return nil, err
-	}
-
-	return &api.ExpandResponse{
-		GoalTree: serialized,
-		Format:   req.Format,
-	}, nil
+	return searcher.Search(ctx, pol.Policy, &origin, &goal)
 }
 
 func (s *Service) DumpRelationships(

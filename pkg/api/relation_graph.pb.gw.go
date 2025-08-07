@@ -99,8 +99,8 @@ func local_request_RelationGraph_ExplainCheck_0(ctx context.Context, marshaler r
 
 }
 
-func request_RelationGraph_Expand_0(ctx context.Context, marshaler runtime.Marshaler, client RelationGraphClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ExpandRequest
+func request_RelationGraph_DOTExplainCheck_0(ctx context.Context, marshaler runtime.Marshaler, client RelationGraphClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq DOTExplainCheckRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -111,13 +111,13 @@ func request_RelationGraph_Expand_0(ctx context.Context, marshaler runtime.Marsh
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.Expand(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.DOTExplainCheck(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_RelationGraph_Expand_0(ctx context.Context, marshaler runtime.Marshaler, server RelationGraphServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ExpandRequest
+func local_request_RelationGraph_DOTExplainCheck_0(ctx context.Context, marshaler runtime.Marshaler, server RelationGraphServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq DOTExplainCheckRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -128,7 +128,7 @@ func local_request_RelationGraph_Expand_0(ctx context.Context, marshaler runtime
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.Expand(ctx, &protoReq)
+	msg, err := server.DOTExplainCheck(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -223,7 +223,7 @@ func RegisterRelationGraphHandlerServer(ctx context.Context, mux *runtime.ServeM
 
 	})
 
-	mux.Handle("POST", pattern_RelationGraph_Expand_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_RelationGraph_DOTExplainCheck_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -231,12 +231,12 @@ func RegisterRelationGraphHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/sourcenetwork.zanzi.api.RelationGraph/Expand", runtime.WithHTTPPathPattern("/sourcenetwork.zanzi.api.RelationGraph/Expand"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/sourcenetwork.zanzi.api.RelationGraph/DOTExplainCheck", runtime.WithHTTPPathPattern("/sourcenetwork.zanzi.api.RelationGraph/DOTExplainCheck"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_RelationGraph_Expand_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_RelationGraph_DOTExplainCheck_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -244,7 +244,7 @@ func RegisterRelationGraphHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_RelationGraph_Expand_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_RelationGraph_DOTExplainCheck_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -358,25 +358,25 @@ func RegisterRelationGraphHandlerClient(ctx context.Context, mux *runtime.ServeM
 
 	})
 
-	mux.Handle("POST", pattern_RelationGraph_Expand_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_RelationGraph_DOTExplainCheck_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/sourcenetwork.zanzi.api.RelationGraph/Expand", runtime.WithHTTPPathPattern("/sourcenetwork.zanzi.api.RelationGraph/Expand"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/sourcenetwork.zanzi.api.RelationGraph/DOTExplainCheck", runtime.WithHTTPPathPattern("/sourcenetwork.zanzi.api.RelationGraph/DOTExplainCheck"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_RelationGraph_Expand_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_RelationGraph_DOTExplainCheck_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_RelationGraph_Expand_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_RelationGraph_DOTExplainCheck_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -410,7 +410,7 @@ var (
 
 	pattern_RelationGraph_ExplainCheck_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"sourcenetwork.zanzi.api.RelationGraph", "ExplainCheck"}, ""))
 
-	pattern_RelationGraph_Expand_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"sourcenetwork.zanzi.api.RelationGraph", "Expand"}, ""))
+	pattern_RelationGraph_DOTExplainCheck_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"sourcenetwork.zanzi.api.RelationGraph", "DOTExplainCheck"}, ""))
 
 	pattern_RelationGraph_DumpRelationships_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"sourcenetwork.zanzi.api.RelationGraph", "DumpRelationships"}, ""))
 )
@@ -420,7 +420,7 @@ var (
 
 	forward_RelationGraph_ExplainCheck_0 = runtime.ForwardResponseMessage
 
-	forward_RelationGraph_Expand_0 = runtime.ForwardResponseMessage
+	forward_RelationGraph_DOTExplainCheck_0 = runtime.ForwardResponseMessage
 
 	forward_RelationGraph_DumpRelationships_0 = runtime.ForwardResponseMessage
 )

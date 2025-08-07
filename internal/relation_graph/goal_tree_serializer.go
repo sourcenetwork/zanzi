@@ -1,44 +1,88 @@
 package relation_graph
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/awalterschulze/gographviz"
-	"github.com/davecgh/go-spew/spew"
 
-	"github.com/sourcenetwork/zanzi/pkg/api"
-	"github.com/sourcenetwork/zanzi/pkg/errors"
+	"github.com/sourcenetwork/zanzi/pkg/types"
 )
 
-type spewSerializer struct{}
+const (
+	OkColor      string = "#299033"
+	FailedColor         = "#BF2528"
+	UnknownColor        = "#D0D0D0"
+	RootColor           = "black"
+)
 
-func (s *spewSerializer) Serialize(goalTree GoalTree) (string, error) {
-	return spew.Sdump(goalTree), nil
+type ExplainCheckTreeMapper struct{}
+
+func (m *ExplainCheckTreeMapper) Map(tree GoalTree) *types.CheckExplainTree {
+	switch node := tree.(type) {
+	case *PathNode:
+		return m.handlePathNode(node)
+	case *ORNode:
+		return m.handleOPNode(node, node.Paths, "+")
+	case *ANDNode:
+		return m.handleOPNode(node, node.Paths, "&")
+	case *DifferenceNode:
+		return m.handleOPNode(node, []GoalTree{node.Left, node.Right}, "-")
+	}
+	return nil
 }
 
-type jsonSerializer struct{}
+func (m *ExplainCheckTreeMapper) handlePathNode(tree *PathNode) *types.CheckExplainTree {
+	t := &types.CheckExplainTree{
+		Text:   tree.RelationNode.PrettyString(),
+		Detail: "reason: " + tree.Reason,
+	}
 
-func (s *jsonSerializer) Serialize(goalTree GoalTree) (string, error) {
-	pathNode, ok := goalTree.(*PathNode)
-	if !ok {
-		return "", errors.Wrap("cannot json serialize goal tree: root is not a PathNode", errors.BadInput)
+	if tree.Path == nil {
+		return t
 	}
-	expandTree := ToExpandTree(pathNode)
-	marshaled, err := json.Marshal(expandTree)
-	if err != nil {
-		return "", errors.Wrap("marshaling expand tree", err)
+
+	child := m.Map(tree.Path)
+	children := []*types.CheckExplainTree{child}
+	if tree.Result.Authorized {
+		t.Ok = children
+	} else if tree.Result.Completed && !tree.Result.Authorized {
+		t.Failed = children
+	} else {
+		t.Unknown = children
 	}
-	return string(marshaled), nil
+
+	return t
+}
+
+func (m *ExplainCheckTreeMapper) handleOPNode(tree GoalTree, children []GoalTree, nodeText string) *types.CheckExplainTree {
+	t := &types.CheckExplainTree{
+		Text:   nodeText,
+		Detail: "",
+	}
+	for _, subPath := range children {
+		child := m.Map(subPath)
+		if subPath.GetResult().Authorized {
+			t.Ok = append(t.Ok, child)
+		} else if subPath.GetResult().Completed && !subPath.GetResult().Authorized {
+			t.Failed = append(t.Failed, child)
+		} else {
+			t.Unknown = append(t.Unknown, child)
+		}
+	}
+	return t
 }
 
 const dotGraphName string = "GoalTree"
 
-type dotSerializer struct {
+// DotSerializer maps a CheckExplainTree into a DOT Graph
+type DotSerializer struct {
 	counter int
 }
 
-func (s *dotSerializer) Serialize(goalTree GoalTree) (string, error) {
+// Serialize converts a CheckExplainTree into a DOT representation
+// omitUknonwn can be used to skip nodes which were not fully explored
+// from the final graph
+func (s *DotSerializer) Serialize(tree *types.CheckExplainTree, omitUknown bool) (string, error) {
 	graph := gographviz.NewGraph()
 	graph.SetDir(true) //directed graph true
 	graph.SetName(dotGraphName)
@@ -48,7 +92,7 @@ func (s *dotSerializer) Serialize(goalTree GoalTree) (string, error) {
 		return "", fmt.Errorf("dot serialize: failed to set root: %v", err)
 	}
 
-	err = s.handleGoalTree("root", goalTree, graph)
+	err = s.step("root", tree, graph, RootColor, omitUknown)
 	if err != nil {
 		return "", fmt.Errorf("dot serialize: %v", err)
 	}
@@ -56,156 +100,59 @@ func (s *dotSerializer) Serialize(goalTree GoalTree) (string, error) {
 	return graph.String(), nil
 }
 
-func (s *dotSerializer) handleGoalTree(parentId string, tree GoalTree, graph *gographviz.Graph) error {
-	switch node := tree.(type) {
-	case *PathNode:
-		s.handlePathNode(parentId, node, graph)
-	case *ORNode:
-		s.handleORNode(parentId, node, graph)
-	case *ANDNode:
-		s.handleANDNode(parentId, node, graph)
-	case *DifferenceNode:
-		s.handleDifferenceNode(parentId, node, graph)
-	case nil:
-		break
-	default:
-		return errors.Wrap("goal tree", errors.ErrInvalidVariant)
-	}
-	return nil
-}
-
-func (s *dotSerializer) handlePathNode(parentId string, node *PathNode, graph *gographviz.Graph) error {
+func (s *DotSerializer) step(parentId string, node *types.CheckExplainTree, graph *gographviz.Graph, color string, omitUknown bool) error {
 	id := s.nextId()
-	label := s.sprintf("relation node: %v\nreason: %v\nauthorized: %v\nexplored: %v\ncompleted: %v",
-		node.RelationNode.PrettyString(), node.Reason,
-		node.Result.Authorized, node.Result.Explored, node.Result.Completed)
 	attrs := map[string]string{
-		"label": label,
+		"label":     s.sprintf("%v\\n%v", node.Text, node.Detail),
+		"color":     s.sprintf(color),
+		"fontcolor": s.sprintf(color),
 	}
 
 	err := graph.AddNode(dotGraphName, id, attrs)
 	if err != nil {
-		return fmt.Errorf("node %v: %w", label, err)
+		return fmt.Errorf("node %v: %w", node.Text, err)
 	}
 
 	directed := true
-	err = graph.AddEdge(parentId, id, directed, nil)
+	edgeAttrs := map[string]string{
+		"color": s.sprintf(color),
+	}
+	err = graph.AddEdge(parentId, id, directed, edgeAttrs)
 	if err != nil {
 		return fmt.Errorf("edg %v->%v: %w", parentId, id, err)
 	}
 
-	return s.handleGoalTree(id, node.Path, graph)
-}
-
-func (s *dotSerializer) handleORNode(parentId string, node *ORNode, graph *gographviz.Graph) error {
-	id := s.nextId()
-	label := s.sprintf("ORNode\nauthorized: %v\nexplored: %v\ncompleted: %v",
-		node.Result.Authorized, node.Result.Explored, node.Result.Completed)
-	attrs := map[string]string{
-		"label": label,
-	}
-
-	err := graph.AddNode(dotGraphName, id, attrs)
-	if err != nil {
-		return fmt.Errorf("node %v: %w", label, err)
-	}
-
-	directed := true
-	err = graph.AddEdge(parentId, id, directed, nil)
-	if err != nil {
-		return fmt.Errorf("edg %v->%v: %w", parentId, id, err)
-	}
-
-	for _, child := range node.Paths {
-		err = s.handleGoalTree(id, child, graph)
+	for _, child := range node.Failed {
+		err = s.step(id, child, graph, FailedColor, omitUknown)
 		if err != nil {
 			return err
+		}
+	}
+	for _, child := range node.Ok {
+		err = s.step(id, child, graph, OkColor, omitUknown)
+		if err != nil {
+			return err
+		}
+	}
+	if !omitUknown {
+		for _, child := range node.Unknown {
+			err = s.step(id, child, graph, UnknownColor, omitUknown)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func (s *dotSerializer) handleANDNode(parentId string, node *ANDNode, graph *gographviz.Graph) error {
-	id := s.nextId()
-	label := s.sprintf("ANDNode\nauthorized: %v\nexplored: %v\ncompleted: %v",
-		node.Result.Authorized, node.Result.Explored, node.Result.Completed)
-	attrs := map[string]string{
-		"label": label,
-	}
-
-	err := graph.AddNode(dotGraphName, id, attrs)
-	if err != nil {
-		return fmt.Errorf("node %v: %w", label, err)
-	}
-
-	directed := true
-	err = graph.AddEdge(parentId, id, directed, nil)
-	if err != nil {
-		return fmt.Errorf("edg %v->%v: %w", parentId, id, err)
-	}
-
-	for _, child := range node.Paths {
-		err = s.handleGoalTree(id, child, graph)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (s *dotSerializer) handleDifferenceNode(parentId string, node *DifferenceNode, graph *gographviz.Graph) error {
-	id := s.nextId()
-	label := s.sprintf("ExclusionNode\nauthorized: %v\nexplored: %v\ncompleted: %v",
-		node.Result.Authorized, node.Result.Explored, node.Result.Completed)
-	attrs := map[string]string{
-		"label": label,
-	}
-
-	err := graph.AddNode(dotGraphName, id, attrs)
-	if err != nil {
-		return fmt.Errorf("node %v: %w", label, err)
-	}
-
-	directed := true
-	err = graph.AddEdge(parentId, id, directed, nil)
-	if err != nil {
-		return fmt.Errorf("edg %v->%v: %w", parentId, id, err)
-	}
-
-	err = s.handleGoalTree(id, node.Left, graph)
-	if err != nil {
-		return err
-	}
-
-	err = s.handleGoalTree(id, node.Right, graph)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *dotSerializer) nextId() string {
+func (s *DotSerializer) nextId() string {
 	id := s.sprintf("%v", s.counter)
 	s.counter++
 	return id
 }
 
 // sprintf formats a string and wraps it with quotes
-func (s *dotSerializer) sprintf(format string, args ...any) string {
+func (s *DotSerializer) sprintf(format string, args ...any) string {
 	format = "\"" + format + "\""
 	return fmt.Sprintf(format, args...)
-}
-
-func SerializerFactory(model api.ExplainFormat) (GoalTreeSerializer, error) {
-	switch model {
-	case api.ExplainFormat_SPEW:
-		return &spewSerializer{}, nil
-	case api.ExplainFormat_JSON:
-		return &jsonSerializer{}, nil
-	case api.ExplainFormat_DOT:
-		return &dotSerializer{}, nil
-	default:
-		return nil, errors.Wrap("explain format", errors.ErrInvalidVariant)
-	}
 }

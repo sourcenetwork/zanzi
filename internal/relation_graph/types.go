@@ -78,7 +78,3 @@ func (n *PathNode) SetParent(p GoalTree)    { n.Parent = p }
 type Goal struct {
 	Target *domain.RelationNode
 }
-
-type GoalTreeSerializer interface {
-	Serialize(GoalTree) (string, error)
-}

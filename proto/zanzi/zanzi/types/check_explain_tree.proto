@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package sourcenetwork.zanzi.types;
+
+option go_package = "github.com/sourcenetwork/zanzi/pkg/types";
+
+// ExplainTree models the resulting goal tree from
+// a Check execution
+message CheckExplainTree {
+    string text = 1;
+    string detail = 2;
+    repeated CheckExplainTree ok = 3;
+    repeated CheckExplainTree failed = 4;
+    repeated CheckExplainTree unknown = 5;
+}

@@ -23,7 +23,7 @@ func RelationGraphClientCommand(options ...client.Option) *cobra.Command {
 	cmd.AddCommand(
 		_RelationGraphCheckCommand(cfg),
 		_RelationGraphExplainCheckCommand(cfg),
-		_RelationGraphExpandCommand(cfg),
+		_RelationGraphDOTExplainCheckCommand(cfg),
 		_RelationGraphDumpRelationshipsCommand(cfg),
 	)
 	return cmd
@@ -92,7 +92,7 @@ func _RelationGraphExplainCheckCommand(cfg *client.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   cfg.CommandNamer("ExplainCheck"),
 		Short: "ExplainCheck RPC client",
-		Long:  "ExplainCheck performs a Check call but outputs a serialized version of the goal tree.\n The goal tree can be used to understand the internals of the RelationGraph search and to debug.\n Note that the output of Explain Check IS NOT stable and it must be used for debug only.",
+		Long:  "ExplainCheck performs a Check call but outputs a simplified version\n of the internal goal tree.\n The goal tree can be used to understand the internals of the RelationGraph search and to debug.\n Note that the output of Explain Check IS NOT stable and it must be used for debug only.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cfg.UseEnvVars {
 				if err := flag.SetFlagsFromEnv(cmd.Parent().PersistentFlags(), true, cfg.EnvVarNamer, cfg.EnvVarPrefix, "RelationGraph"); err != nil {
@@ -129,39 +129,41 @@ func _RelationGraphExplainCheckCommand(cfg *client.Config) *cobra.Command {
 	cmd.PersistentFlags().StringVar(&req.AccessRequest.Relation, cfg.FlagNamer("AccessRequest Relation"), "", "")
 	cmd.PersistentFlags().StringVar(&req.AccessRequest.Subject.Resource, cfg.FlagNamer("AccessRequest Subject Resource"), "", "resource represents the resource name which will contain the entity")
 	cmd.PersistentFlags().StringVar(&req.AccessRequest.Subject.Id, cfg.FlagNamer("AccessRequest Subject Id"), "", "id is an unique identifier for the entity within a resource")
-	flag.EnumVar(cmd.PersistentFlags(), &req.Format, cfg.FlagNamer("Format"), "format flags which format should be used to serialize the goal tree")
 
 	return cmd
 }
 
-func _RelationGraphExpandCommand(cfg *client.Config) *cobra.Command {
-	req := &ExpandRequest{
-		Root: &domain.RelationNode{},
+func _RelationGraphDOTExplainCheckCommand(cfg *client.Config) *cobra.Command {
+	req := &DOTExplainCheckRequest{
+		AccessRequest: &domain.AccessRequest{
+			Object:  &domain.Entity{},
+			Subject: &domain.Entity{},
+		},
 	}
 
 	cmd := &cobra.Command{
-		Use:   cfg.CommandNamer("Expand"),
-		Short: "Expand RPC client",
-		Long:  "Expand returns a GoalTree used to scan all nodes reachable from a stating point.\n Note that the output of Expand IS NOT stable and it must be used for debug only.",
+		Use:   cfg.CommandNamer("DOTExplainCheck"),
+		Short: "DOTExplainCheck RPC client",
+		Long:  "ExplainCheck performs a Check call but outputs a DOT serialized version of the goal tree.\n Like ExplainCheck but outputs a DOT string",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cfg.UseEnvVars {
 				if err := flag.SetFlagsFromEnv(cmd.Parent().PersistentFlags(), true, cfg.EnvVarNamer, cfg.EnvVarPrefix, "RelationGraph"); err != nil {
 					return err
 				}
-				if err := flag.SetFlagsFromEnv(cmd.PersistentFlags(), false, cfg.EnvVarNamer, cfg.EnvVarPrefix, "RelationGraph", "Expand"); err != nil {
+				if err := flag.SetFlagsFromEnv(cmd.PersistentFlags(), false, cfg.EnvVarNamer, cfg.EnvVarPrefix, "RelationGraph", "DOTExplainCheck"); err != nil {
 					return err
 				}
 			}
 			return client.RoundTrip(cmd.Context(), cfg, func(cc grpc.ClientConnInterface, in iocodec.Decoder, out iocodec.Encoder) error {
 				cli := NewRelationGraphClient(cc)
-				v := &ExpandRequest{}
+				v := &DOTExplainCheckRequest{}
 
 				if err := in(v); err != nil {
 					return err
 				}
 				proto.Merge(v, req)
 
-				res, err := cli.Expand(cmd.Context(), v)
+				res, err := cli.DOTExplainCheck(cmd.Context(), v)
 
 				if err != nil {
 					return err
@@ -174,32 +176,12 @@ func _RelationGraphExpandCommand(cfg *client.Config) *cobra.Command {
 	}
 
 	cmd.PersistentFlags().StringVar(&req.PolicyId, cfg.FlagNamer("PolicyId"), "", "")
-	RootEntitySet := &domain.EntitySetNode{
-		Object: &domain.Entity{},
-	}
-	cmd.PersistentFlags().Bool(cfg.FlagNamer("Root EntitySet"), false, "")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Root EntitySet"), func() { req.Root.Node = &domain.RelationNode_EntitySet{EntitySet: RootEntitySet} })
-	cmd.PersistentFlags().StringVar(&RootEntitySet.Object.Resource, cfg.FlagNamer("Root EntitySet Object Resource"), "", "resource represents the resource name which will contain the entity")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Root EntitySet Object Resource"), func() { req.Root.Node = &domain.RelationNode_EntitySet{EntitySet: RootEntitySet} })
-	cmd.PersistentFlags().StringVar(&RootEntitySet.Object.Id, cfg.FlagNamer("Root EntitySet Object Id"), "", "id is an unique identifier for the entity within a resource")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Root EntitySet Object Id"), func() { req.Root.Node = &domain.RelationNode_EntitySet{EntitySet: RootEntitySet} })
-	cmd.PersistentFlags().StringVar(&RootEntitySet.Relation, cfg.FlagNamer("Root EntitySet Relation"), "", "")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Root EntitySet Relation"), func() { req.Root.Node = &domain.RelationNode_EntitySet{EntitySet: RootEntitySet} })
-	RootEntity := &domain.EntityNode{
-		Object: &domain.Entity{},
-	}
-	cmd.PersistentFlags().Bool(cfg.FlagNamer("Root Entity"), false, "")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Root Entity"), func() { req.Root.Node = &domain.RelationNode_Entity{Entity: RootEntity} })
-	cmd.PersistentFlags().StringVar(&RootEntity.Object.Resource, cfg.FlagNamer("Root Entity Object Resource"), "", "resource represents the resource name which will contain the entity")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Root Entity Object Resource"), func() { req.Root.Node = &domain.RelationNode_Entity{Entity: RootEntity} })
-	cmd.PersistentFlags().StringVar(&RootEntity.Object.Id, cfg.FlagNamer("Root Entity Object Id"), "", "id is an unique identifier for the entity within a resource")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Root Entity Object Id"), func() { req.Root.Node = &domain.RelationNode_Entity{Entity: RootEntity} })
-	RootWildcard := &domain.WildcardNode{}
-	cmd.PersistentFlags().Bool(cfg.FlagNamer("Root Wildcard"), false, "")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Root Wildcard"), func() { req.Root.Node = &domain.RelationNode_Wildcard{Wildcard: RootWildcard} })
-	cmd.PersistentFlags().StringVar(&RootWildcard.Resource, cfg.FlagNamer("Root Wildcard Resource"), "", "")
-	flag.WithPostSetHook(cmd.PersistentFlags(), cfg.FlagNamer("Root Wildcard Resource"), func() { req.Root.Node = &domain.RelationNode_Wildcard{Wildcard: RootWildcard} })
-	flag.EnumVar(cmd.PersistentFlags(), &req.Format, cfg.FlagNamer("Format"), "")
+	cmd.PersistentFlags().StringVar(&req.AccessRequest.Object.Resource, cfg.FlagNamer("AccessRequest Object Resource"), "", "resource represents the resource name which will contain the entity")
+	cmd.PersistentFlags().StringVar(&req.AccessRequest.Object.Id, cfg.FlagNamer("AccessRequest Object Id"), "", "id is an unique identifier for the entity within a resource")
+	cmd.PersistentFlags().StringVar(&req.AccessRequest.Relation, cfg.FlagNamer("AccessRequest Relation"), "", "")
+	cmd.PersistentFlags().StringVar(&req.AccessRequest.Subject.Resource, cfg.FlagNamer("AccessRequest Subject Resource"), "", "resource represents the resource name which will contain the entity")
+	cmd.PersistentFlags().StringVar(&req.AccessRequest.Subject.Id, cfg.FlagNamer("AccessRequest Subject Id"), "", "id is an unique identifier for the entity within a resource")
+	cmd.PersistentFlags().BoolVar(&req.OmitUnknown, cfg.FlagNamer("OmitUnknown"), false, "")
 
 	return cmd
 }
