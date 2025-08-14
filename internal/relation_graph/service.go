@@ -113,7 +113,7 @@ func (s *Service) ExplainCheck(
 	mapper := ExplainCheckTreeMapper{}
 
 	return &api.ExplainCheckResponse{
-		Tree:       mapper.Map(tree),
+		Graph:      mapper.Map(tree),
 		Authorized: tree.GetResult().Authorized,
 	}, nil
 }
@@ -128,8 +128,8 @@ func (s *Service) DOTExplainCheck(
 
 	mapper := ExplainCheckTreeMapper{}
 	explainTree := mapper.Map(tree)
-	serializer := DotSerializer{}
-	out, err := serializer.Serialize(explainTree, req.OmitUnknown)
+	serializer := DOTMapper{}
+	out, err := serializer.Map(explainTree, req.OmitUnknown)
 	if err != nil {
 		return nil, err
 	}

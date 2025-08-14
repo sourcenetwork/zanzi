@@ -35,148 +35,47 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on CheckExplainTree with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *CheckExplainTree) Validate() error {
+// Validate checks the field values on SearchResult with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *SearchResult) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on CheckExplainTree with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// CheckExplainTreeMultiError, or nil if none found.
-func (m *CheckExplainTree) ValidateAll() error {
+// ValidateAll checks the field values on SearchResult with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in SearchResultMultiError, or
+// nil if none found.
+func (m *SearchResult) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *CheckExplainTree) validate(all bool) error {
+func (m *SearchResult) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	// no validation rules for Text
+	// no validation rules for Authorized
 
-	// no validation rules for Detail
+	// no validation rules for Explored
 
-	for idx, item := range m.GetOk() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, CheckExplainTreeValidationError{
-						field:  fmt.Sprintf("Ok[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, CheckExplainTreeValidationError{
-						field:  fmt.Sprintf("Ok[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return CheckExplainTreeValidationError{
-					field:  fmt.Sprintf("Ok[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	for idx, item := range m.GetFailed() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, CheckExplainTreeValidationError{
-						field:  fmt.Sprintf("Failed[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, CheckExplainTreeValidationError{
-						field:  fmt.Sprintf("Failed[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return CheckExplainTreeValidationError{
-					field:  fmt.Sprintf("Failed[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	for idx, item := range m.GetUnknown() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, CheckExplainTreeValidationError{
-						field:  fmt.Sprintf("Unknown[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, CheckExplainTreeValidationError{
-						field:  fmt.Sprintf("Unknown[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return CheckExplainTreeValidationError{
-					field:  fmt.Sprintf("Unknown[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
+	// no validation rules for Exhausted
 
 	if len(errors) > 0 {
-		return CheckExplainTreeMultiError(errors)
+		return SearchResultMultiError(errors)
 	}
 
 	return nil
 }
 
-// CheckExplainTreeMultiError is an error wrapping multiple validation errors
-// returned by CheckExplainTree.ValidateAll() if the designated constraints
-// aren't met.
-type CheckExplainTreeMultiError []error
+// SearchResultMultiError is an error wrapping multiple validation errors
+// returned by SearchResult.ValidateAll() if the designated constraints aren't met.
+type SearchResultMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m CheckExplainTreeMultiError) Error() string {
+func (m SearchResultMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -185,11 +84,11 @@ func (m CheckExplainTreeMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m CheckExplainTreeMultiError) AllErrors() []error { return m }
+func (m SearchResultMultiError) AllErrors() []error { return m }
 
-// CheckExplainTreeValidationError is the validation error returned by
-// CheckExplainTree.Validate if the designated constraints aren't met.
-type CheckExplainTreeValidationError struct {
+// SearchResultValidationError is the validation error returned by
+// SearchResult.Validate if the designated constraints aren't met.
+type SearchResultValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -197,22 +96,22 @@ type CheckExplainTreeValidationError struct {
 }
 
 // Field function returns field value.
-func (e CheckExplainTreeValidationError) Field() string { return e.field }
+func (e SearchResultValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e CheckExplainTreeValidationError) Reason() string { return e.reason }
+func (e SearchResultValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e CheckExplainTreeValidationError) Cause() error { return e.cause }
+func (e SearchResultValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e CheckExplainTreeValidationError) Key() bool { return e.key }
+func (e SearchResultValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e CheckExplainTreeValidationError) ErrorName() string { return "CheckExplainTreeValidationError" }
+func (e SearchResultValidationError) ErrorName() string { return "SearchResultValidationError" }
 
 // Error satisfies the builtin error interface
-func (e CheckExplainTreeValidationError) Error() string {
+func (e SearchResultValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -224,14 +123,14 @@ func (e CheckExplainTreeValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sCheckExplainTree.%s: %s%s",
+		"invalid %sSearchResult.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = CheckExplainTreeValidationError{}
+var _ error = SearchResultValidationError{}
 
 var _ interface {
 	Field() string
@@ -239,4 +138,419 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = CheckExplainTreeValidationError{}
+} = SearchResultValidationError{}
+
+// Validate checks the field values on CheckExplainGraph with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *CheckExplainGraph) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CheckExplainGraph with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CheckExplainGraphMultiError, or nil if none found.
+func (m *CheckExplainGraph) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckExplainGraph) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for RootNodeId
+
+	for idx, item := range m.GetNodes() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CheckExplainGraphValidationError{
+						field:  fmt.Sprintf("Nodes[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CheckExplainGraphValidationError{
+						field:  fmt.Sprintf("Nodes[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CheckExplainGraphValidationError{
+					field:  fmt.Sprintf("Nodes[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetEdges() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CheckExplainGraphValidationError{
+						field:  fmt.Sprintf("Edges[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CheckExplainGraphValidationError{
+						field:  fmt.Sprintf("Edges[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CheckExplainGraphValidationError{
+					field:  fmt.Sprintf("Edges[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return CheckExplainGraphMultiError(errors)
+	}
+
+	return nil
+}
+
+// CheckExplainGraphMultiError is an error wrapping multiple validation errors
+// returned by CheckExplainGraph.ValidateAll() if the designated constraints
+// aren't met.
+type CheckExplainGraphMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckExplainGraphMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckExplainGraphMultiError) AllErrors() []error { return m }
+
+// CheckExplainGraphValidationError is the validation error returned by
+// CheckExplainGraph.Validate if the designated constraints aren't met.
+type CheckExplainGraphValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckExplainGraphValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckExplainGraphValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckExplainGraphValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckExplainGraphValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckExplainGraphValidationError) ErrorName() string {
+	return "CheckExplainGraphValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckExplainGraphValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckExplainGraph.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckExplainGraphValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckExplainGraphValidationError{}
+
+// Validate checks the field values on CheckExplainNode with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *CheckExplainNode) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CheckExplainNode with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CheckExplainNodeMultiError, or nil if none found.
+func (m *CheckExplainNode) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckExplainNode) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for NodeType
+
+	// no validation rules for Text
+
+	// no validation rules for Detail
+
+	if all {
+		switch v := interface{}(m.GetResult()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CheckExplainNodeValidationError{
+					field:  "Result",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CheckExplainNodeValidationError{
+					field:  "Result",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetResult()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CheckExplainNodeValidationError{
+				field:  "Result",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return CheckExplainNodeMultiError(errors)
+	}
+
+	return nil
+}
+
+// CheckExplainNodeMultiError is an error wrapping multiple validation errors
+// returned by CheckExplainNode.ValidateAll() if the designated constraints
+// aren't met.
+type CheckExplainNodeMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckExplainNodeMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckExplainNodeMultiError) AllErrors() []error { return m }
+
+// CheckExplainNodeValidationError is the validation error returned by
+// CheckExplainNode.Validate if the designated constraints aren't met.
+type CheckExplainNodeValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckExplainNodeValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckExplainNodeValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckExplainNodeValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckExplainNodeValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckExplainNodeValidationError) ErrorName() string { return "CheckExplainNodeValidationError" }
+
+// Error satisfies the builtin error interface
+func (e CheckExplainNodeValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckExplainNode.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckExplainNodeValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckExplainNodeValidationError{}
+
+// Validate checks the field values on CheckExplainEdge with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *CheckExplainEdge) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CheckExplainEdge with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CheckExplainEdgeMultiError, or nil if none found.
+func (m *CheckExplainEdge) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckExplainEdge) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for SourceNodeId
+
+	// no validation rules for DestNodeId
+
+	// no validation rules for Message
+
+	if len(errors) > 0 {
+		return CheckExplainEdgeMultiError(errors)
+	}
+
+	return nil
+}
+
+// CheckExplainEdgeMultiError is an error wrapping multiple validation errors
+// returned by CheckExplainEdge.ValidateAll() if the designated constraints
+// aren't met.
+type CheckExplainEdgeMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckExplainEdgeMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckExplainEdgeMultiError) AllErrors() []error { return m }
+
+// CheckExplainEdgeValidationError is the validation error returned by
+// CheckExplainEdge.Validate if the designated constraints aren't met.
+type CheckExplainEdgeValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckExplainEdgeValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckExplainEdgeValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckExplainEdgeValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckExplainEdgeValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckExplainEdgeValidationError) ErrorName() string { return "CheckExplainEdgeValidationError" }
+
+// Error satisfies the builtin error interface
+func (e CheckExplainEdgeValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckExplainEdge.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckExplainEdgeValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckExplainEdgeValidationError{}

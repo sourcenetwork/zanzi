@@ -68,7 +68,7 @@ message ExplainCheckRequest {
 }
 
 message ExplainCheckResponse {
-    sourcenetwork.zanzi.types.CheckExplainTree tree = 1;
+    sourcenetwork.zanzi.types.CheckExplainGraph graph = 1;
     bool authorized = 2;
 }
 

@@ -4,12 +4,40 @@ package sourcenetwork.zanzi.types;
 
 option go_package = "github.com/sourcenetwork/zanzi/pkg/types";
 
-// ExplainTree models the resulting goal tree from
-// a Check execution
-message CheckExplainTree {
-    string text = 1;
-    string detail = 2;
-    repeated CheckExplainTree ok = 3;
-    repeated CheckExplainTree failed = 4;
-    repeated CheckExplainTree unknown = 5;
+message SearchResult {
+    // authorized indicates this node is part of a path which lead to the target
+    bool authorized = 1;
+    // explored means the node was touched during the search
+    bool explored = 2;
+    // exhausted indicates that all the node paths were explored
+    bool exhausted = 3;
+}
+
+// Models the type of the check explain node
+enum CheckExplainNodeType {
+    UNION_NODE = 0;
+    DIFF_NODE = 1;
+    INTERSECTION_NODE = 2;
+    USERSET_NODE = 3;
+}
+
+// Graph of nodes and edges which results from a check explain call
+message CheckExplainGraph {
+    string root_node_id = 1;
+    repeated CheckExplainNode nodes = 2;
+    repeated CheckExplainEdge edges = 3;
+}
+
+message CheckExplainNode {
+    string id = 1;
+    CheckExplainNodeType node_type = 2;
+    string text = 3;
+    string detail = 4;
+    SearchResult result = 5;
+}
+
+message CheckExplainEdge {
+    string source_node_id = 1;
+    string dest_node_id = 2;
+    string message = 3;
 }

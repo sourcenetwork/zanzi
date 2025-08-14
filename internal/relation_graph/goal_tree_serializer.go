@@ -15,144 +15,170 @@ const (
 	RootColor           = "black"
 )
 
-type ExplainCheckTreeMapper struct{}
+type ExplainCheckTreeMapper struct {
+	counter int
+	nodes   []*types.CheckExplainNode
+	edges   []*types.CheckExplainEdge
+}
 
-func (m *ExplainCheckTreeMapper) Map(tree GoalTree) *types.CheckExplainTree {
+func (s *ExplainCheckTreeMapper) nextId() string {
+	id := fmt.Sprintf("%v", s.counter)
+	s.counter++
+	return id
+}
+
+func (m *ExplainCheckTreeMapper) Map(tree GoalTree) *types.CheckExplainGraph {
+	m.mapTree(tree, "")
+	return &types.CheckExplainGraph{
+		RootNodeId: "1",
+		Edges:      m.edges,
+		Nodes:      m.nodes,
+	}
+}
+
+func (m *ExplainCheckTreeMapper) mapTree(tree GoalTree, parent_id string) {
+	id := m.nextId()
 	switch node := tree.(type) {
 	case *PathNode:
-		return m.handlePathNode(node)
+		m.handlePathNode(id, parent_id, node)
 	case *ORNode:
-		return m.handleOPNode(node, node.Paths, "+")
+		m.handleOPNode(id, parent_id, node, node.Paths, types.CheckExplainNodeType_UNION_NODE, "+", "")
 	case *ANDNode:
-		return m.handleOPNode(node, node.Paths, "&")
+		m.handleOPNode(id, parent_id, node, node.Paths, types.CheckExplainNodeType_INTERSECTION_NODE, "&", "")
 	case *DifferenceNode:
-		return m.handleOPNode(node, []GoalTree{node.Left, node.Right}, "-")
+		m.handleOPNode(id, parent_id, node, []GoalTree{node.Left, node.Right}, types.CheckExplainNodeType_DIFF_NODE, "-", "")
 	}
-	return nil
 }
 
-func (m *ExplainCheckTreeMapper) handlePathNode(tree *PathNode) *types.CheckExplainTree {
-	t := &types.CheckExplainTree{
-		Text:   tree.RelationNode.PrettyString(),
-		Detail: "reason: " + tree.Reason,
+func (m *ExplainCheckTreeMapper) handlePathNode(id string, parent_id string, tree *PathNode) {
+	// only a top level node may be a root node
+	if parent_id != "" {
+		edge := &types.CheckExplainEdge{
+			SourceNodeId: parent_id,
+			DestNodeId:   id,
+			Message:      "",
+		}
+		m.edges = append(m.edges, edge)
 	}
+
+	node := &types.CheckExplainNode{
+		Id:       id,
+		NodeType: types.CheckExplainNodeType_USERSET_NODE,
+		Text:     tree.RelationNode.PrettyString(),
+		Detail:   "reason: " + tree.Reason,
+		Result: &types.SearchResult{
+			Authorized: tree.Result.Authorized,
+			Explored:   tree.Result.Explored,
+			Exhausted:  tree.Result.Completed,
+		},
+	}
+	m.nodes = append(m.nodes, node)
 
 	if tree.Path == nil {
-		return t
+		return
 	}
 
-	child := m.Map(tree.Path)
-	children := []*types.CheckExplainTree{child}
-	if tree.Result.Authorized {
-		t.Ok = children
-	} else if tree.Result.Completed && !tree.Result.Authorized {
-		t.Failed = children
-	} else {
-		t.Unknown = children
-	}
-
-	return t
+	m.mapTree(tree.Path, id)
 }
 
-func (m *ExplainCheckTreeMapper) handleOPNode(tree GoalTree, children []GoalTree, nodeText string) *types.CheckExplainTree {
-	t := &types.CheckExplainTree{
-		Text:   nodeText,
-		Detail: "",
+func (m *ExplainCheckTreeMapper) handleOPNode(id string, parent_id string, tree GoalTree, children []GoalTree, nodeType types.CheckExplainNodeType, text string, detail string) {
+	edg := &types.CheckExplainEdge{
+		SourceNodeId: parent_id,
+		DestNodeId:   id,
+		Message:      "",
 	}
+	m.edges = append(m.edges, edg)
+
+	node := &types.CheckExplainNode{
+		Id:       id,
+		NodeType: nodeType,
+		Text:     text,
+		Detail:   detail,
+		Result: &types.SearchResult{
+			Authorized: tree.GetResult().Authorized,
+			Explored:   tree.GetResult().Explored,
+			Exhausted:  tree.GetResult().Completed,
+		},
+	}
+	m.nodes = append(m.nodes, node)
+
 	for _, subPath := range children {
-		child := m.Map(subPath)
-		if subPath.GetResult().Authorized {
-			t.Ok = append(t.Ok, child)
-		} else if subPath.GetResult().Completed && !subPath.GetResult().Authorized {
-			t.Failed = append(t.Failed, child)
-		} else {
-			t.Unknown = append(t.Unknown, child)
-		}
+		m.mapTree(subPath, id)
 	}
-	return t
 }
 
 const dotGraphName string = "GoalTree"
 
-// DotSerializer maps a CheckExplainTree into a DOT Graph
-type DotSerializer struct {
+// DOTMapper maps a CheckExplainGraph into a DOT Graph
+type DOTMapper struct {
 	counter int
 }
 
-// Serialize converts a CheckExplainTree into a DOT representation
+// Map converts a CheckExplainGraph into a DOT representation
 // omitUknonwn can be used to skip nodes which were not fully explored
 // from the final graph
-func (s *DotSerializer) Serialize(tree *types.CheckExplainTree, omitUknown bool) (string, error) {
+func (s *DOTMapper) Map(g *types.CheckExplainGraph, omitUknown bool) (string, error) {
 	graph := gographviz.NewGraph()
 	graph.SetDir(true) //directed graph true
 	graph.SetName(dotGraphName)
 
-	err := graph.AddNode(dotGraphName, "root", nil)
-	if err != nil {
-		return "", fmt.Errorf("dot serialize: failed to set root: %v", err)
+	nodeMap := make(map[string]*types.CheckExplainNode)
+
+	for _, node := range g.Nodes {
+		// skip nodes not explored
+		if node.Result.Explored == false {
+			continue
+		}
+
+		txt := s.sprintf("%v\\n%v", node.Text, node.Detail)
+		color := s.getColor(node.Result)
+		attrs := map[string]string{
+			"label":     txt,
+			"color":     s.sprintf(color),
+			"fontcolor": s.sprintf(color),
+		}
+		err := graph.AddNode(dotGraphName, s.sprintf(node.Id), attrs)
+		if err != nil {
+			return "", fmt.Errorf("dot serialize: failed to set node: %v: %v", node.Id, err)
+		}
+		nodeMap[node.Id] = node
 	}
 
-	err = s.step("root", tree, graph, RootColor, omitUknown)
-	if err != nil {
-		return "", fmt.Errorf("dot serialize: %v", err)
+	for _, edg := range g.Edges {
+		srcNode, ok := nodeMap[edg.SourceNodeId]
+		// if node is not found, it means we are omitting unknown
+		// and the parent wasn't explored
+		if !ok {
+			continue
+		}
+
+		// color of edge is defined by the soruce node
+		color := s.getColor(srcNode.Result)
+
+		directed := true
+		edgeAttrs := map[string]string{
+			"color": s.sprintf(color),
+		}
+		err := graph.AddEdge(edg.SourceNodeId, edg.DestNodeId, directed, edgeAttrs)
+		if err != nil {
+			return "", fmt.Errorf("edg %v->%v: %w", edg.SourceNodeId, edg.DestNodeId, err)
+		}
 	}
 
 	return graph.String(), nil
 }
 
-func (s *DotSerializer) step(parentId string, node *types.CheckExplainTree, graph *gographviz.Graph, color string, omitUknown bool) error {
-	id := s.nextId()
-	attrs := map[string]string{
-		"label":     s.sprintf("%v\\n%v", node.Text, node.Detail),
-		"color":     s.sprintf(color),
-		"fontcolor": s.sprintf(color),
+func (s *DOTMapper) getColor(result *types.SearchResult) string {
+	if result.Explored == false {
+		return UnknownColor
 	}
-
-	err := graph.AddNode(dotGraphName, id, attrs)
-	if err != nil {
-		return fmt.Errorf("node %v: %w", node.Text, err)
+	if result.Authorized {
+		return OkColor
 	}
-
-	directed := true
-	edgeAttrs := map[string]string{
-		"color": s.sprintf(color),
-	}
-	err = graph.AddEdge(parentId, id, directed, edgeAttrs)
-	if err != nil {
-		return fmt.Errorf("edg %v->%v: %w", parentId, id, err)
-	}
-
-	for _, child := range node.Failed {
-		err = s.step(id, child, graph, FailedColor, omitUknown)
-		if err != nil {
-			return err
-		}
-	}
-	for _, child := range node.Ok {
-		err = s.step(id, child, graph, OkColor, omitUknown)
-		if err != nil {
-			return err
-		}
-	}
-	if !omitUknown {
-		for _, child := range node.Unknown {
-			err = s.step(id, child, graph, UnknownColor, omitUknown)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+	return FailedColor
 }
 
-func (s *DotSerializer) nextId() string {
-	id := s.sprintf("%v", s.counter)
-	s.counter++
-	return id
-}
-
-// sprintf formats a string and wraps it with quotes
-func (s *DotSerializer) sprintf(format string, args ...any) string {
-	format = "\"" + format + "\""
-	return fmt.Sprintf(format, args...)
+// fmt formats a string and wraps it with quotes
+func (s *DOTMapper) sprintf(str string, args ...any) string {
+	return "\"" + fmt.Sprintf(str, args...) + "\""
 }
