@@ -3,6 +3,8 @@ package relation_graph
 import (
 	"context"
 
+	"github.com/google/uuid"
+
 	"github.com/sourcenetwork/zanzi/internal/policy"
 	"github.com/sourcenetwork/zanzi/pkg/api"
 	"github.com/sourcenetwork/zanzi/pkg/domain"
@@ -205,4 +207,69 @@ func (s *Service) DumpRelationships(
 	}
 
 	return response, nil
+}
+
+func (s *Service) CheckExpression(
+	ctx context.Context,
+	req *api.CheckExpressionRequest) (*api.CheckExpressionResponse, error) {
+	record, err := s.policyRepository.GetPolicy(ctx, req.PolicyId)
+	if err != nil {
+		return nil, err
+	}
+	if record == nil {
+		return nil, errors.ErrPolicyNotFound(req.PolicyId)
+	}
+
+	// augment policy with the provided expression
+	id := uuid.NewString()
+	res := record.Policy.GetResourceByName(req.Object.Resource)
+	if res == nil {
+		return nil, errors.New("resource not found", errors.BadInput,
+			errors.Pair("policy", req.PolicyId),
+			errors.Pair("resource", req.Object.Resource))
+	}
+	tmpRel := domain.Relation{
+		Name:        id,
+		Description: "temporary relation for check expression",
+		SubjectRestriction: &domain.SubjectRestriction{
+			SubjectRestriction: &domain.SubjectRestriction_UniversalSet{},
+		},
+		RelationExpression: &domain.RelationExpression{
+			Expression: &domain.RelationExpression_Expr{
+				Expr: req.RelationExpression,
+			},
+		},
+	}
+	res.Relations = append(res.Relations, &tmpRel)
+
+	evaluator := newEvaluator(s.repository, s.logger)
+	builder := newGoalTreeBuilder(evaluator, s.logger)
+	searcher := NewSearcher(builder, s.logger)
+
+	origin := domain.RelationNode{
+		Node: &domain.RelationNode_EntitySet{
+			EntitySet: &domain.EntitySetNode{
+				Object:   req.Object,
+				Relation: id,
+			},
+		},
+	}
+	goal := Goal{
+		Target: &domain.RelationNode{
+			Node: &domain.RelationNode_Entity{
+				Entity: &domain.EntityNode{
+					Object: req.Subject,
+				},
+			},
+		},
+	}
+	tree, err := searcher.Search(ctx, record.Policy, &origin, &goal)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.CheckExpressionResponse{
+		Authorized: tree.GetResult().Authorized,
+	}, nil
 }

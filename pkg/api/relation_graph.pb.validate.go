@@ -1067,6 +1067,274 @@ var _ interface {
 	ErrorName() string
 } = DumpRelationshipResponseValidationError{}
 
+// Validate checks the field values on CheckExpressionRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CheckExpressionRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CheckExpressionRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CheckExpressionRequestMultiError, or nil if none found.
+func (m *CheckExpressionRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckExpressionRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for PolicyId
+
+	if all {
+		switch v := interface{}(m.GetObject()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CheckExpressionRequestValidationError{
+					field:  "Object",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CheckExpressionRequestValidationError{
+					field:  "Object",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetObject()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CheckExpressionRequestValidationError{
+				field:  "Object",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for RelationExpression
+
+	if all {
+		switch v := interface{}(m.GetSubject()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CheckExpressionRequestValidationError{
+					field:  "Subject",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CheckExpressionRequestValidationError{
+					field:  "Subject",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSubject()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CheckExpressionRequestValidationError{
+				field:  "Subject",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return CheckExpressionRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CheckExpressionRequestMultiError is an error wrapping multiple validation
+// errors returned by CheckExpressionRequest.ValidateAll() if the designated
+// constraints aren't met.
+type CheckExpressionRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckExpressionRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckExpressionRequestMultiError) AllErrors() []error { return m }
+
+// CheckExpressionRequestValidationError is the validation error returned by
+// CheckExpressionRequest.Validate if the designated constraints aren't met.
+type CheckExpressionRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckExpressionRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckExpressionRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckExpressionRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckExpressionRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckExpressionRequestValidationError) ErrorName() string {
+	return "CheckExpressionRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckExpressionRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckExpressionRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckExpressionRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckExpressionRequestValidationError{}
+
+// Validate checks the field values on CheckExpressionResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CheckExpressionResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CheckExpressionResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CheckExpressionResponseMultiError, or nil if none found.
+func (m *CheckExpressionResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckExpressionResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Authorized
+
+	if len(errors) > 0 {
+		return CheckExpressionResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// CheckExpressionResponseMultiError is an error wrapping multiple validation
+// errors returned by CheckExpressionResponse.ValidateAll() if the designated
+// constraints aren't met.
+type CheckExpressionResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckExpressionResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckExpressionResponseMultiError) AllErrors() []error { return m }
+
+// CheckExpressionResponseValidationError is the validation error returned by
+// CheckExpressionResponse.Validate if the designated constraints aren't met.
+type CheckExpressionResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckExpressionResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckExpressionResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckExpressionResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckExpressionResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckExpressionResponseValidationError) ErrorName() string {
+	return "CheckExpressionResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckExpressionResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckExpressionResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckExpressionResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckExpressionResponseValidationError{}
+
 // Validate checks the field values on CheckResponse_Result with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

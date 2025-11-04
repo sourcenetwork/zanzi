@@ -22,6 +22,7 @@ func RelationGraphClientCommand(options ...client.Option) *cobra.Command {
 	cfg.BindFlags(cmd.PersistentFlags())
 	cmd.AddCommand(
 		_RelationGraphCheckCommand(cfg),
+		_RelationGraphCheckExpressionCommand(cfg),
 		_RelationGraphExplainCheckCommand(cfg),
 		_RelationGraphDOTExplainCheckCommand(cfg),
 		_RelationGraphDumpRelationshipsCommand(cfg),
@@ -77,6 +78,56 @@ func _RelationGraphCheckCommand(cfg *client.Config) *cobra.Command {
 	cmd.PersistentFlags().StringVar(&req.AccessRequest.Relation, cfg.FlagNamer("AccessRequest Relation"), "", "")
 	cmd.PersistentFlags().StringVar(&req.AccessRequest.Subject.Resource, cfg.FlagNamer("AccessRequest Subject Resource"), "", "resource represents the resource name which will contain the entity")
 	cmd.PersistentFlags().StringVar(&req.AccessRequest.Subject.Id, cfg.FlagNamer("AccessRequest Subject Id"), "", "id is an unique identifier for the entity within a resource")
+
+	return cmd
+}
+
+func _RelationGraphCheckExpressionCommand(cfg *client.Config) *cobra.Command {
+	req := &CheckExpressionRequest{
+		Object:  &domain.Entity{},
+		Subject: &domain.Entity{},
+	}
+
+	cmd := &cobra.Command{
+		Use:   cfg.CommandNamer("CheckExpression"),
+		Short: "CheckExpression RPC client",
+		Long:  "CheckExpression behaves as check does, but it evaluates a runtime supplied relation expression.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if cfg.UseEnvVars {
+				if err := flag.SetFlagsFromEnv(cmd.Parent().PersistentFlags(), true, cfg.EnvVarNamer, cfg.EnvVarPrefix, "RelationGraph"); err != nil {
+					return err
+				}
+				if err := flag.SetFlagsFromEnv(cmd.PersistentFlags(), false, cfg.EnvVarNamer, cfg.EnvVarPrefix, "RelationGraph", "CheckExpression"); err != nil {
+					return err
+				}
+			}
+			return client.RoundTrip(cmd.Context(), cfg, func(cc grpc.ClientConnInterface, in iocodec.Decoder, out iocodec.Encoder) error {
+				cli := NewRelationGraphClient(cc)
+				v := &CheckExpressionRequest{}
+
+				if err := in(v); err != nil {
+					return err
+				}
+				proto.Merge(v, req)
+
+				res, err := cli.CheckExpression(cmd.Context(), v)
+
+				if err != nil {
+					return err
+				}
+
+				return out(res)
+
+			})
+		},
+	}
+
+	cmd.PersistentFlags().StringVar(&req.PolicyId, cfg.FlagNamer("PolicyId"), "", "")
+	cmd.PersistentFlags().StringVar(&req.Object.Resource, cfg.FlagNamer("Object Resource"), "", "resource represents the resource name which will contain the entity")
+	cmd.PersistentFlags().StringVar(&req.Object.Id, cfg.FlagNamer("Object Id"), "", "id is an unique identifier for the entity within a resource")
+	cmd.PersistentFlags().StringVar(&req.RelationExpression, cfg.FlagNamer("RelationExpression"), "", "")
+	cmd.PersistentFlags().StringVar(&req.Subject.Resource, cfg.FlagNamer("Subject Resource"), "", "resource represents the resource name which will contain the entity")
+	cmd.PersistentFlags().StringVar(&req.Subject.Id, cfg.FlagNamer("Subject Id"), "", "id is an unique identifier for the entity within a resource")
 
 	return cmd
 }

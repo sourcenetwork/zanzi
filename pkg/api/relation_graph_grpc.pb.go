@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	RelationGraph_Check_FullMethodName             = "/sourcenetwork.zanzi.api.RelationGraph/Check"
+	RelationGraph_CheckExpression_FullMethodName   = "/sourcenetwork.zanzi.api.RelationGraph/CheckExpression"
 	RelationGraph_ExplainCheck_FullMethodName      = "/sourcenetwork.zanzi.api.RelationGraph/ExplainCheck"
 	RelationGraph_DOTExplainCheck_FullMethodName   = "/sourcenetwork.zanzi.api.RelationGraph/DOTExplainCheck"
 	RelationGraph_DumpRelationships_FullMethodName = "/sourcenetwork.zanzi.api.RelationGraph/DumpRelationships"
@@ -32,6 +33,8 @@ type RelationGraphClient interface {
 	// Check verifies whether some subject has some relation to an object.
 	// Effectively this means a Graph Walk through the Relation Graph.
 	Check(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error)
+	// CheckExpression behaves as check does, but it evaluates a runtime supplied relation expression.
+	CheckExpression(ctx context.Context, in *CheckExpressionRequest, opts ...grpc.CallOption) (*CheckExpressionResponse, error)
 	// ExplainCheck performs a Check call but outputs a simplified version
 	// of the internal goal tree.
 	// The goal tree can be used to understand the internals of the RelationGraph search and to debug.
@@ -58,6 +61,15 @@ func NewRelationGraphClient(cc grpc.ClientConnInterface) RelationGraphClient {
 func (c *relationGraphClient) Check(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error) {
 	out := new(CheckResponse)
 	err := c.cc.Invoke(ctx, RelationGraph_Check_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *relationGraphClient) CheckExpression(ctx context.Context, in *CheckExpressionRequest, opts ...grpc.CallOption) (*CheckExpressionResponse, error) {
+	out := new(CheckExpressionResponse)
+	err := c.cc.Invoke(ctx, RelationGraph_CheckExpression_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -98,6 +110,8 @@ type RelationGraphServer interface {
 	// Check verifies whether some subject has some relation to an object.
 	// Effectively this means a Graph Walk through the Relation Graph.
 	Check(context.Context, *CheckRequest) (*CheckResponse, error)
+	// CheckExpression behaves as check does, but it evaluates a runtime supplied relation expression.
+	CheckExpression(context.Context, *CheckExpressionRequest) (*CheckExpressionResponse, error)
 	// ExplainCheck performs a Check call but outputs a simplified version
 	// of the internal goal tree.
 	// The goal tree can be used to understand the internals of the RelationGraph search and to debug.
@@ -120,6 +134,9 @@ type UnimplementedRelationGraphServer struct {
 
 func (UnimplementedRelationGraphServer) Check(context.Context, *CheckRequest) (*CheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Check not implemented")
+}
+func (UnimplementedRelationGraphServer) CheckExpression(context.Context, *CheckExpressionRequest) (*CheckExpressionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckExpression not implemented")
 }
 func (UnimplementedRelationGraphServer) ExplainCheck(context.Context, *ExplainCheckRequest) (*ExplainCheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExplainCheck not implemented")
@@ -157,6 +174,24 @@ func _RelationGraph_Check_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RelationGraphServer).Check(ctx, req.(*CheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RelationGraph_CheckExpression_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckExpressionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RelationGraphServer).CheckExpression(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RelationGraph_CheckExpression_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RelationGraphServer).CheckExpression(ctx, req.(*CheckExpressionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -225,6 +260,10 @@ var RelationGraph_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Check",
 			Handler:    _RelationGraph_Check_Handler,
+		},
+		{
+			MethodName: "CheckExpression",
+			Handler:    _RelationGraph_CheckExpression_Handler,
 		},
 		{
 			MethodName: "ExplainCheck",

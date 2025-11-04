@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/zanzi/pkg/domain"
 )
 
-func setup() (context.Context, api.RelationGraphServer) {
+func setup(pol domain.Policy, rels []domain.Relationship) (context.Context, api.RelationGraphServer) {
 	ctx := context.Background()
 	kv := rcdb.NewMemKV()
 	kvStore, err := kv_store.NewKVStore(kv)
@@ -41,7 +41,7 @@ func setup() (context.Context, api.RelationGraphServer) {
 	createReq := &api.CreatePolicyRequest{
 		PolicyDefinition: &api.PolicyDefinition{
 			Definition: &api.PolicyDefinition_Policy{
-				Policy: setupPolicy,
+				Policy: &pol,
 			},
 		},
 		AppData: []byte("app data"),
@@ -52,9 +52,9 @@ func setup() (context.Context, api.RelationGraphServer) {
 	}
 
 	// setup relationships
-	for _, relationship := range setupRelationships {
+	for _, relationship := range rels {
 		req := api.SetRelationshipRequest{
-			PolicyId:     setupPolicy.Id,
+			PolicyId:     pol.Id,
 			Relationship: &relationship,
 		}
 		_, err = polService.SetRelationship(ctx, &req)
@@ -67,7 +67,7 @@ func setup() (context.Context, api.RelationGraphServer) {
 }
 
 func TestCheckForSimpleObject(t *testing.T) {
-	ctx, service := setup()
+	ctx, service := setup(*setupPolicy, setupRelationships)
 
 	req := &api.CheckRequest{
 		PolicyId: setupPolicy.Id,
@@ -85,4 +85,70 @@ func TestCheckForSimpleObject(t *testing.T) {
 			Authorized: true,
 		},
 	})
+}
+
+func TestCheckExpr(t *testing.T) {
+	pol := domain.Policy{
+		Id:   "1",
+		Name: "pol",
+		Resources: []*domain.Resource{
+			&domain.Resource{
+				Name: "file",
+				Relations: []*domain.Relation{
+					{
+						Name: "owner",
+						RelationExpression: &domain.RelationExpression{
+							Expression: &domain.RelationExpression_Expr{
+								Expr: "_this",
+							},
+						},
+						SubjectRestriction: &domain.SubjectRestriction{
+							SubjectRestriction: &domain.SubjectRestriction_UniversalSet{
+								UniversalSet: &domain.UniversalSet{},
+							},
+						},
+					},
+					{
+						Name: "reader",
+						RelationExpression: &domain.RelationExpression{
+							Expression: &domain.RelationExpression_Expr{
+								Expr: "_this",
+							},
+						},
+						SubjectRestriction: &domain.SubjectRestriction{
+							SubjectRestriction: &domain.SubjectRestriction_UniversalSet{
+								UniversalSet: &domain.UniversalSet{},
+							},
+						},
+					},
+				},
+			},
+			&domain.Resource{
+				Name: "user",
+			},
+		},
+	}
+	rels := []domain.Relationship{
+		builder.Relationship("file", "readme", "owner", "user", "owner"),
+		builder.Relationship("file", "readme", "reader", "user", "reader"),
+	}
+
+	ctx, srv := setup(pol, rels)
+	result, err := srv.CheckExpression(ctx, &api.CheckExpressionRequest{
+		PolicyId:           pol.Id,
+		Object:             domain.NewEntity("file", "readme"),
+		Subject:            domain.NewEntity("user", "reader"),
+		RelationExpression: "owner + reader",
+	})
+	require.NoError(t, err)
+	require.True(t, result.Authorized)
+
+	result, err = srv.CheckExpression(ctx, &api.CheckExpressionRequest{
+		PolicyId:           pol.Id,
+		Object:             domain.NewEntity("file", "readme"),
+		Subject:            domain.NewEntity("user", "owner"),
+		RelationExpression: "owner + reader",
+	})
+	require.NoError(t, err)
+	require.True(t, result.Authorized)
 }

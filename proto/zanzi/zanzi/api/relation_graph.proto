@@ -18,6 +18,9 @@ service RelationGraph {
     // Effectively this means a Graph Walk through the Relation Graph.
     rpc Check(CheckRequest) returns (CheckResponse);
 
+    // CheckExpression behaves as check does, but it evaluates a runtime supplied relation expression.
+    rpc CheckExpression(CheckExpressionRequest) returns (CheckExpressionResponse);
+
     // ExplainCheck performs a Check call but outputs a simplified version
     // of the internal goal tree.
     // The goal tree can be used to understand the internals of the RelationGraph search and to debug.
@@ -98,4 +101,15 @@ message  DumpRelationshipResponse {
         sourcenetwork.zanzi.domain.RelationTree tree = 1;
         string dot = 2;
     }
+}
+
+message CheckExpressionRequest {
+    string policy_id = 1;
+    sourcenetwork.zanzi.domain.Entity object = 2;
+    string relation_expression = 3;
+    sourcenetwork.zanzi.domain.Entity subject = 4;
+}
+
+message CheckExpressionResponse {
+    bool authorized = 1;
 }
