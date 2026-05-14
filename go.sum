@@ -132,6 +132,8 @@ github.com/rogpeppe/go-internal v1.11.0/go.mod h1:ddIwULY96R17DhadqLgMfk9H9tvdUz
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 h1:d0jNogSYqMt+dC05tnd+x7lmzEcBHpKoIU5woZSSHFM=
 github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8/go.mod h1:/WJdZWouiY199DypsN0xaP5PF0zy3rka3FxH5Y8o9Bc=
+github.com/sourcenetwork/raccoondb v0.2.1-0.20260514175348-017fdf639300 h1:Cg44ZTo3jot8806J91dFd0Un6gcYjheUy4sz7XnI7k4=
+github.com/sourcenetwork/raccoondb v0.2.1-0.20260514175348-017fdf639300/go.mod h1:/WJdZWouiY199DypsN0xaP5PF0zy3rka3FxH5Y8o9Bc=
 github.com/sourcenetwork/raccoondb/v2 v2.0.0 h1:Gb0SjsZUbrbkHCEg7PyyNs0+2IzPxjE/BkEQnlu1nfA=
 github.com/sourcenetwork/raccoondb/v2 v2.0.0/go.mod h1:tPKAWHUgYcSoXNMt01iWJ+Y51AQYc2knY93IjmmbejY=
 github.com/spf13/cast v1.6.0 h1:GEiTHELF+vaR5dhz3VqZfFSzZjYbgeKDpBxQVS4GYJ0=

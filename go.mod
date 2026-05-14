@@ -13,7 +13,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.2
-	github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8
+	github.com/sourcenetwork/raccoondb v0.2.1-0.20260514175348-017fdf639300
 	github.com/sourcenetwork/raccoondb/v2 v2.0.0
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
