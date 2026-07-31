@@ -3,7 +3,6 @@ syntax = "proto3";
 
 package sourcenetwork.zanzi.domain;
 
-import "google/protobuf/timestamp.proto";
 import "zanzi/domain/relation_expression_tree.proto";
 import "buf/validate/validate.proto";
 
@@ -31,14 +30,14 @@ message Policy {
 
 // PolicyRecord is a pair containing a Policy definition and its associated data
 message PolicyRecord {
+    reserved 3;
+    reserved "created_at";
+
     // Policy object
     Policy policy = 1;
 
     // Opaque, user supplied, satellite data associated to a Policy
     bytes app_data = 2;
-
-    // timestamp of creation moment
-    google.protobuf.Timestamp created_at = 3;
 }
 
 // Resources represents a class of objects in the relation graph

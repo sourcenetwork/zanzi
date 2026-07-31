@@ -150,7 +150,6 @@ func (m *relationshipMapper) FromInternalRecord(policyId string, relationship *R
 	return domain.RelationshipRecord{
 		PolicyId:     policyId,
 		Relationship: &rel,
-		CreatedAt:    data.CreatedAt,
 		AppData:      data.AppData,
 	}
 }

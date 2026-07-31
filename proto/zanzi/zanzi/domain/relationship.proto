@@ -3,7 +3,6 @@ syntax = "proto3";
 
 package sourcenetwork.zanzi.domain;
 
-import "google/protobuf/timestamp.proto";
 import "buf/validate/validate.proto";
 
 option go_package = "github.com/sourcenetwork/zanzi/pkg/domain";
@@ -62,14 +61,14 @@ message EntitySet {
 
 // RelationshipRecord models a Relationship alongside auxiliary data
 message RelationshipRecord {
+    reserved 3;
+    reserved "created_at";
+
     // id of the policy to which the relationship belongs
     string policy_id = 1;
 
     // the relationship itself
     Relationship relationship = 2;
-
-    // timestamp for creation time of relationship (based on the local system clock)
-    google.protobuf.Timestamp created_at = 3;
 
     // app_data opaque application data sent by the client
     bytes app_data = 4;

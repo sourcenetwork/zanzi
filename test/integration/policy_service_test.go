@@ -250,13 +250,11 @@ func TestCreatePolicy(t *testing.T) {
 	}
 	wantGet := &api.GetPolicyResponse{
 		Record: &domain.PolicyRecord{
-			Policy:    testPolicy,
-			AppData:   createReq.AppData,
-			CreatedAt: nil,
+			Policy:  testPolicy,
+			AppData: createReq.AppData,
 		},
 	}
 	gotGet, errGet := service.GetPolicy(ctx, getReq)
-	gotGet.Record.CreatedAt = nil
 	require.Nil(t, errGet)
 	wantGet.Reset()
 	gotGet.Reset()
@@ -331,13 +329,11 @@ func TestUpdatePolicyUpdatesPolicy(t *testing.T) {
 	}
 	wantGet := &api.GetPolicyResponse{
 		Record: &domain.PolicyRecord{
-			Policy:    policy,
-			AppData:   []byte("more data"),
-			CreatedAt: nil,
+			Policy:  policy,
+			AppData: []byte("more data"),
 		},
 	}
 	gotGet, errGet := service.GetPolicy(ctx, getReq)
-	gotGet.Record.CreatedAt = nil
 	require.Nil(t, errGet)
 	_testing.ProtoEq(t, gotGet, wantGet)
 }
@@ -427,7 +423,6 @@ func TestSetRelationshipAllowedBySubjectRestrictionRulesSavesRelationship(t *tes
 			PolicyId:     testPolicy.Id,
 			Relationship: &relationship,
 			AppData:      []byte("app data"),
-			CreatedAt:    getResponse.Record.CreatedAt,
 		},
 	})
 }

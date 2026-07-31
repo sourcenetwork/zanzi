@@ -1,15 +1,11 @@
 package domain
 
-import (
-	"github.com/sourcenetwork/zanzi/internal/utils"
-	"google.golang.org/protobuf/types/known/timestamppb"
-)
+import "github.com/sourcenetwork/zanzi/internal/utils"
 
 func NewPolicyRecord(policy *Policy, data []byte) *PolicyRecord {
 	return &PolicyRecord{
-		Policy:    policy,
-		AppData:   data,
-		CreatedAt: timestamppb.Now(),
+		Policy:  policy,
+		AppData: data,
 	}
 }
 

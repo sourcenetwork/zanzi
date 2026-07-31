@@ -3,10 +3,8 @@ package store
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/sourcenetwork/zanzi/internal/policy"
 	_testing "github.com/sourcenetwork/zanzi/internal/testing"
@@ -106,9 +104,8 @@ var policyDef *domain.Policy = &domain.Policy{
 }
 
 var policyRecord *domain.PolicyRecord = &domain.PolicyRecord{
-	CreatedAt: timestamppb.New(time.Date(2023, time.November, 10, 0, 0, 0, 0, time.UTC)),
-	AppData:   []byte("app_data"),
-	Policy:    policyDef,
+	AppData: []byte("app_data"),
+	Policy:  policyDef,
 }
 
 func (s *PolicyRepositoryTestSuite) TestPolicySetGet(t *testing.T) {

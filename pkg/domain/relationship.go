@@ -1,9 +1,5 @@
 package domain
 
-import (
-	"google.golang.org/protobuf/types/known/timestamppb"
-)
-
 func NewEntity(resource, id string) *Entity {
 	return &Entity{
 		Resource: resource,
@@ -16,7 +12,6 @@ func NewRelationshipRecord(policyId string, relationship *Relationship, data []b
 		PolicyId:     policyId,
 		Relationship: relationship,
 		AppData:      data,
-		CreatedAt:    timestamppb.Now(),
 	}
 }
 

@@ -110,7 +110,6 @@ func (r *policyRepository) SetRelationship(ctx context.Context, record *domain.R
 	data := RelationshipData{
 		RelationshipId: r.relationshipIDer.Id(&relationship),
 		AppData:        record.AppData,
-		CreatedAt:      record.CreatedAt,
 	}
 	err = relationshipDataStore.SetObject(&data)
 	if err != nil {
